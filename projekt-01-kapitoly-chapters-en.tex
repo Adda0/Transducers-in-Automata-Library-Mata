@@ -32,10 +32,13 @@ Heneforth, each finite transducer can be thought of as a translator translating 
 In this work, we usually work with binary rational relations, but in general an \emph{n-ary rational relation} can be modelled by a n-tape transducer.
 
 % String Solving + Noodler
+In the recent decades, we have seen a rapid growth of  various procedures for SMT string solving, implemented in numerous state-of-the-art SMT solvers.
+The importance of efficient algorithms for deciding satisfiability of SMT formulae is underlined by everyday applications in the industry such as AWS~\cite{Rungta2022} or the ongoing anual competion SMT-COMP~\cite{smt_comp}.
+
 Recent advances in analysis of programs manipulating strings, string solving, automatically solving string constraints over string languages, have heightened the importance of modelling string replacement operations.
 Such operations allow for replacing a substring specified by a regular langauge with another string.
 The appliations are widely used in web applications such as implicit browser transductions, or replace functions such as \emph{replace} and \emph{replace-all} functions.
-One of the most important application of string-replace operations is defense against attacks such as cross-site scripting or code injection in web application.
+One of the most important applications of string-replace operations is defense against attacks such as cross-site scripting or code injection in web applications.
 Untrusted inputs from a user are to be sanitized (e.g. by escaping the input string) in order to prevent arbitrary malicious code execution.
 We need a toolset to verify that such sanitizations are correct and safe.
 SMT solver with support for replace operations can be used to decide this.
@@ -46,8 +49,10 @@ HTML codes need to be coded and decoded in the input strings (replacing \texttt{
 Finite transducers are ideal for modelling both the sanitization operations as well as the implicit browser transductions:
 Both these applications create relations between two languages, mapping strings from one language to the other which can be modelled by finite transducers.
 Finite transducers can model implicit browser transductions directly.
-They can be used to model string-replace operations for sanitization operations and the finial replacement (the generated language) can be tested for emptiness of intersection with the typical cross-site scripting attack patterns database, represented as a regular language.
+They can be used to model string-replace operations for sanitization operations and the resulting replacement (the generated language) can be tested for emptiness of intersection with the typical cross-site scripting attack patterns database, represented as a regular languages.
 Such constraints are presented to an SMT solver to decide its satisfiability.
+
+We have introduced a new SMT string solver \noodler which utilizes an automata-based approach to string solving with finite automata and operations on them implemented in \mata as the backbone of the whole decision procedure of \noodler.
 
 \paragraph{Contribution.}
 In this work, we study automata models called finite transducers and their applicability to string solving. We implement the proposed solution in \mata and evaluate the implemented solution on variety of benchmark problems from practice.
@@ -586,7 +591,7 @@ These operations are modified only in places where it is necessary to handle the
 
 Furthermore, several algorithms specific for \nfts are added to \mata, namely composition of two \nfts, application (of both an \nfa and a word) on an \nft, projection (to a specified subset of \nft tapes---producing a new \nft---or to only a single tape---producing the corresponding \nfa for the specified tape).
 
-\paragraph{Levels}
+\paragraph{Levels.}
 The vector of levels is a vector of unsigned integers representin the levels indexed by states.
 
 Each \nft also stores the number of tapes (levels) in the \nft.
@@ -594,7 +599,7 @@ The number of tapes defaults to $1$, which means that the \nft is equivalent to 
 
 This is useful as it keeps the data structures in \mata consitent with the behaviour expected by many potential users of \mata.
 
-\paragraph{Epsilon and No Operation Transitions}
+\paragraph{Epsilon and no operation transitions.}
 We have decided to unify the symbols for epsilon transitions and \nop transitions used in \mata.
 We represent both transitions with a transition over an epsilon symbol $\epsilon$, corresponding to the largest unsigned integer value of a symbol in \mata.
 
@@ -603,7 +608,7 @@ This operation has constant complexity since a set of levels in \mata is a state
 
 We decided for this approach since all operations in \mata already support epsilon transitions, checking for existence of epsilon transitions and accessing them has constant complexity, and adding handling for yet another special transition symbol is further complicates the logic for many operations which do not have to distinguish between epsilon and no operation transitions.
 
-\paragraph{Words or Identity Insertion.}
+\paragraph{Words and identity insertion.}
 We also implemented a few utility functions which are useful when constructing or modifying \nfts\footnote{Especially for modelling the replace and other operations in string solving.} such as
 \begin{itemize}
   \item \emph{inserting an identity transition} over all tapes (all tapes read/write the same symbol) over the given alphabet for a specified state.
