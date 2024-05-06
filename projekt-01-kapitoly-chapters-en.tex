@@ -51,10 +51,12 @@ Such constraints are presented to an SMT solver to decide its satisfiability.
 
 \paragraph{Contribution.}
 In this work, we study automata models called finite transducers and their applicability to string solving. We implement the proposed solution in \mata and evaluate the implemented solution on variety of benchmark problems from practice.
+
 Namely, the constributions of this work can be summarized as follows:
 \begin{itemize}
   \item Design of data structures and algorithms for finite transducers with regard to existing and planned data structures and algorithms in \mata.
   \item Implementation of the proposed data structures and algorithms in automata library \mata,
+  \item A new benchmark of replace operations encoded as finite transducers derived from SMT-LIB benchmarks with replace operations. The operations in the benchmark performed are the typically used operations in string solving on real problems, and
   \item Experimental evaluation of the implemented algorithms on a variety of benchmark problems from practice.
 \end{itemize}
 
@@ -220,7 +222,7 @@ Unless we explicitly state the number of tapes, we will further consider 2-tape 
 The performance of \mata have been evaluated in~\cite{cade23_reasoning_regular_properties_comparision_DBLP:conf/cade/FiedorHHRSV23} (as \enfa), \cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
 Furthermore, \mata is used as an underlying finite automata library for a novel string solver \noodler in~\cite{fm23fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23,tacas24_noodler_10.1007/978-3-031-57246-3_2}, where \mata handles creation and storing of finite automata and performing automata operations on them.
 
-In all of these papers, \mata performs well, and outperforms even the state-of-the-art automata libraries such as \automatajar, \awali, \vata, \brics, \automatanet, \automatapy, \fado.
+In all of these papers, \mata performs well, and outperforms even the state-of-the-art automata libraries such as \automatajar, \awali, \vata, \brics, \automatanet, \automatapy, \fado.~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
 
 From these results, we can see that \mata offers an interesting set of features, namely performance and extensibility, and is applicable in numerous areas of both research and practical use-cases.
 
@@ -340,7 +342,11 @@ Nielsen transformation~\cite{nielsen1917}, used for solving quadratic equations.
 Thanks to this combination of approaches, \noodler is able to uniquely utilize information from both the regular constraints and word equations to efficiently prune the searched state space, mitigating the effects of possible combinatorial state space explosion.
 This feature of the stabilization-based procedure makes \noodler superior to other state-of-the-art string solvers on many benchmarks, as seen in the latest results from \noodler~\cite{tacas24_noodler_10.1007/978-3-031-57246-3_2}, and in previous articles~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
 
-\noodler utilizes \mata to intuitively encode regular constraints as finite automata, allowing for solving the SMT formula satisfiability by performing standard automata operations on finite automata representing regular languages of string variables in the formula and corresponding constraints.
+\noodler, as opposed to all other state-of-the-art SMT string solvers (with the exception of \ostrich) utilizes finite automata as the underlying data structures to intuitively encode regular constraints.
+This gives \noodler unique oportunities for efficient string solving of SMT formulae which other SMT solvers cannot utilize.
+Using finite automata models as much as possible allows us to solve the satisfiability of the SMT formula by performing standard automata operations on finite automata representing regular languages of string variables in the formula and corresponding constraints.
+The performance results of \noodler clearly show that, when implemented correctly, automata-based algorithms can be more performant than the classic approaches to string solving.
+This is the reason why it is so important that all implemented automata models in \mata are as performant as possible.
 
 The only unsupported operations in \noodler are at the time of writing string operations \texttt{str.replace\_all} and \texttt{str.replace\_re\_all} from the theory of strings in SMTLIB~\cite{smtlib_theory_strings}.
 Furthermore, the string operations \texttt{str.replace} and \texttt{str.replace\_re} are handled by a modified \noodler version of theory rewriter (replacing \ziii own theory rewriter) applying rewriting rules to convert both operations to a combination of word equations, disequations, and length and regular constraints.
@@ -506,8 +512,11 @@ In this work, we use \nop when we want to explicitly stress the distinction betw
 
 \begin{itemize}
   \item Synchronization,
+  \item intersection,
+  \item composition,
+  \item concatenate
   \item Application,
-  \item Projection,
+  \item Projection (to, out),
   \item get\_one\_letter\_aut
   \item \ldots
 \end{itemize}
@@ -554,6 +563,9 @@ We deem this approach inferior to our chosen appraoch since it distorts the simp
 
 % Basic approach, operations, representation
 \section{Finite Transducers for String Solving}
+
+TODO: Modelling replace operations
+
 \subsection{Algorithms}
 \begin{itemize}
   \item Reluctant replacement~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10}
