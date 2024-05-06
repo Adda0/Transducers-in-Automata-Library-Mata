@@ -60,6 +60,7 @@ Namely, the constributions of this work can be summarized as follows:
 
 \chapter{Preliminaries}
 In this chapter, we will define several terms and notions used throughout this thesis.
+We follow the usual definitions of automata theory, as used in works such as~\cite{Esparza} or~\cite{Sipser} with custom modifications and additions.
 
 \paragraph{Alphabets.}
 We define an \emph{alphabet} $\Sigma = \{ a, b, c, \ldots \}$ as a set of \emph{symbols} where
@@ -69,6 +70,10 @@ Furthermore, we use two special symbols: an \emph{epsilon symbol} $\eps \notin \
 \emph{Alphabet with epsilon symbols} (epsilons) is denoted $\SigmaEps = \Sigma \cup \{ \eps \}$.
 
 We denote \emph{concatenation} on words $w_1$, $w_2$ using $w_1 \concat w_2$, sometimes for convenience omitting the concatention operator $w_1w_2$, where $\eps$ is the neutral element of concatenation ($\eps \concat w_1 = w_1 \cdot \eps = w_1$).
+
+\section{Finite Automata}
+
+In this section, we lay foundation to finite automata and their aspects which are utilized in this work.
 
 \paragraph{Nondeterministic finite automata.}
 A \emph{nondeterministic finite automaton} (\emph{NFA}) over the alphabet $\Sigma$ is a 5-tuple $\aut = (\states, \Sigma, \post, \initialStates, \finalStates)$ where
@@ -80,10 +85,11 @@ A \emph{nondeterministic finite automaton} (\emph{NFA}) over the alphabet $\Sigm
     \item $\finalStates \subseteq \states$ is a finite set of \emph{final states}.
 \end{itemize}
 
-A set of all transitions of $\aut$ forms a transition relation of $\aut$, denoted $\Delta$.
+A set of all transitions of $\aut$ forms a transition relation of $\aut$, denoted $\Delta$. $\Delta(q, a) \equiv \post(q, a)$.
 
 Furthermore, we define a \emph{state-post function} $\post(q) = \{ (a, \post(q, a)) \mid \post(q, a) \neq \emptyset \}$ for a state $q$.
 Symbol-post function and State-post function are called \emph{post-image functions}.
+$\post$ can be generalized to a set of source states over a given transtision symbol, $\post(S, a)$ where $S \in \states$ and $a \in \Sigma$ as $\post(S, a) = \bigcup_{s \in S} \post(s, a)$.
 
 
 An \emph{NFA with epsilon symbols} is a 5-tuple $\aut = (\states, \SigmaEps, \post, \initialStates, \finalStates)$ where
@@ -114,7 +120,58 @@ We call an NFA $\aut = (\states, \Sigma
 % \land |\post(q, \eps)| = 0
 $, and $|\initialStates| = 1$.
 
-% TODO: Operations on finite automata?
+\begin{definition}[\textbf{Powerset (\textbf{subset}) construction}] \hfill \newline
+    The algorithm of powerset (subset) construction creates deterministic finite automaton from its equivalent non-deterministic finite automaton. Powerset construction produces a \dfa $A'$, where $\states' = 2^\states$, $\finalStates' = \{S \in \states' | S \cap \finalStates \neq \emptyset\}$, $\initialStates' = \initialStates$ and for $S \in \states': \post'(S, a) = \bigcup_{s \in S} \post(s, a)$.
+\end{definition}
+
+\begin{definition}[\textbf{Product construction}] \hfill \newline
+Product construction is an algorithm where, given two \nfas $A_1 = (\states_1, \Sigma, \post_1, \initialStates_1, \finalStates_1)$ and $A_2 = (\states_2, \Sigma, \post_2, \initialStates_2, \finalStates_2)$ over an alphabet $\Sigma$, the algorithm yields a product \nfa $A$ as a 5-tuple deterministic finite automaton $A = (\states, \Sigma, \post, \initialStates, \finalStates)$ where:
+\begin{itemize}
+    \item $\states = \states_1 \times \states_2$,
+    \item $\post: \states \times \Sigma \rightarrow{} P(\states)$,
+    \item $\initialStates = \initialStates_1 \times \initialStates_2$, and
+    \item $\finalStates = \finalStates_1 \times \finalStates_2$.
+\end{itemize}
+\end{definition}
+
+$\post$ is constructed as $([q_1, q_2], a) = \post_1(q_1, a) \times \post_2(q_2, a)$ where $[q_1, q_2]$ denotes a pair of states, often called \emph{macrostate} or \emph{product state}. For pairs of states $q_1 \in \states_1$ and $q_2 \in \states_2$ and a common transition symbol $a$ of transitions $q'_1 \in \post_1(q_1, a)$ and $q'_2 \in \post_2(q_2,a)$, a single product transition is denoted as $[q_1, q_2] \xrightarrow{a} [q'_1, q'_2]$, where $[q'_1, q'_2] \in \post([q_1, q_2], a)$ for the corresponding states $[q_1, q_2]$ and $[q'_1, q'_2]$ in $A$.
+
+When applied for computing an \emph{intersection} of \nfas, the language of $A$ is equal to $ \langof{A} = \langof{A_1} \cap \langof{A_2} $.
+
+In this work, we will utilize the classic product construction algorithm, as shown in Algorithm~\ref{productConstructionAlg}.
+
+\begin{algorithm}[ht]
+\caption{Product construction algorithm in its classic implementation.}\label{productConstructionAlg}
+\SetKwData{Left}{left}\SetKwData{This}{this}\SetKwData{Up}{up}
+\SetKwFunction{Union}{Union}\SetKwFunction{FindCompress}{FindCompress}
+\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+\DontPrintSemicolon
+\Input{ NFA $A_1 = (\states_1, \Sigma, \post_1, \initialStates_1, \finalStates_1)$, NFA $A_2 = (Q_2, \Sigma, \post_2, \initialStates_2, \finalStates_2)$}
+\Output{ NFA $A = (A_1 \cap A_2) = (\states, \Sigma, \post, \initialStates, \finalStates)$ with $\langof{A_1 \cap A_2} = \langof{A_1} \cap \langof{A_2}$}
+\BlankLine
+$\states, \post, \finalStates \gets \emptyset$ \\
+$\initialStates \gets \initialStates_1 \times \finalStates_2$ \\
+$W \gets  I$
+
+\While{$W \neq \emptyset$}{
+    \textbf{pick} $[q_1, q_2]$ \textbf{from} $W$ \\
+    \textbf{add} $[q_1, q_2]$ \textbf{to} $\states$ \\
+    \If{$q_1 \in \finalStates_1$ and $q_2 \in \finalStates_2$} {
+        \textbf{add} $[q_1, q_2]$ \textbf{to} $\finalStates$
+    }
+    \ForAll{$a \in \Sigma$}{
+        \ForAll{$q'_1 \in \post_1(q_1, a), q'_2 \in \post_2(q_2, a)$}{
+            \If{$[q'_1, q'_2] \notin Q$}{\textbf{add} $[q'_1, q'_2]$ \textbf{to} $W$}
+            \textbf{add} $[q'_1, q'_2] \textbf{ to } \post([q_1, q_2], a)$
+        }
+    }
+}
+\end{algorithm}
+
+\section{Finite State Transducers}
+
+In this section, we define finite state transducers and corresponding operations.
+
 
 \paragraph{Nondeterministic finite state transducers.}
 An $n$-tape \emph{nondeterministic finite state transducer} (\emph{NFST}; \emph{nondeterministic finite transducer}, \emph{NFT}) over an alphabet $\Gamma$ is a 5-tuple $\transducer = (\states, \Gamma, \post, \initialStates, \finalStates)$ where
@@ -132,19 +189,21 @@ When the context is clear, we sometimes omit $\circ$, similarly as for NFA.
 
 A (potentially infinite) set of words for which there exists an accepting run of $\transducer$ defines a \emph{rational relation} $\relationof{\transducer} \subseteq (\SigmaEps^*)^n$ of \nft $\transducer$.
 
-% TODO: Synchronized transducer and synchronized rational language + its properties?
-
 \paragraph{Deterministic finite transducers.}
 An $n$-tape \emph{deterministic finite state transducer} (\emph{DFST}; \emph{deterministic finite transducer}, \emph{DFT}) over an alphabet $\Gamma$ is a 5-tuple $\transducer = (\states, \Gamma, \post, \initialStates, \finalStates)$ where all elements in the tuple are the same as for \nft, except for the definition of $\post$ where
 \begin{itemize}
-    \item $\post: \states \times \Gamma \rightarrow \states$ is a \emph{symbol-post function} where $\move{q}{\gamma}{q'}$ (or $(q, \gamma, q')$) for $q' = \post(q, \gamma)$ is a \emph{transition} for $\gamma = \begin{bsmallmatrix} a^1 & a^2 & \ldots & a^n\end{bsmallmatrix} = (a^1, a^2, \ldots, a^n) \in (\SigmaEps)^n$. That is, $|\post(q, \gamma)| \leq 1$.
+    \item $\post: \states \times \Gamma \rightarrow \states$ is a \emph{symbol-post function} where $\move{q}{\gamma}{q'}$ (or $(q, \gamma, q')$) for $q' = \post(q, \gamma)$ is a \emph{transition} for $\gamma = \begin{bsmallmatrix} a^1 & a^2 & \ldots & a^n\end{bsmallmatrix} = (a^1, a^2, \ldots, a^n) \in (\SigmaEps)^n$. That is, $|\post(q, \gamma)| \leq 1$, and
+    \item $|\initialStates| = 1$.
 \end{itemize}
+
+% TODO: Synchronized transducer and synchronized rational language + its properties?
 
 In this work, we will often limit ourselves to 2-tape \nfts (\dfts), called \emph{((non)deterministic) finite state input output transducers} where the first tape is the \emph{input tape} and the second tape is the \emph{output tape}.
 
 Unless we explicitly state the number of tapes, we will further consider 2-tape \nfts.
 
 % TODO: Input, output projection.
+% TODO: Composition, Application.
 
 
 
@@ -291,8 +350,8 @@ In Figure~\ref{fig:2_tape_nft}, we show a 2-tape input/output \nft accepting a r
 We propose utilizing the existing data structures in \mata (used for NFAs) for implementing finite transducers in \mata.
 The main advantage is that NFAs, \nfts, and BDDs can all be implemented using the same single data structure, utilizing a lot of the existing algorithms on the data structures.
 
-\mata provides a base class \nfa which encompasses both deterministic and non-deterministic finite automata and operations on them.
-Class \nfa is a base class from which \nfts, BDDs, and register automata can inherit, including all operations on \nfa where only a few specific operations need to be modified for each respective type of finite-state machine.
+\mata provides a base class \nfaClass which encompasses both deterministic and non-deterministic finite automata and operations on them.
+Class \nfaClass is a base class from which \nfts, BDDs, and register automata can inherit, including all operations on \nfaClass where only a few specific operations need to be modified for each respective type of finite-state machine.
 This hierarchy also allows us to add model-specific operations to each type of automata without modifying operations for the other automata.
 BDDs in our representation only extend the functionality of \nfts, and can therefore inherit most of the algorithms from \nfts and only modify some of the algorithms for BDD-specific use-cases.
 
@@ -303,12 +362,12 @@ BDDs in our representation only extend the functionality of \nfts, and can there
     An inheritance hierarchy for NFAs, \nfts, BDDs, and register automata.
     All of these finite-state machines utilize the same data structure, with mostly the same algorithms where only a few algorithms needs to be modified for each respective type of finite-state machine.
     Each type of finite-state machine can further extend the set of operations by their own specific operations.
-    Since BDDs only extend the functionality of transducers, BDDs can inherit directly from \nfts, modifying a few algorithms of \nfts together with the base \nfa algorithms.
+    Since BDDs only extend the functionality of transducers, BDDs can inherit directly from \nfts, modifying a few algorithms of \nfts together with the base \nfaClass algorithms.
   }
 \end{figure}
 
-Class \nfa defines which states in the represented automaton are initial (a set of initial states) and which are final (a set of final states).
-Furthermore, \nfa allows for storing of arbitraty context in the automaton itself.
+Class \nfaClass defines which states in the represented automaton are initial (a set of initial states) and which are final (a set of final states).
+Furthermore, \nfaClass allows for storing of arbitraty context in the automaton itself.
 
 The most important data structure for the representation of the finite-state machines and the efficiency of the algorithms run on the representation is the representation of transition relation, called \deltastruct in \mata.
 \deltastruct defines the set of states of the finite automaton, and gives the transition relation of the finite automaton.
@@ -362,13 +421,13 @@ The vizualization of the three-level data structure representing the transition 
 
 Notice that since \mata supports epsilon symbols as maximal unsigned integer values, the symbol posts for epsilons are always at the end of state posts and can be therefore accessed in constant time instead of having to search the whole state post to look them up. \mata operations utilize this fact in numerous operations using epsilon symbols such as in string solving~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23}.
 
-\nfts and BDDs can directly utilize \nfa with all of the underlying data structures where one transition in \nft is represented by several transitions in \nfa.
-The only modification of \nfa to support \nfts and BDDs is adding a vector of state \emph{levels} (represented by \texttt{std::vector}<unsigned>) indexed by automaton states, as in the first level in \deltastruct. The vector maps each aumaton state to its level in the finite-state machine.
+\nfts and BDDs can directly utilize \nfaClass with all of the underlying data structures where one transition in \nft is represented by several transitions in \nfaClass.
+The only modification of \nfaClass to support \nfts and BDDs is adding a vector of state \emph{levels} (represented by \texttt{std::vector}<unsigned>) indexed by automaton states, as in the first level in \deltastruct. The vector maps each aumaton state to its level in the finite-state machine.
 $n$-tape \nft has $n$ levels.
 Therefore, in a representation of a $n$-tape \nft, vector of state levels maps to values from $0$ to $n-1$.
-One transition in \nft corresponds to $n$ transitions in \nfa.
+One transition in \nft corresponds to $n$ transitions in \nfaClass.
 
-Each transition in \nfa corresponds to one level of the \nft, i.e., one tape of the \nft.
+Each transition in \nfaClass corresponds to one level of the \nft, i.e., one tape of the \nft.
 \nft transition always starts in level $0$. Transition from level $0$ to level $1$ represents the operation on the first \nft tape, from level $1$ to level $2$ the second \nft tape operation and so on.
 Finally, the transition from state with level $n-1$ back to state with level $0$ corresponds to the last tape in the \nft.
 For 2-tape (input/output) \nft, the levels used will be $0$ and $1$, where transitions from states with levels $0$ represent the ipnut transitions and transitions from states with levels $1$ represent the output transitions.
@@ -383,14 +442,14 @@ This is crutial for many algorithms (more in~\ref{sec:Algorithms}) which rely on
 \mata already supports epsilon symbols as (several) last transition symbol(s) in the range of possible transition symbols given by the data type of transition symbol.
 Adding support for \emph{don't care} symbols on transitions, matching any transition symbol on the tape.
 
-An epsilon symbol on a transition from state with level $k$ to level $k + 1 \% n$ in \nfa representing a \nft means that the tape corresponding to the level $k$ does not read from / write on the tape $k$ any symbol.
+An epsilon symbol on a transition from state with level $k$ to level $k + 1 \% n$ in \nfaClass representing a \nft means that the tape corresponding to the level $k$ does not read from / write on the tape $k$ any symbol.
 
-\nfts represented as \nfa also require support for \emph{jumps} where the transition goes from a state with level $k$ to any other state with level $l$ where $l \neq k + 1$.
+\nfts represented as \nfaClass also require support for \emph{jumps} where the transition goes from a state with level $k$ to any other state with level $l$ where $l \neq k + 1$.
 However, we restrict the jumps for $n$-tape \nft as follows:
 \begin{itemize}
   \item The jump cannot jump over a state with level $0$.
   That is, if we need to jump further, the transition can at most jump to the next state with level $0$,
-  \item A jump of length $k$ greater than one (the length of one is a normal transition in \nfa which we call just a transition) is interpreted the same as if we made $k$ transitions in \nfa with the transition symbol on the jump transition.
+  \item A jump of length $k$ greater than one (the length of one is a normal transition in \nfaClass which we call just a transition) is interpreted the same as if we made $k$ transitions in \nfaClass with the transition symbol on the jump transition.
   That is, a jump of length $3$ (over $3$ tapes) with transition symbol $\epsilon$ means that the transducer made $3$ normal transitions with $\epsilon$ as a transition symbol for each of them.
   \item Jumping from a state with level $0$ to the next state with level $0$ means that only the internal state of the \nft has changed (the state has changed) without reading or writing anything on any of the tapes.
 \end{itemize}
@@ -401,7 +460,7 @@ However, we restrict the jumps for $n$-tape \nft as follows:
 
 
 \begin{example}\label{example:2_tape_nft_in_mata}
-  The \nft from Example~\ref{example:2_tape_nft} is represented in the data structure for \nfts inherited from \nfa as in the Figure~\ref{fig:2_tape_nft_in_mata}.
+  The \nft from Example~\ref{example:2_tape_nft} is represented in the data structure for \nfts inherited from \nfaClass as in the Figure~\ref{fig:2_tape_nft_in_mata}.
 
   Transitions from states with level $0$ represent the input tape transition symbol, and transitions from states with level $1$ represent the output tape transition symbol.
 
@@ -409,7 +468,7 @@ However, we restrict the jumps for $n$-tape \nft as follows:
     \centering
     \includegraphics[scale=1.0,keepaspectratio]{obrazky-figures/transducer_in_mata.drawio.pdf}
     \caption{
-      2-tape \nft from Example~\ref{example:2_tape_nft} represented in \mata as an \nfa with states annotated by state levels.
+      2-tape \nft from Example~\ref{example:2_tape_nft} represented in \mata as an \nfaClass with states annotated by state levels.
     }\label{fig:2_tape_nft_in_mata}
   \end{figure}
 \end{example}
