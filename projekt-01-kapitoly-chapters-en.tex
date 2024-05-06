@@ -508,6 +508,7 @@ In this work, we use \nop when we want to explicitly stress the distinction betw
   \item Synchronization,
   \item Application,
   \item Projection,
+  \item get\_one\_letter\_aut
   \item \ldots
 \end{itemize}
 
@@ -573,6 +574,14 @@ These operations are modified only in places where it is necessary to handle the
 
 Furthermore, several algorithms specific for \nfts are added to \mata, namely composition of two \nfts, application (of both an \nfa and a word) on an \nft, projection (to a specified subset of \nft tapes---producing a new \nft---or to only a single tape---producing the corresponding \nfa for the specified tape).
 
+\paragraph{Levels}
+The vector of levels is a vector of unsigned integers representin the levels indexed by states.
+
+Each \nft also stores the number of tapes (levels) in the \nft.
+The number of tapes defaults to $1$, which means that the \nft is equivalent to \nfa and the operations on \nfts with number of levels set to $1$ will behave the same as a corresponding \nfa (with an equivalent transition relation where all don't care transitions are replaced with transition between the same states over the whole alphabet).
+
+This is useful as it keeps the data structures in \mata consitent with the behaviour expected by many potential users of \mata.
+
 \paragraph{Epsilon and No Operation Transitions}
 We have decided to unify the symbols for epsilon transitions and \nop transitions used in \mata.
 We represent both transitions with a transition over an epsilon symbol $\epsilon$, corresponding to the largest unsigned integer value of a symbol in \mata.
@@ -581,6 +590,19 @@ To distinguish between both, we check whether the epsilon transition leads from 
 This operation has constant complexity since a set of levels in \mata is a state-idexable vector of levels.
 
 We decided for this approach since all operations in \mata already support epsilon transitions, checking for existence of epsilon transitions and accessing them has constant complexity, and adding handling for yet another special transition symbol is further complicates the logic for many operations which do not have to distinguish between epsilon and no operation transitions.
+
+\paragraph{Words or Identity Insertion.}
+We also implemented a few utility functions which are useful when constructing or modifying \nfts\footnote{Especially for modelling the replace and other operations in string solving.} such as
+\begin{itemize}
+  \item \emph{inserting an identity transition} over all tapes (all tapes read/write the same symbol) over the given alphabet for a specified state.
+
+  This is specially useful for string solving where usually one specially handles a small subset of transitions symbols, but wants to leave the remaining symbols in the input word unmodified.
+
+  \item \emph{inserting a word} for specified tapes or \emph{inserting words}, one for each tape.
+
+  This allows one to quickly create transducers which read a specific word, replace a specific string literal with a given literal, or removes specified literal from the input word.
+\end{itemize}
+
 
 \chapter{Experimental Evaluation}
 
