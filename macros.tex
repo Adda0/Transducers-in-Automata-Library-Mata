@@ -1,0 +1,60 @@
+\newcommand{\dontCare}{x}
+\newcommand{\concat}{\cdot}
+\newcommand{\eps}{\epsilon}
+\newcommand{\SigmaEps}{\Sigma_\eps}
+
+\newcommand{\aut}{\mathcal{A}}
+\newcommand{\states}{Q}
+\newcommand{\initialStates}{I}
+\newcommand{\finalStates}{F}
+\newcommand{\post}{\ensuremath{\mathit{post}}}
+\newcommand{\langof}[1]{\lang(#1)}
+\newcommand{\lang}{L}
+\newcommand{\move}[3]{{#1} \xrightarrow{{#2}} {#3}}
+
+\newcommand{\code}[1]{\ensuremath{\mathtt{#1}}}
+\newcommand{\ordvector}{\code{OrdVector}\xspace}
+\newcommand{\symbolpost}{\code{SymbolPost}\xspace}
+\newcommand{\statepost}{\code{StatePost}\xspace}
+\newcommand{\pushb}{\code{push\_back}\xspace}
+\newcommand{\popb}{\code{pop\_back}\xspace}
+\newcommand{\ins}{\code{insert}\xspace}
+\newcommand{\erase}{\code{erase}\xspace}
+\newcommand{\deltastruct}{\code{Delta}\xspace}
+\newcommand{\postvec}{\code{post}\xspace}
+\newcommand{\nfa}{\code{Nfa}\xspace}
+
+
+
+
+\newcommand{\transducer}{\mathcal{T}}
+\newcommand{\nft}{NFT\xspace}
+\newcommand{\nfts}{NFTs\xspace}
+\newcommand{\dft}{DFT\xspace}
+\newcommand{\dfts}{DFTs\xspace}
+% \newcommand{\bdd}{BDD\xspace}
+% \newcommand{\bdds}{BDDs\xspace}
+% \newcommand{\concatTuple}{\circ}
+\newcommand{\transWord}[1]{\bar{{#1}}}
+\newcommand{\relationof}[1]{\relation(#1)}
+\newcommand{\relation}{R}
+
+
+\newcommand{\toolname}[1]{\textsc{#1}\xspace}
+\newcommand{\automatajar}{\toolname{AutomataLib}}
+\newcommand{\awali}{\toolname{Awali}}
+\newcommand{\lash}{\toolname{Lash}}
+\newcommand{\mona}{\toolname{Mona}}
+\newcommand{\mata}{\toolname{Mata}}
+\newcommand{\matasim}{\toolname{Mata-Sim}}
+\newcommand{\enfa}{\toolname{eNfa}}
+\newcommand{\noodler}{\toolname{Z3-Noodler}}
+%\newcommand{\cpp}{{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}}\xspace}
+\newcommand{\cpp}{C++\xspace}
+\newcommand{\csharp}{
+  {\settoheight{\dimen0}{C}C\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}\xspace}
+\newcommand{\vata}{\toolname{Vata}}
+\newcommand{\brics}{\toolname{Brics}}
+\newcommand{\automatanet}{\toolname{Automata.net}}
+\newcommand{\automatapy}{\toolname{Automata.py}}
+\newcommand{\fado}{\toolname{FAdo}}
