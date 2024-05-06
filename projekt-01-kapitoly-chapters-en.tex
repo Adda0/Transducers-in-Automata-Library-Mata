@@ -21,7 +21,7 @@ Many automata libraries are well-optimized on only one subset of operations, or 
 
 \mata's underlying data structures are designed in such a way that they provide sufficient performance, but also enable easy modification by the user for their own uses and extensible framework for adding new automata types, purpose-specific operations, or additional maintanence of related context while keeping the existing infrastructure working with as minimal number of changes required as possible.
 
-In this work, we intend on utilizing the extensibility of \mata and its underlying data structures to add support for finite transducers while maintaing the main ideas of \mata: performant, and easy to extend and modify.
+In this work, we intend on utilizing the extensibility of \mata and its underlying data structures to add support for finite state transducers while maintaining the main ideas of \mata: being fast, and easy to extend or modify.
 
 % Finite Transducers
 Finite transducers are finite-state machines.
@@ -217,9 +217,8 @@ Unless we explicitly state the number of tapes, we will further consider 2-tape 
 \mata is a new finite automata library, built with simplicity, extensibility and performance in mind.
 \mata currently supports only (non)deterministic finite automata.
 
-The performance of \mata have been evaluated in~\cite{cade23_reasoning_regular_properties_comparision_DBLP:conf/cade/FiedorHHRSV23} (as \enfa), \cite{tacas24_arxiv_mata_tool_paper_DBLP:journals/corr/abs-2310-10136}.
-Furthermore, \mata is used as an underlying finite automata library for a novel string solver \noodler in~\cite{fm23fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23,tacas24_arxiv_noodler_tool_paper_DBLP:journals/corr/abs-2310-08327}, where \mata handles creation and storing of finite automata and performing automata operations on them.
-% TODO: Update citation to tacas24 arxiv for real tacas24 citation.
+The performance of \mata have been evaluated in~\cite{cade23_reasoning_regular_properties_comparision_DBLP:conf/cade/FiedorHHRSV23} (as \enfa), \cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
+Furthermore, \mata is used as an underlying finite automata library for a novel string solver \noodler in~\cite{fm23fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23,tacas24_noodler_10.1007/978-3-031-57246-3_2}, where \mata handles creation and storing of finite automata and performing automata operations on them.
 
 In all of these papers, \mata performs well, and outperforms even the state-of-the-art automata libraries such as \automatajar, \awali, \vata, \brics, \automatanet, \automatapy, \fado.
 
@@ -237,8 +236,6 @@ Other types include binary decision diagrams (BDDs), finite automata with regist
 \section{Finite Transducers}
 
 \section{String Solving}
-
-
 
 During the last two decades, a great development efforts have been put on improving SMT solvers for specific theories (specific constraint languages).
 Namely, modelling and deciding constraints over a language of strings, also known as \emph{string solving}, is one of the dominant fields of active research.
@@ -328,6 +325,29 @@ Depending on the use-case, both semantics can be useful.
 Such SMT solver with finite transducers can be then used for automatic discovery of cross-site scripting vulnerabilities in source code as well as real-time sanitization.
 
 \subsection{Noodler}
+
+An SMT string solver called \noodler~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23,tacas24_noodler_10.1007/978-3-031-57246-3_2}, using \mata as the underlying automata library, is a new addition to the set of SMT solvers solving string constraints.
+\noodler is based on \ziii~\cite{z3} where it replaces its theory of string.
+
+\noodler brings a novel approach to solving string constraints using a method called \emph{stabilization}, a new procedure for solving word (dis)equations in combination with regular constraints.
+
+This stabilization-based procedure is seamlessly used in \noodler in combination with the well-used existing algorithms such as
+Align\& Split (first implemented in a string solver \norn~\cite{Norn,AutomataSplitting}, and later adopted by a multitude of other state-of-the-art string solvers---\ostrich~\cite{AnthonyTowards2016,AnthonyReplaceAll2018,AnthonyComplex2019,AnthonyRegex2022,AnthonyInteger2020},
+\ziiistriiire~\cite{Z3str3RE,BerzishDGKMMN23}, \sloth~\cite{holik_string_2018}, \ldots
+), used for converting regular constraints into length constraints, and
+Nielsen transformation~\cite{nielsen1917}, used for solving quadratic equations.
+
+Thanks to this combination of approaches, \noodler is able to uniquely utilize information from both the regular constraints and word equations to efficiently prune the searched state space, mitigating the effects of possible combinatorial state space explosion.
+This feature of the stabilization-based procedure makes \noodler superior to other state-of-the-art string solvers on many benchmarks, as seen in the latest results from \noodler~\cite{tacas24_noodler_10.1007/978-3-031-57246-3_2}, and in previous articles~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
+
+\noodler utilizes \mata to intuitively encode regular constraints as finite automata, allowing for solving the SMT formula satisfiability by performing standard automata operations on finite automata representing regular languages of string variables in the formula and corresponding constraints.
+
+The only unsupported operations in \noodler are at the time of writing string operations \texttt{str.replace\_all} and \texttt{str.replace\_re\_all} from the theory of strings in SMTLIB~\cite{smtlib_theory_strings}.
+Furthermore, the string operations \texttt{str.replace} and \texttt{str.replace\_re} are handled by a modified \noodler version of theory rewriter (replacing \ziii own theory rewriter) applying rewriting rules to convert both operations to a combination of word equations, disequations, and length and regular constraints.
+However, the generated corresponding (dis)equations and constraints negatively impact the performance of the overall procedure.
+
+All of these operations can be easily encoded as finite transducers (with the model being implemented in \mata together with the corresponding operations on finite transducers), and resolved by applying standard finite transducer operations on the computed inputs.
+For this reason, adding support for finite transducers in \mata is paramount to the capabilities of \noodler and its overall performance.
 
 \chapter{Finite Transducers}
 
@@ -473,6 +493,14 @@ However, we restrict the jumps for $n$-tape \nft as follows:
   \end{figure}
 \end{example}
 
+\subsection{No Operation Transitions}
+An epsilon transition from a state with level $k$ to $k+1 \mod n$ can be understood as a \emph{no operation transition} \nop, i.e., a transition where the current tape does not perform any operation (no reading nor writing). In essence the impact of the transition is the same as if reading an empty string on the current tape.
+
+In constrast, an epsilon transition from a state with level $k$ to another state with level $k$ is a simple change of states (as per the usual definition of epsilon transitions in \nfas).
+
+Depending on the application, one might prefer to use one or the other representation as needed.
+In this work, we use \nop when we want to explicitly stress the distinction between a simple change of state in \nft (an epsilon transition between states with the same level), and no operation on a current tape (tape does not read nor writes any symbol).
+
 \section{Algorithms}
 \label{sec:Algorithms}
 
@@ -526,8 +554,33 @@ We deem this approach inferior to our chosen appraoch since it distorts the simp
 % Basic approach, operations, representation
 \section{Finite Transducers for String Solving}
 \subsection{Algorithms}
+\begin{itemize}
+  \item Reluctant replacement~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10}
+  \begin{itemize}
+    \item \dfts for finite replacement
+    \item \nfts for left-most reluctant replacement
+    \item differences for single literal, single symbol, regular langauge
+    \item differences for single replacement and all replacement
+  \end{itemize}
+\end{itemize}
 
 \chapter{Implementation}
+
+The proposed data structures for finite transducers, standard operations on finite transducers, and algorithms for modelling replace operations were implemented in \mata.
+
+The majority of the operations on finite transducers closely follow the implementation of the corresponding operations on \nfas already existing in \mata.
+These operations are modified only in places where it is necessary to handle the differences between \nfas and \nfts, such as correctly setting and resetting the vector of levels for transducer states, or handling epsilon, \nop and don't care symbols.
+
+Furthermore, several algorithms specific for \nfts are added to \mata, namely composition of two \nfts, application (of both an \nfa and a word) on an \nft, projection (to a specified subset of \nft tapes---producing a new \nft---or to only a single tape---producing the corresponding \nfa for the specified tape).
+
+\paragraph{Epsilon and No Operation Transitions}
+We have decided to unify the symbols for epsilon transitions and \nop transitions used in \mata.
+We represent both transitions with a transition over an epsilon symbol $\epsilon$, corresponding to the largest unsigned integer value of a symbol in \mata.
+
+To distinguish between both, we check whether the epsilon transition leads from a state with level $k$ to a state with level $k + 1 \mod n$ or not whenever we encounter the symbol in algorithms.
+This operation has constant complexity since a set of levels in \mata is a state-idexable vector of levels.
+
+We decided for this approach since all operations in \mata already support epsilon transitions, checking for existence of epsilon transitions and accessing them has constant complexity, and adding handling for yet another special transition symbol is further complicates the logic for many operations which do not have to distinguish between epsilon and no operation transitions.
 
 \chapter{Experimental Evaluation}
 
