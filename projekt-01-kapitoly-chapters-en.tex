@@ -27,8 +27,8 @@ In this work, we intend on utilizing the extensibility of \mata and its underlyi
 Finite transducers are finite-state machines.
 They are similar to finite automata, but finite transducers work with multiple memory tapes.
 Each tape represents a regular language where finite transducers performs mapping between these languages, and, more preciselly, between words in each language.
-Finite transducers model relations (called \emph{rational relations}) between regular languages.
-Heneforth, each finite transducer can be thought of as a translator translating (transducing) between the languages (a 2-tape finite transducer precisely models a translator from an input language to a output language, modelling a so-called \emph{binary rational relation}).
+Finite transducers model relations (called \emph{rational relations}) between regular languages, subsets of carthesian product of regular languages.
+Heneforth, each finite transducer can be thought of as a translator translating (transducing) between the languages (a 2-tape finite transducer precisely models a translator from an input language to a output language, modelling a so-called \emph{binary rational relation}), a subset of $\Sigma^* \times \Sigma^*$.
 In this work, we usually work with binary rational relations, but in general an \emph{n-ary rational relation} can be modelled by a n-tape transducer.
 
 % String Solving + Noodler
@@ -73,6 +73,7 @@ We follow the usual definitions of automata theory, as used in works such as~\ci
 We define an \emph{alphabet} $\Sigma = \{ a, b, c, \ldots \}$ as a set of \emph{symbols} where
 symbols are usually denoted by $a, b, c, \ldots$.
 $\Sigma^*$ denotes a set of all finite \emph{words} (or \emph{strings}) over the alphabet $\Sigma$.
+We usually denote words $u, v, w, \ldots$.
 Furthermore, we use two special symbols: an \emph{epsilon symbol} $\eps \notin \Sigma$, representing an empty symbol (or word, $\eps \in \Sigma^*$), and a \emph{don't care symbol}, denoted $\dontCare$, representing any single symbol from $\Sigma$.
 \emph{Alphabet with epsilon symbols} (epsilons) is denoted $\SigmaEps = \Sigma \cup \{ \eps \}$.
 
@@ -611,23 +612,33 @@ We denote reluctant regular replacement as $x_{\pi \rightarrow y}$ as where $x$ 
 
 \subsection{Encoding Reluctant Regular Replacement as Finite Transducers}
 
-\paragraph{Epsilon as \texttt{pattern}}
+SMT-LIB suports two types of reluctant replacements: a \emph{reluctant all replacement} which replaces all occurrences of the shortest left-most matches of \texttt{pattern}, and \emph{reluctant single replacement} which replaces only the first shortest left-most occurrence of \texttt{pattern}.
+
+\paragraph{Epsilon in \texttt{pattern}.}
 If the \texttt{pattern} contains epsilon symbol, a special handling of epsilon matching needs to be performed. In such a case, one encodes the replacement operation as if $\epsilon \notin \pi$, and solves the replacement for two options:
 \begin{itemize}
   \item Tries solving for just $\epsilon$ manually, and alternatively
   \item Solves the reluctant replacement without the epsilon if the $\epsilon$ match fails.
 \end{itemize}
-Since SMT-LIB works only with reluctant replacements, the reluctant replacement would always pick the shortest replacement, i.e., the $\epsilon$ replacement. The reluctant match of $\epsilon$ will always succeed and longer matches will not be needed nor accepted.
+Since SMT-LIB works only with reluctant replacements, the reluctant replacement would always pick the shortest replacement, i.e., the $\epsilon$ replacement. The reluctant match of $\epsilon$ will always succeed and longer matches will not be needed nor accepted. SMT-LIB declares results to such patterns with $\epsilon$ to be equal to $\texttt{replacement} \concat \texttt{input\_string}$ (prepending the replacement to the \texttt{input\_string}).
 
 % Define reluctant replacement.
+
 \begin{definition}[\textbf{Reluctant all replacement}] \hfill \newline
   A \emph{reluctant all replacement} $x^{+}_{\pi \rightarrow y}$ is defined as follows: \newline
-  $x^{+}_{\pi \rightarrow y} = \{ a \cdot b \cdot c^{+}_{\pi \rightarrow y} \}$ where $a, b, x, y \in \Sigma^*$, $\pi$ is a regular language (regex), $x = a r c$, $a \notin \Sigma^* \pi \Sigma^*$, $r \in \pi$, and to ensure the shortest left-most matching, the following must hold: $\forall a = a_1 a_2, r = r_1 r_2, c = c_1 c_2: \text{if } a_2 \neq \epsilon \text{ then } a_2 r_1 \notin \pi \land a_2 r c_1 \notin \pi$; if $r_2 \neq \epsilon$ then $r_2 \notin \pi$.
-
-
+  $$x^{+}_{\pi \rightarrow y} = \{ u \concat y \concat w^{+}_{\pi \rightarrow y} \} \text{,}$$
+  where $u, v, w, x, y \in \Sigma^*$, $\pi$ is a regular language (regex), $x = u v w$, $u \notin \Sigma^* \pi \Sigma^*$, $v \in \pi$, and to ensure the shortest left-most matching, the following must hold: $\forall u = u_1 u_2, v = v_1 v_2, w = w_1 w_2:$ if $v_2 \neq \epsilon$ then $v_1 \notin \pi$ (the shortest match as if $v_1$ is not a match, then surely the  shortest match is $v = v_1v_2$); if $u_2 \neq \epsilon$ then $u_2 v_1 \notin \pi \land u_2 v w_1 \notin \pi$ (the left-most match is $v$ since there is no match of $\pi$ before $v$).
 \end{definition}
 
+A reluctant single replacement is defined similarly, only the recursive replacement of $w$ is no longer performed since after the first replacement of $v$, no more patterns matchings are tried on the substring $w$ after the replaced substring $v$.
+\begin{definition}[\textbf{Reluctant single replacement}] \hfill \newline
+  A \emph{reluctant single replacement} $x^{1}_{\pi \rightarrow y}$ is defined as reluctnant all replacement, only with the recursive replacement removed:
+  $$x^{1}_{\pi \rightarrow y} = \{ u \concat y \concat w \} \text{.}$$
+\end{definition}
 
+\begin{example}
+  For $a, b, c \in \Sigma$: $aabaaba^{+}_{aa \rightarrow c} = \{ cbcba \}$; $aabaaba^{1}_{aa \rightarrow c} = \{ cbaaba \}$;
+\end{example}
 
 % TODO: Modelling reluctant regular replacements.
 
