@@ -52,7 +52,7 @@ Finite transducers can model implicit browser transductions directly.
 They can be used to model string-replace operations for sanitization operations and the resulting replacement (the generated language) can be tested for emptiness of intersection with the typical cross-site scripting attack patterns database, represented as a regular languages.
 Such constraints are presented to an SMT solver to decide its satisfiability.
 
-We have introduced a new SMT string solver \noodler which utilizes an automata-based approach to string solving with finite automata and operations on them implemented in \mata as the backbone of the whole decision procedure of \noodler.
+We have previously introduced a new SMT string solver \noodler which utilizes an automata-based approach to string solving with finite automata and operations on them implemented in \mata as the backbone of the whole decision procedure of \noodler.
 
 \paragraph{Contribution.}
 In this work, we study automata models called finite transducers and their applicability to string solving. We implement the proposed solution in \mata and evaluate the implemented solution on variety of benchmark problems from practice.
@@ -182,23 +182,23 @@ In this section, we define finite state transducers and corresponding operations
 
 
 \paragraph{Nondeterministic finite state transducers.}
-An $n$-tape \emph{nondeterministic finite state transducer} (\emph{NFST}; \emph{nondeterministic finite transducer}, \emph{NFT}) over an alphabet $\Gamma$ is a 5-tuple $\transducer = (\states, \Gamma, \post, \initialStates, \finalStates)$ where
+An $n$-tape \emph{nondeterministic finite state transducer} (\emph{NFST}; \emph{nondeterministic finite transducer}, \emph{NFT}) over an alphabet $\Gamma$ is a 5-tuple $\ft = (\states, \Gamma, \post, \initialStates, \finalStates)$ where
 \begin{itemize}
     \item $\states$ is a finite set of \emph{states},
-    \item $\Gamma = (\SigmaEps)^n$ is an $n$-tape alphabet of $\transducer$.
+    \item $\Gamma = (\SigmaEps)^n$ is an $n$-tape alphabet of $\ft$.
     \item $\post: \states \times \Gamma \rightarrow 2^{\states}$ is a \emph{symbol-post function} where $\move{q}{\gamma}{q'}$ (or $(q, \gamma, q')$) for $q' \in \post(q, \gamma)$ is a \emph{transition} for $\gamma = \begin{bsmallmatrix} a^1 & a^2 & \ldots & a^n\end{bsmallmatrix} = (a^1, a^2, \ldots, a^n) \in (\SigmaEps)^n$,
     \item $\initialStates \subseteq \states$ is a finite set of \emph{initial states}, and
     \item $\finalStates \subseteq \states$ is a finite set of \emph{final states}.
 \end{itemize}
 
-\nft $\transducer$ is syntactically an NFA over $\Gamma$.
-$\transducer$ accepts word $\transWord{w} = \gamma_1 \circ \gamma_2 \circ \ldots \circ \gamma_m = (a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) \circ \ldots \circ (a^1_m, a^2_m, \ldots, a^n_m) $ if there exists an accepting run of $\transducer$ for $\transWord{w}$ where $\circ$ is a concatenation operator performing component-wise concatenation over tuples: $(a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) = (a^1_1a^1_2, a^2_1a^2_2, \ldots, a^n_1a^n_2)$.
+\nft $\ft$ is syntactically an NFA over $\Gamma$.
+$\ft$ accepts word $\transWord{w} = \gamma_1 \circ \gamma_2 \circ \ldots \circ \gamma_m = (a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) \circ \ldots \circ (a^1_m, a^2_m, \ldots, a^n_m) $ if there exists an accepting run of $\ft$ for $\transWord{w}$ where $\circ$ is a concatenation operator performing component-wise concatenation over tuples: $(a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) = (a^1_1a^1_2, a^2_1a^2_2, \ldots, a^n_1a^n_2)$.
 When the context is clear, we sometimes omit $\circ$, similarly as for NFA.
 
-A (potentially infinite) set of words for which there exists an accepting run of $\transducer$ defines a \emph{rational relation} $\relationof{\transducer} \subseteq (\SigmaEps^*)^n$ of \nft $\transducer$.
+A (potentially infinite) set of words for which there exists an accepting run of $\ft$ defines a \emph{rational relation} $\relationof{\ft} \subseteq (\SigmaEps^*)^n$ of \nft $\ft$.
 
 \paragraph{Deterministic finite transducers.}
-An $n$-tape \emph{deterministic finite state transducer} (\emph{DFST}; \emph{deterministic finite transducer}, \emph{DFT}) over an alphabet $\Gamma$ is a 5-tuple $\transducer = (\states, \Gamma, \post, \initialStates, \finalStates)$ where all elements in the tuple are the same as for \nft, except for the definition of $\post$ where
+An $n$-tape \emph{deterministic finite state transducer} (\emph{DFST}; \emph{deterministic finite transducer}, \emph{DFT}) over an alphabet $\Gamma$ is a 5-tuple $\ft = (\states, \Gamma, \post, \initialStates, \finalStates)$ where all elements in the tuple are the same as for \nft, except for the definition of $\post$ where
 \begin{itemize}
     \item $\post: \states \times \Gamma \rightarrow \states$ is a \emph{symbol-post function} where $\move{q}{\gamma}{q'}$ (or $(q, \gamma, q')$) for $q' = \post(q, \gamma)$ is a \emph{transition} for $\gamma = \begin{bsmallmatrix} a^1 & a^2 & \ldots & a^n\end{bsmallmatrix} = (a^1, a^2, \ldots, a^n) \in (\SigmaEps)^n$. That is, $|\post(q, \gamma)| \leq 1$, and
     \item $|\initialStates| = 1$.
@@ -639,6 +639,105 @@ A reluctant single replacement is defined similarly, only the recursive replacem
 \begin{example}
   For $a, b, c \in \Sigma$: $aabaaba^{+}_{aa \rightarrow c} = \{ cbcba \}$; $aabaaba^{1}_{aa \rightarrow c} = \{ cbaaba \}$;
 \end{example}
+
+\subsection{Finite Transducer for Regex Reluctant Replacement}
+
+First, we introduce a method for constructing a finite transducer $\ftRegexRelucAll$ for the most general case of reluctant regular replacement, a \emph{regex reluctant all replacement} $x^{+}_{\pi \rightarrow y}$, where the pattern $\pi$ being replaced is specified as a regular language and we replace all occurrences of $\pi$.
+
+We follow the idea of the existing procedure for constructing \nft for regex reluctant all replacement operation taken from~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10}, but we modify the method to fit SMT-LIB requirements for replacement operations and our implemented representation of \nfts in \mata.
+
+The approach constructs two main \nfts where one non-deterministically finds a possible beginning of a pattern match and inserts a special symbol $[$ at the found location in the input word $x$. The symbol $[$ serves as a \emph{begin marker} for the searched pattern.
+
+Since we have a reluctant replacement matching the shortest left-most pattern, we know that when we insert the correct begin marker into the input word(followed by a patter match), we can simply read the characters following $[$ until we read a matching pattern. There is no need for us to explicitly mark the end of the pattern with another special symbol.\footnote{
+  This would not be the case for, e.g., the greedy replacement, however.
+}
+
+However, in order to construct the \nft for the begin marker, we first construct a \dft to find a possible \emph{end marker} $]$ which denotes the end of a pattern, but we construct the \nft the reverse of the searched pattern $\pi$, $\reverse{\pi}$.
+This way, we deterministically find the ends of the reversed $\reverse{\pi}$, which gives us the potential beginning of the reverse of $\reverse{\pi}$, that is, the original $\pi$ in $x$.
+
+We will explain the construction on a running example.
+Given $x^{+}_{\pi \rightarrow y}$ where $\pi = a^+b^+c$ and $y = d$, construct $\ft_{x^{+}_{\pi \rightarrow y}}$.
+
+\subsubsection{End Marker \dft}
+Here, we construct a \dft $\ftEndMarker$ marking the end of a regular pattern $\reverse{\pi}$.
+
+First, we construct \dfa $\aut_{\reverse{\pi}}$ for $\reverse{\pi}$.
+Note that here we treat $\epsilon$ as a special transition symbol used in the construction of $\ftRegexRelucAll$.
+Hence, $\aut_{\reverse{\pi}}$ cannot contain $\epsilon$ symbols.
+Also note that we require $\aut_{\reverse{\pi}}$ to be deterministic.
+
+See Figure~\cite{fig:end_marker_dfa} for \dfa $\aut_{cb^+a^+}$ for $\reverse{\pi} = cb^+a^+$.
+
+% TODO: Figure.
+\begin{figure}[ht]
+  \centering
+  \caption{\dfa $\aut_{cb^+a^+}$.}
+  \label{fig:end_marker_dfa}
+\end{figure}
+
+$\aut_{\reverse{\pi}}$ accepts $\reverse{\pi}$, but for replace operations, we need the $\ftRegexRelucAll$ to read any $x \in \Sigma^*$ and replace only the requested pattern, leaving the rest of $x$ unmodified.
+Therefore, we \emph{generalize} $\aut_{\reverse{\pi}}$, producing $\aut^{\text{gen}}_{\reverse{\pi}}$, which accepts any word $x \in \Sigma^*$.
+Think of $\aut^{\text{gen}}_{\reverse{\pi}}$ as the input tape of an \nft which needs to read any word on its input, and only perform a specific operation (replacement here) for a specified pattern in the input word.
+
+Given $\aut_{\reverse{\pi}} = (\states, \Sigma, \post, \{ q_0 \}, \finalStates)$, we construct $\aut^{\text{gen}}_{\reverse{\pi}} = (\states^{\text{gen}}, \Sigma, \post^{\text{gen}}, { s_0 }, \finalStates^{\text{gen}})$ where $\states^{\text{gen}} = \{ t \,\mid\, t \subseteq \states \}$ following these rules:\newline
+We define a bijective mapping $\mathcal{M}: \states^{\text{gen}} \rightarrow 2^{\states }$ such that $\forall s \in \states^{\text{gen}}, a \in \Sigma: s' \in \post^{\text{gen}}(s, a)$
+iff $\mathcal{M}(s') = \{ q_0 \} \cup \{ q' \,\mid\, \exists q \in \mathcal{M}(s): q' \in \post(q, a) \}$
+and $\mathcal{M}(s_0) = \{ q_0 \}$.
+
+Intuitively, we construct a new \dfa from $\aut_{\reverse{\pi}}$ where each state $s$ maps to a set of states in $\aut_{\reverse{\pi}}$ which can be reached from $q_0$ with the same substrings of $\langof{\aut_{\reverse{\pi}}}$.
+Since $\aut_{\reverse{\pi}}$ is deterministic, each substring will end in at most one state $s$.
+Thus, $\aut^{\text{gen}}_{\reverse{\pi}}$ remains deterministic.
+
+However, when we encounter state $s$ where $\finalStates \cap \mathcal{M}(s) \neq \emptyset$, we know that we have reached a state in the constructed $\aut^{\text{gen}}_{\reverse{\pi}}$ where the substring corresponding to $s$ is accepted by $\aut_{\reverse{\pi}}$.
+That means that we have reached an end of an accepted word in $\aut_{\reverse{\pi}}$ which we want to mark (insert an end marker $]$ after this substring).
+Therefore, we during the construction, we create a new final state $s_f$, and each time we encounter such a state $s$, we add a transition $\move{s}{\epsilon}{s_f}$, and redirect all transitions which would normally go from $s$ to start in $s_f$.
+Thus the only outgoing transition from $s$ is the epsilon transition and we did not introduce a non-determinisctic choice of transition from $s$.
+Then, all states except for states $s$ where $\finalStates \cap \mathcal{M}(s) \neq \emptyset$ are made final since we want to accept any arbitrary input.
+We omit the original final states since reaching these states is a significant event in reading an arbitrary input which we need to handle separately.
+
+$\aut^{\text{gen}}_{\reverse{\pi}}$ represents an \dfa which states how "far" into $\reverse{\pi}$ we are when reading an arbitrary input.
+Each symbol either resets the \dfa (simulating manual backtracking) to some previous matched state or all the way up to $s_0$ (no even partial match was found, we start from the beginning of the pattern), or advances to the next state in the \dfa following the pattern.
+
+Now, $\aut^{\text{gen}}_{\reverse{\pi}}$ accepts any string $x$ on its input.
+During the run of $x$ on $\aut^{\text{gen}}_{\reverse{\pi}}$, each time an end of a substring $x_2$ where $x_2 \in \reverse{\pi}$ and $x = x_1 x_2 x_3$ is encountered, an epsilon transition is taken.
+If we were to insert $]$ into $x$ each time an epsilon transition is taken, we would modify $x$ in such a way that the word would remain the same, only interspersed with $]$ after each end of $x_2$ (since $\aut^{\text{gen}}_{cb^+a^+}$ is deterministic, no other transition can be taken from the source state of the epsilon transition).
+These $]$ represent the end markers we want to insert with $\ftEndMarker$.
+
+See Figure~\cite{fig:generalized_end_marker_dfa} showing a generalized modification of \dfa $\aut_{cb^+a^+}$, $\aut^{\text{gen}}_{cb^+a^+}$.
+For example, a word $cbcbba]a]a]bcb$ would be accepted by this automaton where the imaginery string symbol $]$ symbolically represents places where an epsilon transition was taken in the automaton.
+
+% TODO: Figure.
+\begin{figure}[ht]
+  \centering
+  \caption{\dfa $\aut^{\text{gen}}_{cb^+a^+}$, a generalized version of $\aut_{cb^+a^+}$.}
+  \label{fig:generalized_end_marker_dfa}
+\end{figure}
+
+Next, we can construct $\ftEndMarker$ from $\aut^{\text{gen}}_{\reverse{\pi}}$.
+We simply consider the current transitions as the input tape of $\ftEndMarker$,
+and we add transition symbols for output tape: for all $a \in Sigma$, the  symbol on the output tape is $a$ again, only for input symbol $\epsilon$, the output symbol is $]$.
+
+We can see the final $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ in Figure~\ref{fig:generalized_end_marker_dft}.
+\begin{figure}[ht]
+  \centering
+  \caption{\dft $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ inserting the end markers $]$ at the correct locations in the read input word.}
+  \label{fig:generalized_end_marker_dft}
+\end{figure}
+
+\subsubsection{Begin Marker \nft}
+We could start constructing the \emph{begin marker} \nft from $\ftEndMarker$ by reversing all transitions in $\ftEndMarker$.
+However, considering reversing a single transducer transition (consisting of operations on the input and output tapes), represented as a sequence of two \nfa transitions in \mata from state with level $0$ to $1$ and back to some state with level $0$, we instead utilize $\aut^{\text{gen}}_{\reverse{\pi}}$ before its conversion to $\ftEndMarker$ (and $\ftEndMarker$ is therefore never truly constructed in \mata).
+
+We reverse all transitions in $\aut^{\text{gen}}_{\reverse{\pi}}$, effectively obtaining the foundation for an \nfa for marking beginnings of $\pi$.
+However, marking beginnings is non-deterministic operation since we cannot know in advance whether the currently read symbol in an arbitrary input string marks a beginning of a full match in $\pi$.
+Henceforth, we have introduce another source of non-determinism, which gives us the "look-ahead" power for marking beginnings for only those inputs that will later on truly match in $\pi$.
+
+
+
+% The general idea is that we utilize these \nfts to process $x$ from left to right, and when encountering the first $[$, start reading the shortest matching pattern enclosed in $[ v ]$ for $v \in \pi$, then we replace the read pattern with the $y$ and go back to the beginning of the procedure to look for the next shortest match.
+
+% ,gets applied on the begin marker \nft which produces the input word annotated with begin markers. Now the word is applied to the second \nft.
+% The second \nft encodes an end marker
 
 % TODO: Modelling reluctant regular replacements.
 
