@@ -36,7 +36,7 @@ In the recent decades, we have seen a rapid growth of  various procedures for SM
 The importance of efficient algorithms for deciding satisfiability of SMT formulae is underlined by everyday applications in the industry such as AWS~\cite{Rungta2022} or the ongoing anual competion SMT-COMP~\cite{smt_comp}.
 
 Recent advances in analysis of programs manipulating strings, string solving, automatically solving string constraints over string languages, have heightened the importance of modelling string replacement operations.
-Such operations allow for replacing a substring specified by a regular langauge with another string.
+Such operations allow for replacing a substring specified by a regular language with another string.
 The appliations are widely used in web applications such as implicit browser transductions, or replace functions such as \emph{replace} and \emph{replace-all} functions.
 One of the most important applications of string-replace operations is defense against attacks such as cross-site scripting or code injection in web applications.
 Untrusted inputs from a user are to be sanitized (e.g. by escaping the input string) in order to prevent arbitrary malicious code execution.
@@ -76,7 +76,7 @@ $\Sigma^*$ denotes a set of all finite \emph{words} (or \emph{strings}) over the
 Furthermore, we use two special symbols: an \emph{epsilon symbol} $\eps \notin \Sigma$, representing an empty symbol (or word, $\eps \in \Sigma^*$), and a \emph{don't care symbol}, denoted $\dontCare$, representing any single symbol from $\Sigma$.
 \emph{Alphabet with epsilon symbols} (epsilons) is denoted $\SigmaEps = \Sigma \cup \{ \eps \}$.
 
-We denote \emph{concatenation} on words $w_1$, $w_2$ using $w_1 \concat w_2$, sometimes for convenience omitting the concatention operator $w_1w_2$, where $\eps$ is the neutral element of concatenation ($\eps \concat w_1 = w_1 \cdot \eps = w_1$).
+We denote \emph{concatenation} on words $w_1$, $w_2$ using $w_1 \concat w_2$, sometimes for convenience omitting the concatention operator $w_1w_2$, where $\eps$ is the neutral element of concatenation ($\eps \concat w_1 = w_1 \concat \eps = w_1$).
 
 \section{Finite Automata}
 
@@ -247,7 +247,8 @@ Other types include binary decision diagrams (BDDs), finite automata with regist
 During the last two decades, a great development efforts have been put on improving SMT solvers for specific theories (specific constraint languages).
 Namely, modelling and deciding constraints over a language of strings, also known as \emph{string solving}, is one of the dominant fields of active research.
 
-The advances in string solving are supported by the application of string solvers (SMT solvers supporting solving constraints over the language of strings) in web services to prevent cross-site scripting or code execution attacks by discovering security vulnerabilities in web applications and web service APIs, as presented by works:~\cite{String_constraints_with_concatenation_and_transducers_solved_efficiently, Composing_Static_and_Dynamic_Analysis_to_Validate_Sanitization_in_Web_Applications, Satisfiability_Modulo_Theories_Introduction_and_Applications, Simple_linear_string_constraints,Z3-str_a_z3-based_string_solver_for_web_application_analysis,S3_A_Symbolic_String_Solver_for_Vulnerability_Detection_in_Web_Applications} and many more.
+The advances in string solving are supported by the application of string solvers (SMT solvers supporting solving constraints over the language of strings) in verification of web services.
+String solvers are used to prevent cross-site scripting or code execution attacks by discovering security vulnerabilities in web applications and web service APIs, as presented by works:~\cite{String_constraints_with_concatenation_and_transducers_solved_efficiently, Composing_Static_and_Dynamic_Analysis_to_Validate_Sanitization_in_Web_Applications, Satisfiability_Modulo_Theories_Introduction_and_Applications, Simple_linear_string_constraints,Z3-str_a_z3-based_string_solver_for_web_application_analysis,S3_A_Symbolic_String_Solver_for_Vulnerability_Detection_in_Web_Applications} and many more.
 
 String solving is especially useful for analysis of security vulnerabilities related to sanitization of text inputs from users on websites.
 This prevents crackers from injecting malicious code into the website and spreading the code between the users of said website using techniques such as cross-site scripting: executing arbitrary malicious code on the user's local browser environment.
@@ -569,15 +570,73 @@ We deem this approach inferior to our chosen appraoch since it distorts the simp
 % Basic approach, operations, representation
 \section{Finite Transducers for String Solving}
 
-TODO: Modelling replace operations
+SMT String solving is a complex and diversive problem which has seen a lot of interest over the past few decades.
+Many different approaches for reasoning about word equations, word disequations, regular constraints, and length constraints have emerged, be it as a theoretical work, or implemented directly in one or more of the current state-of-the-art SMT string solvers, e.g., ~\cite{cvc4,cvc5,z3,Z3-str,Z3Str3,Z3str4,Trau,fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, tacas24_noodler_10.1007/978-3-031-57246-3_2, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
+Each invented approach and each string solver brings a unique set of features and advantages.
 
-\subsection{Algorithms}
+We decided to try a novel approach in \noodler, entirely different from other state-of-the-art SMT string solvers (except for \ostrich).
+\noodler utilizes finite automata to encode the SMT formulae into a set of regular language constraints where the operations on finite automata as well as the representation of the finite automata themselves is handled by \mata.
+This approach gives \noodler a unique oportunity to efficiently encode several problems in string solving as operations on finite automata which other string solvers cannot utilize.
+
+Finite automata can encode regular languages, but string solving problems work with various SMT operations, where some of them cannot be easily encoded into only regular languages.
+Such examples are regular replacement operations, namely \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all} from the theory of strings in SMTLIB~\cite{smtlib_theory_strings}.
+However, finite transducers naturally encode rational relations between regular languages which can be directly utilized to encode such problematic SMT operations while allowing for efficient automata (transducer) operations on the relations and languages.
+
+If \noodler could utilize finite transducers in a similar fashion to how it utilizes finite automata in its decision procedure, these SMT operations would be easy to compute and integration of finite transducers into its decision procedure would be a natural extension of the existing decision procedure.
+
+Thus, we discuss in this chapter how to utilize finite transducers in \noodler to solve SMT string constraints \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all}.
+
+\subsection{Replace Operations}
+A general regular replacement operation has the following form:
+\begin{center}
+\begin{verbatim}
+  replaced_string = replace(input_string, pattern, replacement)
+\end{verbatim}
+\end{center}
+where \texttt{replace} determines the type of the regular replacement (the semantics of the replacement operation).
+\texttt{input\_string} represents the original input string where we want to replace some regular \texttt{pattern} with a \texttt{replacement} literal.
+Regular \texttt{pattern} can be a string literal (a word) or a regular language describing the substring (or substrings) of \texttt{input\_string} we are trying to replace.
+
+There are various replacement semantics for replace operations. Popular regular replacement types are \emph{reluctant replacement}, \emph{greedy replacement}, or \emph{possessive replacement}, or \emph{declarative replacement}.
+For example, reluctant replacement matches a given \texttt{pattern} (a regular language) with the shortest substring of the \texttt{input\_string}, while the greedy replacement matches the longest substring. These types produce the same result when \texttt{pattern} is a string literal.
+Possessive replacement semantics is that of the greedy one, but without backtracking on the substring matched so far.
+Declarative replacement matches every occurrence of regular \texttt{pattern} in the given \texttt{input\_string}.
+
+In opposition, \emph{procedural} regular replacements encompass the greedy and reluctant replacements since both match in \texttt{input\_string} from the left to the right.
+The start with the first character in the word and by using backtracking continue through the word until the end of the word.
+
+Since SMT-LIB defines only replacement operations of type reluctant replacement with the left-most matching and other types of the replacement operations are not allowed in SMT formulae in SMT-LIB format (which \noodler solves), we focus in this work solely on the reluctant replacement type.
+
+We denote reluctant regular replacement as $x_{\pi \rightarrow y}$ as where $x$ is the \texttt{input\_string}, $\pi$ is the regular \texttt{pattern} (a literal or a regular language) and $y$ is the \texttt{replacement}.
+
+\subsection{Encoding Reluctant Regular Replacement as Finite Transducers}
+
+\paragraph{Epsilon as \texttt{pattern}}
+If the \texttt{pattern} contains epsilon symbol, a special handling of epsilon matching needs to be performed. In such a case, one encodes the replacement operation as if $\epsilon \notin \pi$, and solves the replacement for two options:
+\begin{itemize}
+  \item Tries solving for just $\epsilon$ manually, and alternatively
+  \item Solves the reluctant replacement without the epsilon if the $\epsilon$ match fails.
+\end{itemize}
+Since SMT-LIB works only with reluctant replacements, the reluctant replacement would always pick the shortest replacement, i.e., the $\epsilon$ replacement. The reluctant match of $\epsilon$ will always succeed and longer matches will not be needed nor accepted.
+
+% Define reluctant replacement.
+\begin{definition}[\textbf{Reluctant all replacement}] \hfill \newline
+  A \emph{reluctant all replacement} $x^{+}_{\pi \rightarrow y}$ is defined as follows: \newline
+  $x^{+}_{\pi \rightarrow y} = \{ a \cdot b \cdot c^{+}_{\pi \rightarrow y} \}$ where $a, b, x, y \in \Sigma^*$, $\pi$ is a regular language (regex), $x = a r c$, $a \notin \Sigma^* \pi \Sigma^*$, $r \in \pi$, and to ensure the shortest left-most matching, the following must hold: $\forall a = a_1 a_2, r = r_1 r_2, c = c_1 c_2: \text{if } a_2 \neq \epsilon \text{ then } a_2 r_1 \notin \pi \land a_2 r c_1 \notin \pi$; if $r_2 \neq \epsilon$ then $r_2 \notin \pi$.
+
+
+\end{definition}
+
+
+
+% TODO: Modelling reluctant regular replacements.
+
 \begin{itemize}
   \item Reluctant replacement~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10}
   \begin{itemize}
     \item \dfts for finite replacement
     \item \nfts for left-most reluctant replacement
-    \item differences for single literal, single symbol, regular langauge
+    \item differences for single literal, single symbol, regular language
     \item differences for single replacement and all replacement
   \end{itemize}
 \end{itemize}
