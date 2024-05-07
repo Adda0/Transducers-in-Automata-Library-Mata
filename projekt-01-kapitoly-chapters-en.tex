@@ -725,12 +725,28 @@ We can see the final $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ in Figure~
 \end{figure}
 
 \subsubsection{Begin Marker \nft}
-We could start constructing the \emph{begin marker} \nft from $\ftEndMarker$ by reversing all transitions in $\ftEndMarker$.
+We could start constructing the \emph{begin marker} \nft $\ftBeginMarker$ from $\ftEndMarker$ by reversing all transitions in $\ftEndMarker$.
 However, considering reversing a single transducer transition (consisting of operations on the input and output tapes), represented as a sequence of two \nfa transitions in \mata from state with level $0$ to $1$ and back to some state with level $0$, we instead utilize $\aut^{\text{gen}}_{\reverse{\pi}}$ before its conversion to $\ftEndMarker$ (and $\ftEndMarker$ is therefore never truly constructed in \mata).
 
 We reverse all transitions in $\aut^{\text{gen}}_{\reverse{\pi}}$, effectively obtaining the foundation for an \nfa for marking beginnings of $\pi$.
+We can now construct $\ftBeginMarker$ the same way as we constructed $\ftEndMarker$ from $\aut^{\text{gen}}_{\reverse{\pi}}$ except now we use $[$ as the output symbol for the epsilon symbol on the input tape.
+
 However, marking beginnings is non-deterministic operation since we cannot know in advance whether the currently read symbol in an arbitrary input string marks a beginning of a full match in $\pi$.
-Henceforth, we have introduce another source of non-determinism, which gives us the "look-ahead" power for marking beginnings for only those inputs that will later on truly match in $\pi$.
+Henceforth, we have introduce another source of non-determinism, which gives us the smart "look-ahead" ability for marking beginnings for only those inputs that will later on truly match in $\pi$.
+All potentially incorrectly inserted begin markers in the input word end in a non-accepting run for the word with such begin markers.
+We add a new initial state $s'_0$ and add an epsilon transducer transition $\move{s'_0}{\epsilon}{s}$ ($\epsilon$ as the transition symbol on all tapes) leading to all states $s$ which are final in $\aut^{\text{gen}}_{\reverse{\pi}}$, that is, all except those which map to set of states containing the original final state from $\aut_{\reverse{\pi}}$.
+The previous initial state of $\ftBeginMarker$ is set as the only final state and is removed from the initial states.
+
+The Figure~\ref{fig:begin_marker_nft} shows a $\ftBeginMarker$ for $\reverse{\aut^{\text{gen}}_{cb^+a^+}}$.
+\begin{figure}[ht]
+  \centering
+  \caption{\nft $\ftBeginMarker$ for $\reverse{\aut^{\text{gen}}_{cb^+a^+}}$ inserting non-deterministically the begin markers $[$ at the beginning of matches in $\a^+b^+c$ for the read input word.}
+  \label{fig:begin_marker_nft}
+\end{figure}
+
+\subsubsection{Reluctant Replacement \nft}
+- all replacmeent
+- single replacement
 
 
 
