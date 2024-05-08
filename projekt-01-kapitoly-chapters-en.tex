@@ -776,14 +776,16 @@ Now the final modification is to keep the next begin marker for the next shortes
 
 $\aut^{\text{short}'}_{\pi}$ can be converted into $\ft^{\text{short}'}_{\pi}$ where the existing transitions are the input tape transitions, and the output symbols are all $\epsilon$ (\nft only reading the input word---the match---and consuming the whole match including $[$ inside the match).
 
-Figure~\ref{fig:ft_regex_reluc_all} symbolically shows how to construct $\ftRegexRelucReplaceAll$.
+Figure~\ref{fig:ft_regex_reluc_replace_all} symbolically shows how to construct $\ftRegexRelucReplaceAll$ for replacing all shortest left-most occurrences of regular language $\pi$ with $y$.
 
-$\ft^{\text{short}'}_{\pi}$
+To replace only one occurrence (the first shortest left-most match), a variation of $\ftRegexRelucReplaceAll$, $\ftRegexRelucReplaceSingle$ can be constructed, as seen in Figure~\ref{fig:ft_regex_reluc_replace_single}.
+Here we do not return to the beginning after the first replace, but move to a new state with just reads the rest of the word unmodified while removing the additional $[$.
 
+\subsubsection{Whole Regex Reluctant Replace \nft}
 
-- all replacmeent
-- single replacement
-
+We have constructed $\ftBeginMarker$ to insert non-deterministically begin markers into the input word and constructed $\ftRegexRelucReplaceAll$ (or $\ftRegexRelucReplaceSingle$) to perform the replacement upon encountering matches prepended with $[$.
+$\ftRegexRelucAll$ (and similarly $\ftRegexRelucSingle$) can be constructed by connecting these two \nfts into a sequence using composition: $\ftRegexRelucAll = \ftBeginMarker \composePipe \ftRegexRelucReplaceAll$ and $\ftRegexRelucSingle = \ftBeginMarker \composePipe \ftRegexRelucReplaceSingle$.
+$\langof{\ftRegexRelucAll} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{+}_{\pi \rightarrow y} \} $ and $\langof{\ftRegexRelucSingle} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{1}_{\pi \rightarrow y} \} $.
 
 
 % The general idea is that we utilize these \nfts to process $x$ from left to right, and when encountering the first $[$, start reading the shortest matching pattern enclosed in $[ v ]$ for $v \in \pi$, then we replace the read pattern with the $y$ and go back to the beginning of the procedure to look for the next shortest match.
@@ -794,13 +796,8 @@ $\ft^{\text{short}'}_{\pi}$
 % TODO: Modelling reluctant regular replacements.
 
 \begin{itemize}
-  \item Reluctant replacement~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10}
-  \begin{itemize}
     \item \dfts for finite replacement
-    \item \nfts for left-most reluctant replacement
-    \item differences for single literal, single symbol, regular language
-    \item differences for single replacement and all replacement
-  \end{itemize}
+    \item differences for single literal, single symbol
 \end{itemize}
 
 \chapter{Implementation}
