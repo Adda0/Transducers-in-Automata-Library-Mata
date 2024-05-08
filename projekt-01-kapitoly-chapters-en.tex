@@ -74,6 +74,7 @@ We define an \emph{alphabet} $\Sigma = \{ a, b, c, \ldots \}$ as a set of \emph{
 symbols are usually denoted by $a, b, c, \ldots$.
 $\Sigma^*$ denotes a set of all finite \emph{words} (or \emph{strings}) over the alphabet $\Sigma$.
 We usually denote words $u, v, w, \ldots$.
+$u[n:m]$ represents a substring of $u$ containing symbols in the interval of indices (indexed from 0) between $n$ and $m$ (including the symbol on the index $n$ and excluding the symbol on index $m$).
 Furthermore, we use two special symbols: an \emph{epsilon symbol} $\eps \notin \Sigma$, representing an empty symbol (or word, $\eps \in \Sigma^*$), and a \emph{don't care symbol}, denoted $\dontCare$, representing any single symbol from $\Sigma$.
 \emph{Alphabet with epsilon symbols} (epsilons) is denoted $\SigmaEps = \Sigma \cup \{ \eps \}$.
 
@@ -571,7 +572,7 @@ The same holds for BDDs utilizing the same data structure and constraints as \nf
 If the restriction of allowed jumps being only to the next state with level $0$ is too strict, an alternative approach where jumps are allowed to jump over (potentially multiple) states with level $0$ can be chosen.
 However, during operations such as product construction, an additional information must be added to the worklist containing macro-states containing a list of lengths of each jump performed during the expansion of the last macro state in order to know how far ahead are the states jumped to in relation to the other states in the macro-state.
 
-We deem this approach inferior to our chosen appraoch since it distorts the simplicity of a single data structure and algorithms on it for NFAs, \nfts, and BDDs.
+We deem this approach inferior to our chosen approach since it distorts the simplicity of a single data structure and algorithms on it for NFAs, \nfts, and BDDs.
 
 
 % Basic approach, operations, representation
@@ -652,13 +653,13 @@ First, we introduce a method for constructing a finite transducer $\ftRegexReluc
 
 We follow the idea of the existing procedure for constructing \nft for regex reluctant all replacement operation taken from~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10}, but we modify the method to fit SMT-LIB requirements for replacement operations and our implemented representation of \nfts in \mata.
 
-The approach constructs two main \nfts where one non-deterministically finds a possible beginning of a pattern match and inserts a special symbol $[$ at the found location in the input word $x$. The symbol $[$ serves as a \emph{begin marker} for the searched pattern.
+The approach constructs two main \nfts where one non-deterministically finds a possible beginning of a pattern match and inserts a special symbol $\marker$ at the found location in the input word $x$. The symbol $\marker$ serves as a \emph{begin marker} for the searched pattern.
 
-Since we have a reluctant replacement matching the shortest left-most pattern, we know that when we insert the correct begin marker into the input word(followed by a patter match), we can simply read the characters following $[$ until we read a matching pattern. There is no need for us to explicitly mark the end of the pattern with another special symbol.\footnote{
+Since we have a reluctant replacement matching the shortest left-most pattern, we know that when we insert the correct begin marker into the input word(followed by a patter match), we can simply read the characters following $\marker$ until we read a matching pattern. There is no need for us to explicitly mark the end of the pattern with another special symbol.\footnote{
   This would not be the case for, e.g., the greedy replacement, however.
 }
 
-However, in order to construct the \nft for the begin marker, we first construct a \dft to find a possible \emph{end marker} $]$ which denotes the end of a pattern, but we construct the \nft the reverse of the searched pattern $\pi$, $\reverse{\pi}$.
+However, in order to construct the \nft for the begin marker, we first construct a \dft to find a possible \emph{end marker} $\marker$\footnote{For simplicity, we use the same symbol to denote both the begin marker and the end marker. Reason for this is that these two marker are never used simultanously and there is a close connection between them. The connection will be further explained later.} which denotes the end of a pattern, but we construct the \nft the reverse of the searched pattern $\pi$, $\reverse{\pi}$.
 This way, we deterministically find the ends of the reversed $\reverse{\pi}$, which gives us the potential beginning of the reverse of $\reverse{\pi}$, that is, the original $\pi$ in $x$.
 
 We will explain the construction on a running example.
@@ -695,7 +696,7 @@ Since $\aut_{\reverse{\pi}}$ is deterministic, each substring will end in at mos
 Thus, $\aut^{\text{gen}}_{\reverse{\pi}}$ remains deterministic.
 
 However, when we encounter state $s$ where $\finalStates \cap \mathcal{M}(s) \neq \emptyset$, we know that we have reached a state in the constructed $\aut^{\text{gen}}_{\reverse{\pi}}$ where the substring corresponding to $s$ is accepted by $\aut_{\reverse{\pi}}$.
-That means that we have reached an end of an accepted word in $\aut_{\reverse{\pi}}$ which we want to mark (insert an end marker $]$ after this substring).
+That means that we have reached an end of an accepted word in $\aut_{\reverse{\pi}}$ which we want to mark (insert an end marker $\marker$ after this substring).
 Therefore, we during the construction, we create a new final state $s_f$, and each time we encounter such a state $s$, we add a transition $\move{s}{\epsilon}{s_f}$, and redirect all transitions which would normally go from $s$ to start in $s_f$.
 Thus the only outgoing transition from $s$ is the epsilon transition and we did not introduce a non-determinisctic choice of transition from $s$.
 Then, all states except for states $s$ where $\finalStates \cap \mathcal{M}(s) \neq \emptyset$ are made final since we want to accept any arbitrary input.
@@ -706,11 +707,11 @@ Each symbol either resets the \dfa (simulating manual backtracking) to some prev
 
 Now, $\aut^{\text{gen}}_{\reverse{\pi}}$ accepts any string $x$ on its input.
 During the run of $x$ on $\aut^{\text{gen}}_{\reverse{\pi}}$, each time an end of a substring $x_2$ where $x_2 \in \reverse{\pi}$ and $x = x_1 x_2 x_3$ is encountered, an epsilon transition is taken.
-If we were to insert $]$ into $x$ each time an epsilon transition is taken, we would modify $x$ in such a way that the word would remain the same, only interspersed with $]$ after each end of $x_2$ (since $\aut^{\text{gen}}_{cb^+a^+}$ is deterministic, no other transition can be taken from the source state of the epsilon transition).
-These $]$ represent the end markers we want to insert with $\ftEndMarker$.
+If we were to insert $\marker$ into $x$ each time an epsilon transition is taken, we would modify $x$ in such a way that the word would remain the same, only interspersed with $\marker$ after each end of $x_2$ (since $\aut^{\text{gen}}_{cb^+a^+}$ is deterministic, no other transition can be taken from the source state of the epsilon transition).
+These $\marker$ represent the end markers we want to insert with $\ftEndMarker$.
 
 See Figure~\cite{fig:generalized_end_marker_dfa} showing a generalized modification of \dfa $\aut_{cb^+a^+}$, $\aut^{\text{gen}}_{cb^+a^+}$.
-For example, a word $cbcbba]a]a]bcb$ would be accepted by this automaton where the imaginery string symbol $]$ symbolically represents places where an epsilon transition was taken in the automaton.
+For example, a word $cbcbba\marker a\marker a\marker bcb$ would be accepted by this automaton where the imaginery string symbol $\marker$ symbolically represents places where an epsilon transition was taken in the automaton.
 
 % TODO: Figure.
 \begin{figure}[ht]
@@ -721,12 +722,12 @@ For example, a word $cbcbba]a]a]bcb$ would be accepted by this automaton where t
 
 Next, we can construct $\ftEndMarker$ from $\aut^{\text{gen}}_{\reverse{\pi}}$.
 We simply consider the current transitions as the input tape of $\ftEndMarker$,
-and we add transition symbols for output tape: for all $a \in Sigma$, the  symbol on the output tape is $a$ again, only for input symbol $\epsilon$, the output symbol is $]$.
+and we add transition symbols for output tape: for all $a \in Sigma$, the  symbol on the output tape is $a$ again, only for input symbol $\epsilon$, the output symbol is $\marker$.
 
 We can see the final $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ in Figure~\ref{fig:generalized_end_marker_dft}.
 \begin{figure}[ht]
   \centering
-  \caption{\dft $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ inserting the end markers $]$ at the correct locations in the read input word.}
+  \caption{\dft $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ inserting the end markers $\marker$ at the correct locations in the read input word.}
   \label{fig:generalized_end_marker_dft}
 \end{figure}
 
@@ -735,7 +736,9 @@ We could start constructing the \emph{begin marker} \nft $\ftBeginMarker$ from $
 However, considering reversing a single transducer transition (consisting of operations on the input and output tapes), represented as a sequence of two \nfa transitions in \mata from state with level $0$ to $1$ and back to some state with level $0$, we instead utilize $\aut^{\text{gen}}_{\reverse{\pi}}$ before its conversion to $\ftEndMarker$ (and $\ftEndMarker$ is therefore never truly constructed in \mata).
 
 We reverse all transitions in $\aut^{\text{gen}}_{\reverse{\pi}}$, effectively obtaining the foundation for an \nfa for marking beginnings of $\pi$.
-We can now construct $\ftBeginMarker$ the same way as we constructed $\ftEndMarker$ from $\aut^{\text{gen}}_{\reverse{\pi}}$ except now we use $[$ as the output symbol for the epsilon symbol on the input tape.
+We can now construct $\ftBeginMarker$ the same way as we constructed $\ftEndMarker$ from $\aut^{\text{gen}}_{\reverse{\pi}}$ except now $\marker$ as the output symbol for the epsilon symbol on the input tape represents the begin marker instead of the end marker.
+This step shows why we use the same marker for symbols for both the begin and end marker.
+They mark the same location, only once operating on $\reverse{\pi}$, then on $\pi$.
 
 However, marking beginnings is non-deterministic operation since we cannot know in advance whether the currently read symbol in an arbitrary input string marks a beginning of a full match in $\pi$.
 Henceforth, we have introduce another source of non-determinism, which gives us the smart "look-ahead" ability for marking beginnings for only those inputs that will later on truly match in $\pi$.
@@ -746,7 +749,7 @@ The previous initial state of $\ftBeginMarker$ is set as the only final state an
 The Figure~\ref{fig:begin_marker_nft} shows a $\ftBeginMarker$ for $\reverse{\aut^{\text{gen}}_{cb^+a^+}}$.
 \begin{figure}[ht]
   \centering
-  \caption{\nft $\ftBeginMarker$ for $\reverse{\aut^{\text{gen}}_{cb^+a^+}}$ inserting non-deterministically the begin markers $[$ at the beginning of matches in $a^+b^+c$ for the read input word.}
+  \caption{\nft $\ftBeginMarker$ for $\reverse{\aut^{\text{gen}}_{cb^+a^+}}$ inserting non-deterministically the begin markers $\marker$ at the beginning of matches in $a^+b^+c$ for the read input word.}
   \label{fig:begin_marker_nft}
 \end{figure}
 
@@ -768,37 +771,74 @@ First, we convert the $\aut_{\pi}$ into a new \nfa $\aut^{\text{short}}_{\pi}$ w
 This can be easily performed by removing all outgoing transitions from all final states in $\aut_{\pi}$.
 Clearly, $\langof{\aut^{\text{short}}_{\pi}} = \{ u \in \langof{\aut_{\pi}} \,\mid\, \neg \exists u' \in \langof{\aut_{\pi}}^{<|u|} \}$.
 
-$\aut^{\text{short}}_{\pi}$ now matches the shortest words in the language of $\aut_{\pi}$, but does not allow skipping over additional $[$ encountered during reading the match.
-Such $[$ need to be skipped since $[$ inside the shortest left-most match represent beginnings of potential matches further to the right than the left-most match.
-We need to therefore add a self loop to every state in $\aut^{\text{short}}_{\pi}$ with transition symbol $[$.
+$\aut^{\text{short}}_{\pi}$ now matches the shortest words in the language of $\aut_{\pi}$, but does not allow skipping over additional $\marker$ encountered during reading the match.
+Such $\marker$ need to be skipped since $\marker$ inside the shortest left-most match represent beginnings of potential matches further to the right than the left-most match.
+We need to therefore add a self loop to every state in $\aut^{\text{short}}_{\pi}$ with transition symbol $\marker$.
 
-Now the final modification is to keep the next begin marker for the next shortest left-most match. $\aut^{\text{short}'}_{\pi}$ can be constructed given $\Sigma^*_[ = \Sigma^* \cup \{ [ \}$ as $\aut^{\text{short}'}_{\pi} = \aut^{\text{short}}_{\pi} \cap \overline{\Sigma^*_[ \concat \{ [ \}}$.
+Now the final modification is to keep the next begin marker for the next shortest left-most match. $\aut^{\text{short}'}_{\pi}$ can be constructed given $\Sigma^*_\marker = \Sigma^* \cup \{ \marker \}$ as $\aut^{\text{short}'}_{\pi} = \aut^{\text{short}}_{\pi} \cap \overline{\Sigma^*_\marker \concat \{ \marker \}}$.
 
-$\aut^{\text{short}'}_{\pi}$ can be converted into $\ft^{\text{short}'}_{\pi}$ where the existing transitions are the input tape transitions, and the output symbols are all $\epsilon$ (\nft only reading the input word---the match---and consuming the whole match including $[$ inside the match).
+$\aut^{\text{short}'}_{\pi}$ can be converted into $\ft^{\text{short}'}_{\pi}$ where the existing transitions are the input tape transitions, and the output symbols are all $\epsilon$ (\nft only reading the input word---the match---and consuming the whole match including $\marker$ inside the match).
 
 Figure~\ref{fig:ft_regex_reluc_replace_all} symbolically shows how to construct $\ftRegexRelucReplaceAll$ for replacing all shortest left-most occurrences of regular language $\pi$ with $y$.
 
 To replace only one occurrence (the first shortest left-most match), a variation of $\ftRegexRelucReplaceAll$, $\ftRegexRelucReplaceSingle$ can be constructed, as seen in Figure~\ref{fig:ft_regex_reluc_replace_single}.
-Here we do not return to the beginning after the first replace, but move to a new state with just reads the rest of the word unmodified while removing the additional $[$.
+Here we do not return to the beginning after the first replace, but move to a new state with just reads the rest of the word unmodified while removing the additional $\marker$.
 
 \subsubsection{Whole Regex Reluctant Replace \nft}
 
-We have constructed $\ftBeginMarker$ to insert non-deterministically begin markers into the input word and constructed $\ftRegexRelucReplaceAll$ (or $\ftRegexRelucReplaceSingle$) to perform the replacement upon encountering matches prepended with $[$.
+We have constructed $\ftBeginMarker$ to insert non-deterministically begin markers into the input word and constructed $\ftRegexRelucReplaceAll$ (or $\ftRegexRelucReplaceSingle$) to perform the replacement upon encountering matches prepended with $\marker$.
 $\ftRegexRelucAll$ (and similarly $\ftRegexRelucSingle$) can be constructed by connecting these two \nfts into a sequence using composition: $\ftRegexRelucAll = \ftBeginMarker \composePipe \ftRegexRelucReplaceAll$ and $\ftRegexRelucSingle = \ftBeginMarker \composePipe \ftRegexRelucReplaceSingle$.
 $\langof{\ftRegexRelucAll} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{+}_{\pi \rightarrow y} \} $ and $\langof{\ftRegexRelucSingle} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{1}_{\pi \rightarrow y} \} $.
 
+\subsection{Finite Transducer for Literal Reluctant Replacement}
 
-% The general idea is that we utilize these \nfts to process $x$ from left to right, and when encountering the first $[$, start reading the shortest matching pattern enclosed in $[ v ]$ for $v \in \pi$, then we replace the read pattern with the $y$ and go back to the beginning of the procedure to look for the next shortest match.
+Constructing \nfts for regex reluctant replacement is expensive.
+Therefore, when the \texttt{pattern} to be replaced is of a simpler form, namely a string literal, or even a single symbol, a corresponding \nft for reluctant replacement can be constructed faster.
 
-% ,gets applied on the begin marker \nft which produces the input word annotated with begin markers. Now the word is applied to the second \nft.
-% The second \nft encodes an end marker
+\subsubsection{Single Symbol Replacement}
 
-% TODO: Modelling reluctant regular replacements.
+We can construct a replacement \dft for a single symbol reluctant replacement by creating a single-state \dft with $\id{\Sigma}$ self-loop transducer transitions.
+Then only modify the output transitions for the input symbol to be replaced with to produce the replacement.
+The handling of single and all reluctant replacement variations is the same as for regex reluctant replacement.
 
+The Figure~\ref{fig:single_symbol_replacement} shows single symbol replacements for both the single and all replacement variations for replacement being a single symbol and a literal.
+
+\subsubsection{Replacement of Finite Literal}
+
+To construct a \nft for the replacement of a string literal $z$ with $y$, we need to construct two \nfts.
+
+First, we want to annotate the end of the input words $x$ simlarly to how $\ftEndMarker$ annotates the end of the patterns, but now a simple \nft $\ft_\marker$ with an initial state $q_0$, final state $q_f$, and transitions $(q_0, \id{\Sigma}, q_0)$, and $(q_0, (\epsilon, \marker), q_f)$ will suffice.
+$\langof{\ft_\marker} = \Sigma^* \concat \{ \marker \}$.
+
+Second, we need to construct an \nft $\ftLiteralRelucReplaceAll$ for replacing all literals, or $\ftLiteralRelucReplaceSingle$ for replacing only the first left-most shortest literal.
+
+$\ftLiteralRelucReplaceAll = (\states, \Gamma, \post, \{ q_0 \}, \{ q_f \})$ can be constracted using the following method.
+We construct a \nft for $z$ where $z$ represents the input tape and a sequence of $\epsilon$ symbols represents the corresponding output tape.
+Each state $q$ uniquely maps to its corresponding substring of $y$: $\mathcal{M}: \states \rightarrow \Sigma^*$ is a bijection where $\mathcal{M}(q_0) = \epsilon$, $\mathcal{M}(q_1) = y[0:1]$, $\mathcal{M}(q_1) = y[0:2]$, $\mathcal{M}(q_2) = y[0:3]$, etc.
+Each state therefore represents a "buffer" of symbols read so far on the input tape which have not been outputted on the output tape yet.
+We already have transitions as constructed from $z$ for each state.
+
+Now we add additional transitions as follows:\newline
 \begin{itemize}
-    \item \dfts for finite replacement
-    \item differences for single literal, single symbol
+  \item If $\marker$ is read on the input tape, we output the contents of the buffer $\mathcal{M}(q)$ where $q$ is the current state (symbols read from the input word but not outputted onto the output tape yet) and move to $q_f$.
+  When we succeed by locating prefix starting at index $i$, we split $\mathcal{M}(q) \concat a$ into $l$ and $r$, where $l = p[0:i]$ and $r = p[i:|p|]$.
+  We output $l$ onto the output tape (as a sequence of transition symbols) and move to state $q' = \mathcal{M}(r)$ which reprents the longest prefix of $y$ currently being "buffered" and not processed yet.
+  \item If $a \in \Sigma, z = \mathcal{M}(q)\concat a$ ($a$ is the last symbol in $y$), we perform the replacement: outputting $y$, and move to the beginning $q_0$ to continue replacing the next matches.
+  \item If $a \in \Sigma, a \neq z[|\mathcal{M}(q)|:|\mathcal{M}(q)| + 1]$ ($a$ is not the next symbol in $z$---those transitions are already in  $\ftLiteralRelucReplaceAll$), we determine the longest prefix $p$ of $z$ from $\mathcal{M}(q) \concat a$ from left to right.
 \end{itemize}
+
+When constructing $\ftLiteralRelucReplaceSingle$, instead of moving to $q_0$ after reading $z$, we move, after outputting the replacement $y$, to a final state $q_f$, and add transitions to simply read the rest of the input word and output the word unmodified onto the output tape, removing $\marker$ at the end: $(q_f, \id{\Sigma}, q_f)$ and $(q_f, (\marker, \epsilon), q_f)$.
+
+\begin{example}
+  For literal reluctant all replacement $x^{+}_{ab \rightarrow c}$,
+  % TODO: M(state 0) = "", ...
+\end{example}
+
+
+
+\section{Solving SMT Formulae with Replace Operations}
+
+% TODO.
 
 \chapter{Implementation}
 

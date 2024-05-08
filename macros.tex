@@ -5,12 +5,19 @@
 
 \newcommand{\aut}{\mathcal{A}}
 \newcommand{\ft}{\mathcal{T}}
+\newcommand{\marker}{\$}
 \newcommand{\ftBeginMarker}{\ft_{\text{begin}}}
 \newcommand{\ftEndMarker}{\ft_{\text{end}}}
-\newcommand{\ftRegexRelucReplaceAll}{ \ft^[_{x^{+}_{\pi \rightarrow y}} }
-\newcommand{\ftRegexRelucReplaceSingle}{ \ft^[_{x^{1}_{\pi \rightarrow y}} }
+\newcommand{\ftRegexRelucReplaceAll}{ \ft^\marker_{x^{+}_{\pi \rightarrow y}} }
+\newcommand{\ftRegexRelucReplaceSingle}{ \ft^\marker_{x^{1}_{\pi \rightarrow y}} }
 \newcommand{\ftRegexRelucAll}{ \ft_{x^{+}_{\pi \rightarrow y}} }
 \newcommand{\ftRegexRelucSingle}{ \ft_{x^{1}_{\pi \rightarrow y}} }
+
+\newcommand{\ftLiteralRelucReplaceAll}{ \ft^\marker_{x^{+}_{z \rightarrow y}} }
+\newcommand{\ftLiteralRelucReplaceSingle}{ \ft^\marker_{x^{1}_{z \rightarrow y}} }
+\newcommand{\ftLiteralRelucAll}{ \ft_{x^{+}_{z \rightarrow y}} }
+\newcommand{\ftLiteralRelucSingle}{ \ft_{x^{1}_{z \rightarrow y}} }
+
 
 \newcommand{\composePipe}{||}
 \newcommand{\compose}[2]{\texttt{compose}(#1, #2)}
