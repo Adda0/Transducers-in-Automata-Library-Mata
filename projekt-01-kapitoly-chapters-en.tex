@@ -110,7 +110,7 @@ We will often denote NFA with epsilons as just NFA where it is clear whether we 
 We define a \emph{run} (\emph{path}) of $\aut$ over a word $w \in \Sigma^*$ as a sequence of states and symbols $q_0a_1q_1a_2\ldots a_nq_n$ where $\forall 1 \leq i \leq n: q_i \in \post(q_{i-1}, a_i) \land a_i \in \SigmaEps \land w = a_1a_2\ldots a_n$.
 We further distinguish runs as \emph{accepting runs} and \emph{nonaccepting runs} (\emph{not accepting runs}).
 A run is accepting if and only if $q_0 \in \initialStates  o$ and $q_n \in \finalStates$.
-A (potentially infinite) set of words for which there exists an accepting run of $\aut$ defines a regular language $\langof{\aut} \subseteq \SigmaEps$ of NFA $\aut$.
+A (potentially infinite) set of words for which there exists an accepting run of $\aut$ defines a regular language $\langof{\aut} \subseteq \SigmaEps$ of NFA $\aut$. $\langof{\aut}^{<i}$ means a regular language $\langof{\aut}$ containing only words of at most length $i$.
 
 States $\states$ can be divided into \emph{useful states} and \emph{useless} states.
 A state $q$ is useful if there exists an accepting run over states $q_0, q_1, \ldots, q_n$ where $q \in \{ q_0, q_1, \ldots, q_n \}$.
@@ -186,14 +186,20 @@ An $n$-tape \emph{nondeterministic finite state transducer} (\emph{NFST}; \emph{
 \begin{itemize}
     \item $\states$ is a finite set of \emph{states},
     \item $\Gamma = (\SigmaEps)^n$ is an $n$-tape alphabet of $\ft$.
-    \item $\post: \states \times \Gamma \rightarrow 2^{\states}$ is a \emph{symbol-post function} where $\move{q}{\gamma}{q'}$ (or $(q, \gamma, q')$) for $q' \in \post(q, \gamma)$ is a \emph{transition} for $\gamma = \begin{bsmallmatrix} a^1 & a^2 & \ldots & a^n\end{bsmallmatrix} = (a^1, a^2, \ldots, a^n) \in (\SigmaEps)^n$,
+    \item $\post: \states \times \Gamma \rightarrow 2^{\states}$ is a \emph{symbol-post function}
+    where $\move{q}{\gamma}{q'}$ (or $(q, \gamma, q')$) for $q' \in \post(q, \gamma)$ is a \emph{transition} for $\gamma = \begin{bsmallmatrix} a^1 & a^2 & \ldots & a^n\end{bsmallmatrix} = (a^1, a^2, \ldots, a^n) \in (\SigmaEps)^n$,
     \item $\initialStates \subseteq \states$ is a finite set of \emph{initial states}, and
     \item $\finalStates \subseteq \states$ is a finite set of \emph{final states}.
 \end{itemize}
 
 \nft $\ft$ is syntactically an NFA over $\Gamma$.
-$\ft$ accepts word $\transWord{w} = \gamma_1 \circ \gamma_2 \circ \ldots \circ \gamma_m = (a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) \circ \ldots \circ (a^1_m, a^2_m, \ldots, a^n_m) $ if there exists an accepting run of $\ft$ for $\transWord{w}$ where $\circ$ is a concatenation operator performing component-wise concatenation over tuples: $(a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) = (a^1_1a^1_2, a^2_1a^2_2, \ldots, a^n_1a^n_2)$.
+$\ft$ accepts word $\transWord{w} = \gamma_1 \circ \gamma_2 \circ \ldots \circ \gamma_m = (a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) \circ \ldots \circ (a^1_m, a^2_m, \ldots, a^n_m) $
+ if there exists an accepting run of $\ft$ for $\transWord{w}$ where $\circ$ is a concatenation operator performing component-wise concatenation over tuples:
+$(a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) = (a^1_1a^1_2, a^2_1a^2_2, \ldots, a^n_1a^n_2)$.
 When the context is clear, we sometimes omit $\circ$, similarly as for NFA.
+
+We use $\id{\Sigma}$ to denote a set of identity transducer transitions between two states, that is, for states $q, q' \in \states$, transitions
+$(q, \id{\Sigma}, q') = \{ (q, \gamma, q') \,\mid\, \gamma = (a^1, \ldots, a^n) \in (\SigmaEps)^n \land a^1 = \ldots = a^n \}$.
 
 A (potentially infinite) set of words for which there exists an accepting run of $\ft$ defines a \emph{rational relation} $\relationof{\ft} \subseteq (\SigmaEps^*)^n$ of \nft $\ft$.
 
@@ -745,6 +751,36 @@ The Figure~\ref{fig:begin_marker_nft} shows a $\ftBeginMarker$ for $\reverse{\au
 \end{figure}
 
 \subsubsection{Reluctant Replacement \nft}
+
+When we have the begin marker \nft $\ftBeginMarker$, we can construct the second \nft performing the actual replacement.
+These two \nfts are used to finally construct the whole $\ftRegexRelucAll$.
+
+We already can non-deterministically find the correct begin markers, but we now need to perform the actual replacement(s) on the input string annotated with begin markers.
+
+We construct an \nft $\ftRegexRelucReplaceAll$ which models the actual reluctant replacement.
+The idea is that we read the input string annotated with begin markers and output the same symbols unmodified on the output tape.
+Once we encounter the begin marker, we know we have found the first left-most match which needs to be replaced.
+Therefore, we switch to a "replacement" mode where we read the match without outputting anything, removing all symbols of the match and all additional begin markers inside the match.
+Afterwards, the match is read and we can insert the replacement for the match onto the output tape.
+When the replacement is inserted, we return to the beginning to potentially perform replacement on another match.
+
+First, we convert the $\aut_{\pi}$ into a new \nfa $\aut^{\text{short}}_{\pi}$ which accepts (matches) only the shortest input words.
+This can be easily performed by removing all outgoing transitions from all final states in $\aut_{\pi}$.
+Clearly, $\langof{\aut^{\text{short}}_{\pi}} = \{ u \in \langof{\aut_{\pi}} \,\mid\, \neg \exists u' \in \langof{\aut_{\pi}}^{<|u|} \}$.
+
+$\aut^{\text{short}}_{\pi}$ now matches the shortest words in the language of $\aut_{\pi}$, but does not allow skipping over additional $[$ encountered during reading the match.
+Such $[$ need to be skipped since $[$ inside the shortest left-most match represent beginnings of potential matches further to the right than the left-most match.
+We need to therefore add a self loop to every state in $\aut^{\text{short}}_{\pi}$ with transition symbol $[$.
+
+Now the final modification is to keep the next begin marker for the next shortest left-most match. $\aut^{\text{short}'}_{\pi}$ can be constructed given $\Sigma^*_[ = \Sigma^* \cup \{ [ \}$ as $\aut^{\text{short}'}_{\pi} = \aut^{\text{short}}_{\pi} \cap \overline{\Sigma^*_[ \concat \{ [ \}}$.
+
+$\aut^{\text{short}'}_{\pi}$ can be converted into $\ft^{\text{short}'}_{\pi}$ where the existing transitions are the input tape transitions, and the output symbols are all $\epsilon$ (\nft only reading the input word---the match---and consuming the whole match including $[$ inside the match).
+
+Figure~\ref{fig:ft_regex_reluc_all} symbolically shows how to construct $\ftRegexRelucReplaceAll$.
+
+$\ft^{\text{short}'}_{\pi}$
+
+
 - all replacmeent
 - single replacement
 
