@@ -829,6 +829,8 @@ Now we add additional transitions as follows:\newline
 
 When constructing $\ftLiteralRelucReplaceSingle$, instead of moving to $q_0$ after reading $z$, we move, after outputting the replacement $y$, to a final state $q_f$, and add transitions to simply read the rest of the input word and output the word unmodified onto the output tape, removing $\marker$ at the end: $(q_f, \id{\Sigma}, q_f)$ and $(q_f, (\marker, \epsilon), q_f)$.
 
+To construct $\ftLiteralRelucAll$ (or $\ftLiteralRelucSingle$), a composition of $\ft_\marker$ and $\ftLiteralRelucReplaceAll$ (or $\ftLiteralRelucReplaceSingle$) is performed: $\ftLiteralRelucAll = \ft_\marker \composePipe \ftLiteralRelucReplaceAll$ or $\ftLiteralRelucSingle = \ft_\marker \composePipe \ftLiteralRelucReplaceSingle$.
+
 \begin{example}
   For literal reluctant all replacement $x^{+}_{ab \rightarrow c}$,
   % TODO: M(state 0) = "", ...
@@ -837,6 +839,59 @@ When constructing $\ftLiteralRelucReplaceSingle$, instead of moving to $q_0$ aft
 
 
 \section{Solving SMT Formulae with Replace Operations}
+
+The main decision procedure of \noodler rewrites SMT formulae into a form where the formula contains regular constraints (where both the variables and regular constraints have assigned regular language) and \noodler checks whether the languages for variables after restricting the languages by the string constraints are non-empty.
+If during the procedure a language of some variable becomes empty, there is no assignment for the formula which could assign the variable a word satisfying the constraints.
+
+The formulae solved by \noodler which contain replace operations always follow the following general structure:
+$$ x \in \ldots \land u = \texttt{replace}(\ldots (\texttt{replace}(\texttt{replace}(x, \pi_1, y_1), \pi_2, y_2)\ldots), \pi_n, y_n) \land u \in \ldots \text{.}$$
+
+We have a sequence of nested replace operations.
+There can be between one and about 200 nested replace operations on the benchmarks from industry solved by \noodler.
+
+\begin{example}\label{ex:smt_replace_sequence}
+  An encoding for operation \texttt{toUpper} which replaces all lowercase letters in $x$ with uppercase letters looks like this:
+  $$ x \in \ldots \land u = \texttt{replace}(\ldots (\texttt{replace}(\texttt{replace}(x, `\text{a}`, `\text{A}`), `\text{b}`, `\text{B}`)\ldots), `\text{z}`, `\text{Z}`)\land u \in \ldots \text{.}$$.
+
+  Another often performed operation is \texttt{HTMLEscape} which properly escapes special HTML symbols from the input string $x$ so as not to break the HTML when the user input gets inserted into the HTML webpage:
+  \begin{multline*}
+  x \in \ldots \land u = \texttt{replace}(\ldots (\texttt{replace}(\texttt{replace}(x, `\text{<}`, ``\text{\&lt;}``), `\text{\&}`, ``\text{\&amp;}``)\ldots), \\
+  \texttt{from\_code}(39), ``\text{\&\#39;}``)\land u \in \ldots
+  \end{multline*}
+  where \texttt{from\_code}($n$) performs a conversion from integer code $n$ to its corresponding Unicode character.
+
+  And finally, there are operations working with regexes $\pi$:
+  $$
+    x \in \ldots \land u = \texttt{replace}(x, ``\texttt{.d}^+\texttt{.}``, ``\text{\_\$1}``)\land u \in \ldots
+  $$
+where regex $``\texttt{.d}^+\texttt{.}``$ represents a regex descrining one or more occurrences of \texttt{d} surrounded by one character from both sides. For example \texttt{adde} matches, but \texttt{aed} does not.
+
+All of these examples come with variants for replacing all or only the first occurence of the reex or literal, and with varying number of nested replacements.
+\end{example}
+
+As seen in Example~\ref{ex:smt_replace_sequence}, we often reason about regular languages for both the input and output language of the sequence of nested replace operations.
+Internally in \noodler, each level of the nested hierarchy will get assigned a new fresh variable $x_i$, so we obtain from
+$$
+x \in \ldots \land u = \texttt{replace}(\ldots (\texttt{replace}(\texttt{replace}(x, \pi_1, y_1), \pi_2, y_2)\ldots), \pi_n, y_n) \land u \in \ldots \text{.}
+$$
+a formula similar to
+\begin{multline*}
+x \in \ldots \land u_1 = \texttt{replace}(x, \pi_1, y_1) \land u_2 = \texttt{replace}(u_1, \pi_2, y_2) \land \ldots \land \\u = \texttt{replace}(u_{n-1}, \pi_n, y_n) \land u \in \ldots \text{.}
+\end{multline*}
+
+Since we need to propagate the properties of $x$ over all the replace operations to $u$, we need a method to propagate the information over the replace operation.
+Remember that now we consider both $u$ and $x$ to be string variables with an assigned regular language, $\langof{u}$ and $\langof{x}$.
+The problem can be therefore split into smaller problems of form $ u = x^{+}_{\pi \rightarrow y}$ (representing a single replace operation from above) and propagating the information from $x$ to $u$.
+
+In string solving, we work with \nfts with two tapes: the input tape and the output tape.
+Performing projection on either tape produces an \nfa representing the language of the corresponding tape.
+The projection of \nft $\ft$ to its output tape, \texttt{out}($\ft$), gives us the forward image of $\ft$, \nfa $\aut_{\text{out}}$.
+Similarly, the projection of \nft $\ft$ to its input tape, \texttt{in}($\ft$), gives us the backward image of $\ft$, \nfa $\aut_{\text{in}}$.
+
+For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the regular languages assigned to variables $x$ and $u$, we can compute the language of the forward image as $\texttt{out}(\idNft{\aut_x} \compose \ft_{x^+_{\pi \rightarrow y}})$;
+the backward image as $\texttt{in}( \ft_{x^+_{\pi \rightarrow y}} \compose \idNft{\aut_u})$
+
+% TODO: $x$ is a concatenation of langauges with special epsilon symbols used in noodlification.
 
 % TODO.
 
