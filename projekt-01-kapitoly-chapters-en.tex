@@ -202,6 +202,9 @@ When the context is clear, we sometimes omit $\circ$, similarly as for NFA.
 We use $\id{\Sigma}$ to denote a set of identity transducer transitions between two states, that is, for states $q, q' \in \states$, transitions
 $(q, \id{\Sigma}, q') = \{ (q, \gamma, q') \,\mid\, \gamma = (a^1, \ldots, a^n) \in (\SigmaEps)^n \land a^1 = \ldots = a^n \}$.
 
+We represent an \nft which is constructed as an identity \nft for a given \nfa, denoted as $\idNft{\aut}$.
+$\idNft{\aut}$ is constructed from $\aut$ by extending the existing $\aut$ transitions by repeating the same transition symbol as is the existing transition symbol in $\aut$ for each tape.
+
 A (potentially infinite) set of words for which there exists an accepting run of $\ft$ defines a \emph{rational relation} $\relationof{\ft} \subseteq (\SigmaEps^*)^n$ of \nft $\ft$.
 
 \paragraph{Deterministic finite transducers.}
@@ -836,7 +839,9 @@ To construct $\ftLiteralRelucAll$ (or $\ftLiteralRelucSingle$), a composition of
   % TODO: M(state 0) = "", ...
 \end{example}
 
-
+Note that this approach could be generalized to a regex replacement where the regex has finite length, similarly to how~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10} models finite regex replacements.
+However, for our uses in \noodler, we currently do not solve any industry benchmarks where finite regex replacement occurs.
+Further, when modelling finite regex replacement for regex $\pi$ with the maximal length $n$ of a string $u \in \langof{\pi}$, one needs to create states for all possible substrings of $\Sigma^{\leq n}$, each with the transitions similar to those in $\ftLiteralRelucAll$.
 
 \section{Solving SMT Formulae with Replace Operations}
 
@@ -888,12 +893,35 @@ Performing projection on either tape produces an \nfa representing the language 
 The projection of \nft $\ft$ to its output tape, \texttt{out}($\ft$), gives us the forward image of $\ft$, \nfa $\aut_{\text{out}}$.
 Similarly, the projection of \nft $\ft$ to its input tape, \texttt{in}($\ft$), gives us the backward image of $\ft$, \nfa $\aut_{\text{in}}$.
 
-For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the regular languages assigned to variables $x$ and $u$, we can compute the language of the forward image as $\texttt{out}(\idNft{\aut_x} \compose \ft_{x^+_{\pi \rightarrow y}})$;
-the backward image as $\texttt{in}( \ft_{x^+_{\pi \rightarrow y}} \compose \idNft{\aut_u})$
+For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the \nfas representing the regular languages assigned to variables $x$ and $u$, we can compute the language (the corresponding \nfa) of the forward image as $\texttt{proj\_out}(\idNft{\aut_x} \composePipe \ft_{x^+_{\pi \rightarrow y}})$, i.e., the forward application (propagation) of $aut_x$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{u}$ for the given $\langof{x}$.
+The backward image can be computed as $\texttt{proj\_in}( \ft_{x^+_{\pi \rightarrow y}} \composePipe \idNft{\aut_u})$, that is, backward application (propagation) of $\aut_u$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{x}$ for the given $\langof{u}$.
 
-% TODO: $x$ is a concatenation of langauges with special epsilon symbols used in noodlification.
+\paragraph{Languages of variables as concatenations of regular languages}
+A decision procedure in \noodler, called \emph{stabilization}~\cite{oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}
+performs automata operations on languages for variables which may be represented as a concatenation of multiple regular languages for other variables.
+For an algorithm called \emph{noodlification} performed as a part of this procedure, we need to concatenate these languages with special epsilon symbols (different from those used in construction of \nfts for replace operations).
+Therefore, we need to handle these symbols during replace operations as regular symbols, not epsilon symbols, in order to maintain a clear separation of languages of each individual variables in the concatenation.\footnote{The epsilon nature of these special symbols is utilized only in noodlification to indicate move between languages of variables in the concatenated language.}.
 
-% TODO.
+\paragraph{Flattening of the nested hierarchy of replace operations.}
+To further optimize the computation of $u$ from $x$ through a nested hierarchy of replace operations, one can precompute $\ft_\text{seq}$ as a sequential composition of all \nfts for the corresponding replace operations.
+Then, the hierarhcy is flattened into a single $\ft_\text{seq}$ performing all the replace operations simultanously: $u = \ft_\text{seq}(x)$.
+
+\paragraph{Length constraints.}
+Some variables may be length constrainted in addition to the string constraints.
+Length constraints for variables are in \noodler solved separately using a LIA (linear integer arithmetic) solver provided by \ziii.
+If the variables $u$ and $x$ are length variables, we need to maintain the information about lengths through the replace operation (which can in general change the length of words between $u$ and $x$).
+To propagate lengths of words through the replace operations, an option would be to compute an existential Presburger formula $\phi$ based on a computation of a Parikh image of $x^{+}_{\pi \rightarrow y}$, as described in~\cite{ChainFree}.
+
+We compute the standard Parikh image~\cite{DBLP:conf/icalp/SeidlSMH04} on the \nft for replace operation with the whole $n$-tuples of transition symbols being handled as single macrosymbols (obtaining an \nfa over the language of said $n$-tuples).
+$\phi$ now encodes the relationship between the number of occurrences of $n$-tuples (macrosymbols) in $s \in \langof{\ft_{x^{+}_{\pi \rightarrow y}}}$.
+To get the relationship between the actual letters $a \in \Sigma$ inside the $n$-tuples $\alpha$, we must extend $\phi$ with variables $a_i$ counting the number of occurrences of each $a$ on each tape $i$ ($i$-th element of $\alpha$), and compute the relationship between each $a_i$ and $\#\alpha$, representing the number of $\alpha$ symbols in the Parikh image, as: $a_i = \sum_{\alpha \in \Sigma^n_{\epsilon}: \alpha[i] = a} \#\alpha$ where it must hold that $|x_i| = \sum_{a \in \Sigma} a_i $ is the length of words on each tape $i$.
+
+% TODO: What needs to be modified.
+The existing decision procedure of \noodler will have to be modified further as follows:
+\begin{itemize}
+  \item Add saturation of replace operations, similarly to how \noodler saturates other string functions,
+  \item Inclusion graph~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23} used by \noodler will have to be extended to support replace operations.
+\end{itemize}
 
 \chapter{Implementation}
 
