@@ -66,6 +66,7 @@ Namely, the constributions of this work can be summarized as follows:
 \end{itemize}
 
 \chapter{Preliminaries}
+\label{sec:Preliminaries}
 In this chapter, we will define several terms and notions used throughout this thesis.
 We follow the usual definitions of automata theory, as used in works such as~\cite{Esparza} or~\cite{Sipser} with custom modifications and additions.
 
@@ -618,12 +619,14 @@ If jump transitions are involved, one may need to expand the jumps into normal t
 \end{example}
 
 % ==================================
-\subsection{Intersection}
+\subsection{Intersection}\label{sec:intersection}
+
+For constructing the intersection of two \nfts, we make use of the inheritance of \nfts from \nfas and utilize the classical intersection computation on \nfa using the standard product construction algorithm (as described in Chapter~\ref{sec:Preliminaries}).
+The only modification is adding support for proper assignment of levels to new macrostates depending on the levels of the original \nft states in the macrostate, and handling of various combinations of transition symbols during the process of adding transitions leading from the macrostates.
 
 TODO
 - should it be its own subsection?
 - more of a helper function.
-- classic product construction
 - resulting level of a macrostate due to the different orig state levels
 - special handling of combinations of symbols.
   - process epsilons
@@ -639,12 +642,70 @@ we can perform multiple \nfts transductions sequentially: $\ft_2 \circ \ft_1$
 Using the Unix \emph{pipe} notation, we can express the same with $\ft_1 \composePipe \ft_2$
 (perform the transduction of $\ft_1$ on the input, and then pipe the result to $\ft_2$ to perform the transduction of $\ft_2$ on the result).
 
+\begin{example}
+  Throughout this section, we will demonstrate the composition algorithm on the following example.
+  Given \nft $\ft_1$ with tapes $0$, $1$, and $2$, and $\ft_2$ with tapes $2$, $3$, $4$, we want to compute $\ft_1 \composePipe \ft_2$, synchronizing both \nfts on tape $2$.
+  For clarity, we number the tapes uniquely between both \nfts in this example. Internally, each \nft has tapes with levels from $0$ to $2$ and for each \nft, we specify which tape(s) the \nfts should synchronize on.
+\end{example}
+
+The composition comprises the following steps:
+\begin{itemize}
+  \item Extending the \nfts to contain matching tapes,
+  \item adding special self-loops on states with level $0$ to allow for proper handling of $\epsilon$ and $\dontCare$ symbols on the transitions,
+  \item Performing \nft intersection as described in Section~\ref{sec:intersection}, and
+  \item projecting out the synchronization tapes (as described in Section~\ref{sec:projection}) which were "consumed" by the composition.
+\end{itemize}
+
+\paragraph{Extending \nfts to match each other.}
+The first step of the composition is to extend the input \nfts by inserting additional levels $k$ (additional states with levels $k$) into each transition with $\dontCare$ symbols on the transitions at levels $k$.
+This operation balances out the \nfts so both have the same tapes in the same order.
+This allows us to perform the classic \nfa intersection for each level in both \nfts during \nft intersection.
+
+\begin{example}
+  Continuing the example, we extend each \nft transition in $\ft_1$ with $\dontCare$ transitions from existing states with level $2$ to new states with levels $3$, from states with levels $3$ to new states with levels $4$, and finally from states with levels $4$ to the next existing states with levels $0$ (finishing the original \nft transition) which were the original targets of transitions from states with levels $2$.
+
+  Figure~\ref{fig:composition_nfts_extension} shows a depiction of a single transition in $\ft_1$ and $\ft_2$ before and after extension.
+
+  \begin{figure}[ht]
+    \centering
+    \subfloat[\centering Before extension\label{fig:composition_nfts_extension_before}]{{\includegraphics[keepaspectratio,width=0.45\textwidth]{jumps_synchronization-composition_nfts_extension.pdf} }}%
+    \qquad
+    \subfloat[\centering After extention\label{fig:composition_nfts_extension_after}]{{\includegraphics[keepaspectratio,width=0.45\textwidth]{jumps_synchronization-composition_nfts_extension_balanced.pdf} }}%
+    \caption{
+      A depiction of a single transition in \nfts $\ft_1$ (top) and $\ft_2$ (bottom) before extension (Figure~\ref{fig:composition_nfts_extension_before}) and after extension with $\dontCare$ transitions on inserted tapes to balance out the tapes in both \nfts (Figure~\ref{fig:composition_nfts_extension_after}).
+      The red states with together with the outgoing transition represent the tape $\ft_1$ and $\ft_2$ are synchornized on.
+      The blue states represent the newly inserted tapes with $\dontCare$ symbols on transitions.
+    }
+    \label{fig:composition_nfts_extension}%
+  \end{figure}
+
+  We can see that after the extension, both $\ft_1$ and $\ft_2$ have the same tapes.
+\end{example}
+
+Thanks to this general approach, we can compute compositions of any $n$-tape \nfts\footnote{Where $\ft_1$ and $\ft_2$ does not even have to have the same $n$.}, synchronizing on any tape(s)\footnote{When synchronizing on multiple tapes, the tapes must at least be in the same order in both \nfts.}, with the tapes being in an arbitrary order.
+
+As an optimization, when adding multiple subsequent $\dontCare$ transitions during the extension, we can instead add only a single $\dontCare$ jump from the first state in the sequence leading to the last state in the sequence, without having to create new states for all inserted tapes being jumped over.
+
+\paragraph{Adding self-loops.}
+The next step is to add self-loops to all states with level $0$ in both \nfts.
+These self-loops serve the purpose of nondeterministic "waiting" loops for waiting at the beginning of an \nft transition in one \nft for the other \nft to
+
+\paragraph{Intersection.}
+When the \nfts are balanced out and self-loops are added, we can perform an \nft intersection, as per Section~\ref{sec:intersection}.
+The intersection produces a new \nft representing the composition of $\ft = \ft_1 \composePipe \ft2$, only currently $\ft$ still contains all the tapes from the balanced $\ft_1$ and $\ft_2$.
+Other that that, the composition is complete.
+
+\paragraph{Projecting out the tapes the composition synchronized on.}
+To clean up $\ft$, we need to project out the tapes we synchronized on as these are the tapes that have been "consumed" by the composition.
+
 TODO
-- associative operation for string solving with different patterns, denote $\composePipe$ and $\compose{x}{y}$.
-- insert additional levels for balanced nfts on both sides
-- insert self-loops
 - perform intersectoin
 - project out the levels used to synchronize on.
+
+For working with only $2$-tape \nfts, a spe|alized, more performant algorithm for composition could be utilized.
+The algorithm would still utilize the general idea of \nft intersection, but now no extension of \nfts and no self-loops are necessary.
+For each macrostate, we would first perform a step in $\ft_1$ on level $0$, then perform the synchronized step on levels $1$ in $\ft_1$ and $0$ in $\ft_2$ (if such a step is possible as per \nft intersection rules), then finish the composition of the current transition by performing a step in $\ft_2$ on level $1$, constructing a new macrostate from targets of transitions on levels $1$ of both \nfts.
+Handling of jumps is similar to \nft intersection: waiting for the state "left behind" to catch up with the state jumped to.
 
 % ==================================
 \subsection{Application}
@@ -952,7 +1013,7 @@ The formulae solved by \noodler which contain replace operations always follow t
 $$ x \in \ldots \land u = \texttt{replace}(\ldots (\texttt{replace}(\texttt{replace}(x, \pi_1, y_1), \pi_2, y_2)\ldots), \pi_n, y_n) \land u \in \ldots \text{.}$$
 
 We have a sequence of nested replace operations.
-There can be between one and about 200 nested replace operations on the benchmarks from industry solved by \noodler.
+There can be between one and about 200 nested replace operations on the benchmarks from industry solved by \noodler, usually working with small tens of unique transition symbols\footnote{This is thanks to that our decision procedure in \noodler substitutes transition symbols not explicitly worked with in the formula with just two "dummy" transition symbols.}.
 
 \begin{example}\label{ex:smt_replace_sequence}
   An encoding for operation \texttt{toUpper} which replaces all lowercase letters in $x$ with uppercase letters looks like this:
@@ -972,6 +1033,7 @@ There can be between one and about 200 nested replace operations on the benchmar
 where regex $``\texttt{.d}^+\texttt{.}``$ represents a regex descrining one or more occurrences of \texttt{d} surrounded by one character from both sides. For example \texttt{adde} matches, but \texttt{aed} does not.
 
 All of these examples come with variants for replacing all or only the first occurence of the reex or literal, and with varying number of nested replacements.
+
 \end{example}
 
 As seen in Example~\ref{ex:smt_replace_sequence}, we often reason about regular languages for both the input and output language of the sequence of nested replace operations.
@@ -1005,7 +1067,15 @@ Therefore, we need to handle these symbols during replace operations as regular 
 
 \paragraph{Flattening of the nested hierarchy of replace operations.}
 To further optimize the computation of $u$ from $x$ through a nested hierarchy of replace operations, one can precompute $\ft_\text{seq}$ as a sequential composition of all \nfts for the corresponding replace operations.
+
 Then, the hierarhcy is flattened into a single $\ft_\text{seq}$ performing all the replace operations simultanously: $u = \ft_\text{seq}(x)$.
+
+Note that in the benchmarks solved by \noodler, the patterns being replaced are unique in that the replacement of one \nft is never later in the sequence matched to the pattern of another \nft.
+E.g., operation \texttt{toUpper} performs sequence of transductions, each matching one of the lowercase letters of the alphabet and replacing it with its uppercase version.
+It never happens that the uppercase letter replacing the lowercase one is later replaced with some other letter.
+Therefore, an optimization of flattening a sequence of transducers satisfying this property can be utilized: the transductions in the whole sequence are associative.
+We can construct intermediate \nfts for composition of any combination of \nfts in the sequence, disregarding the order of the \nfts in the sequence to more quickly construct the final \nfts for the whole sequence.
+The reason for why the nested hierarchy is necessary for SMT formulae encoded in SMT-LIB format is that since the SMT-LIB format does not allow specifying a single replace operation with multiple (\texttt{pattern}, \texttt{replacement}) pairs, performing operations such as \texttt{toUpper} can be encoded only as a sequence of independent replacements which is however an unoptimal encoding for SMT solvers, especially those which can utilize the abilities of \nfts for the representation of replace operations.
 
 \paragraph{Length constraints.}
 Some variables may be length constrainted in addition to the string constraints.
