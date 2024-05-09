@@ -642,6 +642,9 @@ we can perform multiple \nfts transductions sequentially: $\ft_2 \circ \ft_1$
 Using the Unix \emph{pipe} notation, we can express the same with $\ft_1 \composePipe \ft_2$
 (perform the transduction of $\ft_1$ on the input, and then pipe the result to $\ft_2$ to perform the transduction of $\ft_2$ on the result).
 
+For each \nft, we need to specify which tape(s) $T$ to synchronize on with the other \nft.
+% TODO: Explain synchronization better.
+
 \begin{example}
   Throughout this section, we will demonstrate the composition algorithm on the following example.
   Given \nft $\ft_1$ with tapes $0$, $1$, and $2$, and $\ft_2$ with tapes $2$, $3$, $4$, we want to compute $\ft_1 \composePipe \ft_2$, synchronizing both \nfts on tape $2$.
@@ -660,6 +663,8 @@ The composition comprises the following steps:
 The first step of the composition is to extend the input \nfts by inserting additional levels $k$ (additional states with levels $k$) into each transition with $\dontCare$ symbols on the transitions at levels $k$.
 This operation balances out the \nfts so both have the same tapes in the same order.
 This allows us to perform the classic \nfa intersection for each level in both \nfts during \nft intersection.
+We use $\dontCare$ symbols since for each \nft $\ft_i$, the other \nft $\ft_j$ does not care what transitions over what symbols $\ft_i$ performs during the intersection.
+Hence, from the point of view $\ft_j$, $\ft_i$ can perform any transition.
 
 \begin{example}
   Continuing the example, we extend each \nft transition in $\ft_1$ with $\dontCare$ transitions from existing states with level $2$ to new states with levels $3$, from states with levels $3$ to new states with levels $4$, and finally from states with levels $4$ to the next existing states with levels $0$ (finishing the original \nft transition) which were the original targets of transitions from states with levels $2$.
@@ -688,7 +693,29 @@ As an optimization, when adding multiple subsequent $\dontCare$ transitions duri
 
 \paragraph{Adding self-loops.}
 The next step is to add self-loops to all states with level $0$ in both \nfts.
-These self-loops serve the purpose of nondeterministic "waiting" loops for waiting at the beginning of an \nft transition in one \nft for the other \nft to
+These self-loops serve the purpose of nondeterministic "waiting" loops for waiting at the beginning of an \nft transition in one \nft for the other \nft for epsilon transitions on the tapes being synchronized on.
+
+The self-loops is a symbolic name since they are self-loops in the sense of \nft transitions (from state with level $0$ back to the same state), but they lead over several tapes (i.e., several states with transitions).
+
+The symbols on the self-loops are added as follows:
+\begin{itemize}
+  \item For the transitions on tapes $T$, the symbol is $\epsilon$ is used, being handled as a normal transition symbol the other \nft can synchronize with an $\epsilon$ symbol on the non-self-loop transition.
+  \item For the transitions on tapes added by the extension, the symbol is $\dontCare$ is used.
+  $\dontCare$ here has the same role as $\dontCare$ symbols added during extension.
+  \item For the transitions on the remaining tapes (the original non-synchronizing tapes), $\epsilon$ symbol is used to represent the waiting on all \nft's own transitions.
+\end{itemize}
+
+\begin{example}
+  Figure~\ref{fig:composition_nfts_extension_loops} shows how a single transition in \nfts looks after adding the "waiting" self-loops.
+  \begin{figure}[ht]
+    \centering
+    \includegraphics[keepaspectratio, width=0.5\textwidth]{jumps_synchronization-composition_nfts_extension_loops.pdf}
+    \caption{
+      A depiction of a single transition in \nfts $\ft_1$ (top) and $\ft_2$ (bottom) after adding the "waiting" self-loops.
+    }
+    \label{fig:composition_nfts_extension_loops}
+  \end{figure}
+\end{example}
 
 \paragraph{Intersection.}
 When the \nfts are balanced out and self-loops are added, we can perform an \nft intersection, as per Section~\ref{sec:intersection}.
@@ -696,13 +723,24 @@ The intersection produces a new \nft representing the composition of $\ft = \ft_
 Other that that, the composition is complete.
 
 \paragraph{Projecting out the tapes the composition synchronized on.}
-To clean up $\ft$, we need to project out the tapes we synchronized on as these are the tapes that have been "consumed" by the composition.
+To clean up $\ft$, we need to project out the tapes $T$ we synchronized on as these are the tapes that have been "consumed" by the composition.
 
-TODO
-- perform intersectoin
-- project out the levels used to synchronize on.
+\begin{example}
+  To finish out example, Figure~\ref{fig:composition_nfts_extension_final} depicts a single product transition after composition is performed and the synchronization tapes are projected out.
+  \begin{figure}[ht]
+    \centering
+    \includegraphics[keepaspectratio, width=0.5\textwidth]{jumps_synchronization-composition_nfts_extension_final.pdf}
+    \caption{
+      A depiction of a single product transition in $\ft = \ft_1 \composePipe \ft_2$ synchonized on tape $2$.
+      The levels at the top represent the original tapes before renumbering.
+      The levels at the bottom represented the final tapes after renumbering.
+    }
+    \label{fig:composition_nfts_extension_final}
+  \end{figure}
+\end{example}
 
-For working with only $2$-tape \nfts, a spe|alized, more performant algorithm for composition could be utilized.
+\paragraph{Optimization for $2$-tape \nfts.}
+For working with only $2$-tape \nfts, a specialized algorithm for composition can be utilized.
 The algorithm would still utilize the general idea of \nft intersection, but now no extension of \nfts and no self-loops are necessary.
 For each macrostate, we would first perform a step in $\ft_1$ on level $0$, then perform the synchronized step on levels $1$ in $\ft_1$ and $0$ in $\ft_2$ (if such a step is possible as per \nft intersection rules), then finish the composition of the current transition by performing a step in $\ft_2$ on level $1$, constructing a new macrostate from targets of transitions on levels $1$ of both \nfts.
 Handling of jumps is similar to \nft intersection: waiting for the state "left behind" to catch up with the state jumped to.
