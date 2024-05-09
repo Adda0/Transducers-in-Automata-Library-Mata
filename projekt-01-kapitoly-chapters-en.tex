@@ -527,13 +527,12 @@ In this work, we use \nop when we want to explicitly stress the distinction betw
 \section{Algorithms}
 \label{sec:Algorithms}
 
+For general uses of transducers in \mata, we have implemented general automata operations for creating, modifying, and manipulating transducers.
+Furthermore, we have implemented several transducer-specific operations.
+
 \begin{itemize}
   \item Synchronization,
-  \item intersection,
-  \item composition,
   \item concatenate
-  \item Application,
-  \item Projection (to, out),
   \item get\_one\_letter\_aut
   \item \ldots
 \end{itemize}
@@ -547,9 +546,10 @@ When the synchronized \nfts perform one transition, due to the supported jumps, 
 Only the state in the macro-state with the level furthest behind is expanded.
 The others are at least one step ahead and therefore cannot be expanded and must wait for the states behind to get to at least their levels first before being expanded themselves.
 
-Since jumps can jump at most to the next state with level $0$, we always know which states in the macro-state are ahead and which are behind.
+Since jumps can jump at most to the next state with level $0$, we always know which states in the macro-state are ahead and which are behind by the following method.
 If we expand a macro-state with states with levels $k$ and $l$ where $k > l$, we know that state with level $k$ must be ahead of the state with level $l$.
-If any of the states has level $0$ (and there are other states with nonzero levels), we know that the state $0$ must be ahead of all the other states with nonzero levels and synchronized with all other states with levels $0$ since the states with levels $0$ can only be the next states with levels $0$, and not the states with level $0$ behind.
+If any of the states has level $0$ (and there are other states with nonzero levels), we know that the state $0$ must be ahead of all the other states with nonzero levels, and synchronized with all other states with levels $0$.
+That holds since the states with levels $0$ can only be the next states with levels $0$, and not the states with level $0$ behind (as the first step from the synchronized states is to move immediately out of the states with level $0$ behind).
 
 The same holds for BDDs utilizing the same data structure and constraints as \nfts.
 
@@ -577,9 +577,62 @@ However, during operations such as product construction, an additional informati
 
 We deem this approach inferior to our chosen approach since it distorts the simplicity of a single data structure and algorithms on it for NFAs, \nfts, and BDDs.
 
+% ==================================
+\subsection{Intersection}
+
+% ==================================
+\subsection{Composition}
+
+% ==================================
+\subsection{Application}
+
+When we construct an \nft $\ft$, the most intuitive use of $\ft$ is to perform the transduction (the process of reading the input on input tapes and outputting the output on the output tapes) $\ft$ encodes.
+This operation is called \emph{Application}.
+
+Focusing on $2$-tape \nfts $\ft$, we can \emph{apply} a word $w$ on $\ft$, or a regular language $\langof{\aut}$ for some $\aut$.
+
+% ==================================
+\subsection{Projection}
+
+Another standard operation on transducers is \emph{projection}.
+Given an $n$-tape \nft $\ft$, we can perform \emph{projection to} a specified set of tapes, or \emph{project out} a specified set of tapes.
+
+The transitions remain the same, the only change is that we remove certain tapes (meaning that for every \nft transition we remove transition symbols on those tapes).
+In \mata, this means removing all states with certain levels $k$ and their outgoing transitions and redirecting ingoing transitions to these states to the next states with levels $k + 1 \mod n$ where the outgoing transitions were previously leading to.
+This can be iteratively performed on all tapes specified for removal.
+When the modification is performed, all remaining levels are shifted toward $0$ to start at $0$ and end with $l - 1$ where $l$ is the new number of tapes remaining in \nft.
+
+Projection to, denoted $\projToSet{M}{\ft}$ where $M \subseteq \{ 0, 1, \ldots, n - 1 \} $ is an operation which removes from $\ft$ all other tapes $o \notin M$ and keeps only those tapes $t \in M$.
+In practice, this means that an $n$-tape \nft will be modified into an $|M|$-tape \nft.
+If $|M| = 1$, we create a $1$-tape \nft (containing only states with level $0$) which is semantically equivalent to a corresponding \nfa with the same transitions.
+
+Projection out, denoted $\projOutSet{M}{\ft}$, performs the same operation, only now instead of keeping the specified tapes $o \in M$, we remove all tapes $o \in M$, and keep only the tapes $t \in \{ 0, 1, \ldots, n - 1 \} \setminus M$.
+If $|M| + 1 = n$, we project out all tapes except for one.
+This creates a $1$-tape \nft, which is again semantically equivalent to a corresponding \nfa with the same transitions.
+
+Note that for either variation, removing the first tape in \nft transitions requires setting new initial states (the original targets of transitions from the states with level $0$ become the new initial states).
+Similarly, removing the last tape in \nft transitions requires setting new final states (the original source of ingoing transitions to the final states become the new final states).
+If jump transitions are involved, one may need to expand the jumps into normal transitions between levels to set the correct initial and final states on the new first and last tape.
+
+\begin{example}
+  Given an \nft $\ft$ with $5$ tapes, with levels $\{ 0, 1, 2, 3, 4 \}$.
+
+  We can perform the following operations:
+  \begin{itemize}
+    \item $\projOutSet{\{ 3 \}}{\ft}$ which deletes tape $3$ from $\ft$, leaving tapes $\{ 0, 1, 2, 4 \}$ which are then renumbered to $\{ 0, 1, 2, 3 \}$.
+    \item On the result, we can perform $\projToSet{\{ 1, 3 \}}{\ft}$ which performs the same as if calling $\projOutSet{\{ 0, 2 \} }{\ft}$.
+    Tapes $0$ and $2$ are removed, leaving tapes $\{ 1, 3 \}$, which are then renumbered to $\{ 0, 1 \}$.
+    \item Now, peforming $\projToSet{\{ 1 \}}{\ft}$ gives us \nft with only one tape, which represents the \nfa for the tape $1$.
+    Performing $\projOutSet{\{ 1 \}}{\ft}$ instead would give us \nft with only one tape representing the \nfa for the tape $0$.
+  \end{itemize}
+
+\end{example}
+
+
+
 
 % Basic approach, operations, representation
-\section{Finite Transducers for String Solving}
+\chapter{Finite Transducers for String Solving}
 
 SMT String solving is a complex and diversive problem which has seen a lot of interest over the past few decades.
 Many different approaches for reasoning about word equations, word disequations, regular constraints, and length constraints have emerged, be it as a theoretical work, or implemented directly in one or more of the current state-of-the-art SMT string solvers, e.g., ~\cite{cvc4,cvc5,z3,Z3-str,Z3Str3,Z3str4,Trau,fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, tacas24_noodler_10.1007/978-3-031-57246-3_2, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
@@ -597,7 +650,7 @@ If \noodler could utilize finite transducers in a similar fashion to how it util
 
 Thus, we discuss in this chapter how to utilize finite transducers in \noodler to solve SMT string constraints \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all}.
 
-\subsection{Replace Operations}
+\section{Replace Operations}
 A general regular replacement operation has the following form:
 \begin{center}
 \begin{verbatim}
@@ -620,7 +673,7 @@ Since SMT-LIB defines only replacement operations of type reluctant replacement 
 
 We denote reluctant regular replacement as $x_{\pi \rightarrow y}$ as where $x$ is the \texttt{input\_string}, $\pi$ is the regular \texttt{pattern} (a literal or a regular language) and $y$ is the \texttt{replacement}.
 
-\subsection{Encoding Reluctant Regular Replacement as Finite Transducers}
+\section{Encoding Reluctant Regular Replacement as Finite Transducers}
 
 SMT-LIB suports two types of reluctant replacements: a \emph{reluctant all replacement} which replaces all occurrences of the shortest left-most matches of \texttt{pattern}, and \emph{reluctant single replacement} which replaces only the first shortest left-most occurrence of \texttt{pattern}.
 
@@ -650,7 +703,7 @@ A reluctant single replacement is defined similarly, only the recursive replacem
   For $a, b, c \in \Sigma$: $aabaaba^{+}_{aa \rightarrow c} = \{ cbcba \}$; $aabaaba^{1}_{aa \rightarrow c} = \{ cbaaba \}$;
 \end{example}
 
-\subsection{Finite Transducer for Regex Reluctant Replacement}
+\section{Finite Transducer for Regex Reluctant Replacement}
 
 First, we introduce a method for constructing a finite transducer $\ftRegexRelucAll$ for the most general case of reluctant regular replacement, a \emph{regex reluctant all replacement} $x^{+}_{\pi \rightarrow y}$, where the pattern $\pi$ being replaced is specified as a regular language and we replace all occurrences of $\pi$.
 
@@ -668,7 +721,7 @@ This way, we deterministically find the ends of the reversed $\reverse{\pi}$, wh
 We will explain the construction on a running example.
 Given $x^{+}_{\pi \rightarrow y}$ where $\pi = a^+b^+c$ and $y = d$, construct $\ft_{x^{+}_{\pi \rightarrow y}}$.
 
-\subsubsection{End Marker \dft}
+\subsection{End Marker \dft}
 Here, we construct a \dft $\ftEndMarker$ marking the end of a regular pattern $\reverse{\pi}$.
 
 First, we construct \dfa $\aut_{\reverse{\pi}}$ for $\reverse{\pi}$.
@@ -734,7 +787,7 @@ We can see the final $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ in Figure~
   \label{fig:generalized_end_marker_dft}
 \end{figure}
 
-\subsubsection{Begin Marker \nft}
+\subsection{Begin Marker \nft}
 We could start constructing the \emph{begin marker} \nft $\ftBeginMarker$ from $\ftEndMarker$ by reversing all transitions in $\ftEndMarker$.
 However, considering reversing a single transducer transition (consisting of operations on the input and output tapes), represented as a sequence of two \nfa transitions in \mata from state with level $0$ to $1$ and back to some state with level $0$, we instead utilize $\aut^{\text{gen}}_{\reverse{\pi}}$ before its conversion to $\ftEndMarker$ (and $\ftEndMarker$ is therefore never truly constructed in \mata).
 
@@ -756,7 +809,7 @@ The Figure~\ref{fig:begin_marker_nft} shows a $\ftBeginMarker$ for $\reverse{\au
   \label{fig:begin_marker_nft}
 \end{figure}
 
-\subsubsection{Reluctant Replacement \nft}
+\subsection{Reluctant Replacement \nft}
 
 When we have the begin marker \nft $\ftBeginMarker$, we can construct the second \nft performing the actual replacement.
 These two \nfts are used to finally construct the whole $\ftRegexRelucAll$.
@@ -787,18 +840,18 @@ Figure~\ref{fig:ft_regex_reluc_replace_all} symbolically shows how to construct 
 To replace only one occurrence (the first shortest left-most match), a variation of $\ftRegexRelucReplaceAll$, $\ftRegexRelucReplaceSingle$ can be constructed, as seen in Figure~\ref{fig:ft_regex_reluc_replace_single}.
 Here we do not return to the beginning after the first replace, but move to a new state with just reads the rest of the word unmodified while removing the additional $\marker$.
 
-\subsubsection{Whole Regex Reluctant Replace \nft}
+\subsection{Whole Regex Reluctant Replace \nft}
 
 We have constructed $\ftBeginMarker$ to insert non-deterministically begin markers into the input word and constructed $\ftRegexRelucReplaceAll$ (or $\ftRegexRelucReplaceSingle$) to perform the replacement upon encountering matches prepended with $\marker$.
 $\ftRegexRelucAll$ (and similarly $\ftRegexRelucSingle$) can be constructed by connecting these two \nfts into a sequence using composition: $\ftRegexRelucAll = \ftBeginMarker \composePipe \ftRegexRelucReplaceAll$ and $\ftRegexRelucSingle = \ftBeginMarker \composePipe \ftRegexRelucReplaceSingle$.
 $\langof{\ftRegexRelucAll} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{+}_{\pi \rightarrow y} \} $ and $\langof{\ftRegexRelucSingle} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{1}_{\pi \rightarrow y} \} $.
 
-\subsection{Finite Transducer for Literal Reluctant Replacement}
+\section{Finite Transducer for Literal Reluctant Replacement}
 
 Constructing \nfts for regex reluctant replacement is expensive.
 Therefore, when the \texttt{pattern} to be replaced is of a simpler form, namely a string literal, or even a single symbol, a corresponding \nft for reluctant replacement can be constructed faster.
 
-\subsubsection{Single Symbol Replacement}
+\subsection{Single Symbol Replacement}
 
 We can construct a replacement \dft for a single symbol reluctant replacement by creating a single-state \dft with $\id{\Sigma}$ self-loop transducer transitions.
 Then only modify the output transitions for the input symbol to be replaced with to produce the replacement.
@@ -806,7 +859,7 @@ The handling of single and all reluctant replacement variations is the same as f
 
 The Figure~\ref{fig:single_symbol_replacement} shows single symbol replacements for both the single and all replacement variations for replacement being a single symbol and a literal.
 
-\subsubsection{Replacement of Finite Literal}
+\subsection{Replacement of Finite Literal}
 
 To construct a \nft for the replacement of a string literal $z$ with $y$, we need to construct two \nfts.
 
@@ -889,12 +942,13 @@ Remember that now we consider both $u$ and $x$ to be string variables with an as
 The problem can be therefore split into smaller problems of form $ u = x^{+}_{\pi \rightarrow y}$ (representing a single replace operation from above) and propagating the information from $x$ to $u$.
 
 In string solving, we work with \nfts with two tapes: the input tape and the output tape.
+Thefore, we define $\projInput{\ft}$ and $\projOutput{\ft}$ as special cases of projections, performing $\projToSet{\{ 0 \}}{\ft}$ and $\projToSet{\{ 1 \}}{\ft}$, respectivelly.
 Performing projection on either tape produces an \nfa representing the language of the corresponding tape.
-The projection of \nft $\ft$ to its output tape, \texttt{out}($\ft$), gives us the forward image of $\ft$, \nfa $\aut_{\text{out}}$.
-Similarly, the projection of \nft $\ft$ to its input tape, \texttt{in}($\ft$), gives us the backward image of $\ft$, \nfa $\aut_{\text{in}}$.
+The projection of \nft $\ft$ to its output tape, $\projOutput{\ft}$, gives us the forward image of $\ft$, \nfa $\aut_{\text{out}}$.
+Similarly, the projection of \nft $\ft$ to its input tape, $\projInput{\ft}$, gives us the backward image of $\ft$, \nfa $\aut_{\text{in}}$.
 
-For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the \nfas representing the regular languages assigned to variables $x$ and $u$, we can compute the language (the corresponding \nfa) of the forward image as $\texttt{proj\_out}(\idNft{\aut_x} \composePipe \ft_{x^+_{\pi \rightarrow y}})$, i.e., the forward application (propagation) of $aut_x$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{u}$ for the given $\langof{x}$.
-The backward image can be computed as $\texttt{proj\_in}( \ft_{x^+_{\pi \rightarrow y}} \composePipe \idNft{\aut_u})$, that is, backward application (propagation) of $\aut_u$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{x}$ for the given $\langof{u}$.
+For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the \nfas representing the regular languages assigned to variables $x$ and $u$, we can compute the language (the corresponding \nfa) of the forward image as $\projOutput{\idNft{\aut_x} \composePipe \ft_{x^+_{\pi \rightarrow y}}}$, i.e., the forward application (propagation) of $aut_x$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{u}$ for the given $\langof{x}$.
+The backward image can be computed as $\projInput{\ft_{x^+_{\pi \rightarrow y}} \composePipe \idNft{\aut_u}}$, that is, backward application (propagation) of $\aut_u$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{x}$ for the given $\langof{u}$.
 
 \paragraph{Languages of variables as concatenations of regular languages}
 A decision procedure in \noodler, called \emph{stabilization}~\cite{oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}
@@ -960,6 +1014,15 @@ We also implemented a few utility functions which are useful when constructing o
 
   This allows one to quickly create transducers which read a specific word, replace a specific string literal with a given literal, or removes specified literal from the input word.
 \end{itemize}
+
+\section{Similarities with Operations on BDDs}
+
+Since the idea of data structures and operations for \nfts in \mata was to provide the same underlying data structures as well as the interface for both \nfts and BDDs, many of the operations on \nfts and BDDs follow the same general algorithm with just slight modification in how \nfts and BDDs interpret the same instance of an \nft automaton.
+For example, when using BDDs, one will interpret jumps over several levels to represent a sequence of transitions where the first transition has the transition symbol given by the jump, but the remaining transitions have $\dontCare$ symbols as opposed to the \nft interpretation where all transitions in the jump have the jump symbol.
+
+As a foundation for \nft-specific operations from Section~\ref{sec:Algorithms}, we have utilized the existing implementations of intersection for BDDs.
+Thanks to this, we are able to add official support for BDDs into \mata easily by inheriting \nft and modifying handling of jump transitions and several additional changes.
+Therefore, \nft projection will be similar to BDD projection, \nft application is similar to BDD application, and so on.
 
 
 \chapter{Experimental Evaluation}
