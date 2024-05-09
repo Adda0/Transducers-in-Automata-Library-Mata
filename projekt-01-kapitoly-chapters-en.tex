@@ -199,6 +199,9 @@ $\ft$ accepts word $\transWord{w} = \gamma_1 \circ \gamma_2 \circ \ldots \circ \
 $(a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) = (a^1_1a^1_2, a^2_1a^2_2, \ldots, a^n_1a^n_2)$.
 When the context is clear, we sometimes omit $\circ$, similarly as for NFA.
 
+An alternative definition of \nfts could allow for each tape to have a different alphabet, resulting in $\Gamma = \Sigma_1 \times \Sigma_2 \times \ldots \times \Sigma_n$.
+In this thesis, we consider only \nfts where all tapes have the same alphabet, but generalization to varying alphabets is possible and all algorithms and approaches presented in this work can be easily modified to support this alternative definition.
+
 We use $\id{\Sigma}$ to denote a set of identity transducer transitions between two states, that is, for states $q, q' \in \states$, transitions
 $(q, \id{\Sigma}, q') = \{ (q, \gamma, q') \,\mid\, \gamma = (a^1, \ldots, a^n) \in (\SigmaEps)^n \land a^1 = \ldots = a^n \}$.
 
@@ -578,23 +581,9 @@ However, during operations such as product construction, an additional informati
 We deem this approach inferior to our chosen approach since it distorts the simplicity of a single data structure and algorithms on it for NFAs, \nfts, and BDDs.
 
 % ==================================
-\subsection{Intersection}
-
-% ==================================
-\subsection{Composition}
-
-% ==================================
-\subsection{Application}
-
-When we construct an \nft $\ft$, the most intuitive use of $\ft$ is to perform the transduction (the process of reading the input on input tapes and outputting the output on the output tapes) $\ft$ encodes.
-This operation is called \emph{Application}.
-
-Focusing on $2$-tape \nfts $\ft$, we can \emph{apply} a word $w$ on $\ft$, or a regular language $\langof{\aut}$ for some $\aut$.
-
-% ==================================
 \subsection{Projection}
 
-Another standard operation on transducers is \emph{projection}.
+The first standard operation on transducers is \emph{projection}.
 Given an $n$-tape \nft $\ft$, we can perform \emph{projection to} a specified set of tapes, or \emph{project out} a specified set of tapes.
 
 The transitions remain the same, the only change is that we remove certain tapes (meaning that for every \nft transition we remove transition symbols on those tapes).
@@ -628,6 +617,64 @@ If jump transitions are involved, one may need to expand the jumps into normal t
 
 \end{example}
 
+% ==================================
+\subsection{Intersection}
+
+TODO
+- should it be its own subsection?
+- more of a helper function.
+- classic product construction
+- resulting level of a macrostate due to the different orig state levels
+- special handling of combinations of symbols.
+  - process epsilons
+  - process dont\_cares
+
+% ==================================
+\subsection{Composition}
+
+When working with \nfts as transduction machines taking some input, modifying it and outputting some output, we often encounter problems where we want to perform multiple transductions on the input, one after the other.
+In the same way as we can compose mathematical functions $(f \circ g)(x)$ meaning $f(g(x))$ (perform $g$ on $x$ and perform $f$ on the result of $g(x)$),
+we can perform multiple \nfts transductions sequentially: $\ft_2 \circ \ft_1$
+(perform the transduction of $\ft_1$ on the input, and then perform the transduction of $\ft_2$ on the result), denotes as $\compose{\ft_1}{\ft_2}$.
+Using the Unix \emph{pipe} notation, we can express the same with $\ft_1 \composePipe \ft_2$
+(perform the transduction of $\ft_1$ on the input, and then pipe the result to $\ft_2$ to perform the transduction of $\ft_2$ on the result).
+
+TODO
+- associative operation for string solving with different patterns, denote $\composePipe$ and $\compose{x}{y}$.
+- insert additional levels for balanced nfts on both sides
+- insert self-loops
+- perform intersectoin
+- project out the levels used to synchronize on.
+
+% ==================================
+\subsection{Application}
+
+When we construct an \nft $\ft$, the most intuitive use of $\ft$ is to perform the transduction (the process of reading the input on input tapes and outputting the output on the output tapes) $\ft$ encodes.
+This operation is called \emph{Application}.
+
+We can \emph{apply} a word $w$ on $\ft$, or a regular language $\langof{\aut}$ for some $\aut$.
+
+\paragraph{Application of a word.}
+We can either apply a word $w \in \Sigma^*$ on a given tape (at level $k$), or apply an $l$-tuple of words $(w_i)$ where $i in \in \{ 1, \ldots, n \}$ where $|(w_i)| = l$ and $i$ specifies on which tapes we want to apply the tuple of words (one word $w_i$ for each tape $i$).
+
+The result of the application of a word (or a tuple of words) is a set of tuples of size $(n - l)$ of words.
+We read the word(s) being applied and move through the \nft according to the transition symbols in the applied word(s) on the corresponding tapes, similarly to performing a run on a word in \nfa, only now to potentially multiple tapes (multiple words).
+During the traversal, we construct the result by appending the transition symbols on the remaining tapes to the result constructed so far for the current state.
+This gives us the corresponding word on the remaing tapes when the words on the given tapes are $(w_i)$.
+
+Focusing on $2$-tape \nfts $\ft$, the application equals to translation from the input word $w$ to the output word $w'$ (similarly to what a natural language translator does) where $w' = \apply{\ft}{w}$.
+By convention, we presume the input tape is at level $0$ and the output tape is at level $1$.
+
+The application of a word is equivalent to $\idNft{\aut} \composePipe \ft$ where $\aut$ represents a \dfa accepting only $w$.
+This gives us an \nft encoding the result.
+For $2$-tape $\ft$, we get a $1$-tape \nft, equal to the corresponding \nfa encoding the set of words in the result.
+
+\paragraph{Application of a language.}
+Applying a regular language $\langof{\aut}$ on $n$-tape \nft $\ft$ instead of a single word is performed similarly to the application of a single word, but now the result is a regular language (for $2$-tape \nfts) or an \nft $\ft'$ with $n-1$ tapes.
+
+The application of a language $\langof{\aut}$, similarly to the application of a word, is equivalent to $\idNft{\aut} \composePipe \ft$.
+The resulting \nft encodes the result.
+For $2$-tape $\ft$, we get a $1$-tape \nft, equal to the corresponding \nfa encoding the regular language of the result.
 
 
 
@@ -1014,6 +1061,11 @@ We also implemented a few utility functions which are useful when constructing o
 
   This allows one to quickly create transducers which read a specific word, replace a specific string literal with a given literal, or removes specified literal from the input word.
 \end{itemize}
+
+\paragraph{Specifying tapes to work on.}
+Since we aim to implement \nfts in \mata so they are usable for general purposes, not only limited to string solving, we allow for the majority of operations to specify what is the interpretation of each tape: e.g., which tapes are to be the input tapes, and which are to be the output tapes in application of a word or a language; or which tape(s) to use for synchronization during composition.
+
+Be mindful that using different tapes for some operations may afect the performance of these operations. For example, application on the first tape is more performant than the application on the last tape in an $n$-tape \nft.
 
 \section{Similarities with Operations on BDDs}
 
