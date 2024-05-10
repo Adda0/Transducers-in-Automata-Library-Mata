@@ -9,14 +9,14 @@
 \chapter{Introduction}
 % Finite Automata + Mata
 
-\emph{Finite automata} can be found in numerous fields both in research and in industry.
+\emph{Finite automata} can be found in numerous fields, both in research and in industry.
 Handling finite automata for specific use cases can be a complex task.
 Therefore, a number of finite automata libraries have emerged throughout the years, each with their own set of supported automata types and operations.
 Their respective design and implementation decisions give various advantages and disadvantages to each library.
 Recently, a new finite automata library, called \mata, has been introduced~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
 \mata aims to run fast for a large set of automata operations commonly used in various applications such as \emph{string constraints solving}, \emph{reasoning about regular expressions}, \emph{regular model checking}, or in \emph{decision procedures for logics} such as \emph{WS1S} or \emph{quantified Presburger arithmetic}, yet still remain simple and accessible.
 
-\emph{Efficiency} of automata algorithms used in these fields is crutial since problems from all these fields are computationally hard and every small decrease in performance of the often used low-level operations causes a significant slowdowns of the whole algorithm.
+\emph{Efficiency} of automata algorithms used in these fields is crucial since problems from all these fields are computationally hard and every small decrease in performance of the often used low-level operations causes a significant slowdown of the whole algorithm.
 Many automata libraries are well-optimized on only a subset of operations, presume a certain specific approach to using them, or make limitations on how one can utilize the library.
 \mata wants to achieve fast computation of operations in various frameworks, providing optimized general operations on finite automata as well as several purpose-specific algorithms, especially for its applications in string solving.
 
