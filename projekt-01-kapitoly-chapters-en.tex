@@ -266,6 +266,15 @@ And each library represents the transition relation and transition symbols diffe
 
 For example, automata library \automatapy~\cite{automatapy} is an automata library with a support for \nfas and \dfas.
 \automatapy stores transitions in a hash map mapping source states to a hash map of symbols with set of target states.
+The advantage is that using maps is comfortable for the user, but the disadvantage is that hashing is expensive.
+
+\mona~\cite{mona} is another automata library for \dfas, written in C.
+It utilizes a symbolic representation of the transition relation with MTBDDs, each representing one set of all transitions from a given source state.
+Implicit determinization of automata after every operation provides interesting avantages for certain algorithms, but might be unnecessarily expensive for other algorithms.
+\mona supports handling of large alphabets of bit vectors.
+\mona is generally a well-optimized automata libray used, beside others, for deciding WS$k$S logics.
+
+
 
 This all makes it hard for the user to choose one automata library which can be used for their work.
 The choice often depends on multiple factors where not all of them can be fully satisfied.
@@ -1238,7 +1247,67 @@ Therefore, \nft projection will be similar to BDD projection, \nft application i
 
 \chapter{Experimental Evaluation}
 
+In this chapter, we compare the performance of \nfts implemented in \mata with a state-of-the-art automata library \mona~\cite{mona}.
+
+For our experiments, we are especially interested in how \mata performs when running operations on \nfts modelling the replace operations required by \noodler.
+Since our main indend is to use \nfts in \mata as models for replace operations in \noodler, we need to optimize the \nft algorithms primarily to this use case, while keeping the \nft algorithms general enough for other use cases.
+
+Even if \mona does not support finite transducers directly, we have chosen \mona to compare \mata against because \mona is a well-optimized library which, thanks to its ability to encode transition relation into MTBBs, provides a reasonable model for encoding finite transducers and therefore the replace operations.
+Each tape in a transducers can be encoded as a single variable in the BDD for given transition.
+A sequence of variables then encodes an \nft transition where the leaves of the BDD are target states and edges represent the transition symbols.
+
+Performing operations such as composition, projection, or application on \nfts is, thanks to how \mata encodes \nfts as a representation very close to the representation of BDDs, a natural operation for \mona in the encoding explained above.
+
+Intuitively, \mata performs modifed \nfa operations on \nfts while \mona performs its BDD operations with the proper encoding, leading to a correct result of \nft operations in both libraries.
+
+\paragraph{Benchmarks.}
+
+For benchmarks, we have generated a set of benchmarks from runs of \noodler on benchmarks from SMT-LIB~\cite{SMTLIB} which contain string replace operations \texttt{str.replace}, \texttt{str.replace\_all}, \texttt{str.replace\_re} and \texttt{str.replace\_re\_all}.
+
+We compare the performance of \mata and \mona on operations
+\begin{itemize}
+  \item projection to input/output tapes,
+  \item application of a word on an \nft,
+  \item application of a language on an \nft, and
+  \item composition.
+\end{itemize}
+
+All of these are the operations which will be often used on \nfts created for replace operations in \noodler and will make up the main set of operations on \nfts once support for transducers in introduced in \noodler as well.
+
+Furthermore, these are the operations usually performed in any general use of transducers since they comprise all the transducer-specific operations one needs when working with transducers.
+
+\section{Results}
+
+\subsection{Projection}
+
+\subsection{Application}
+
+\subsection{Composition}
+
 \chapter{Conclusion}
+
+To summarize this thesis, we have added support for a new model for finite state machines, finite state transducers, to \mata, explained the principles behind \nfts and specifically \nfts in the context of \mata and \noodler for string solving.
+
+We have created a new data structures derived from the existing data structures for \nfas in \mata, which fit well in the overall structure and design desicison of \mata.
+The introduced algorithms on \nfts are closely related to the corresponding alorithms on BDDs and maintain the two main goals of \mata: simplicity and efficiency, while keeping \mata easily extensible and understandable for a wide variety of users and applicable to both the areas of automata reasearch and industry.
+
+Thanks to these design decision, further extending \mata with support for handling BDDs will be effortless.
+
+We further focussed on utilizing \nfts in string solving by adding algorithms to model string replace operations defined in SMT-LIB which will be used in \noodler for solving SMT formulae with string replace operations, previously unsolvable by \noodler.
+
+We compared the performance of \nfts in \mata with a natural encoding of transducers in automata library \mona.
+
+TODO: experiment results.
+
+Overall, the implementation of \nfts in \mata is functional, performant, and widely usable, with ready-for-use support for solving SMT formulae with string replace operations in \noodler.
+
+\paragraph{Future work.}
+We continue optimizing and developing \mata and the implementation of \nfts.
+In the future, we want to apply \nfts to solving string SMT formulae in \noodler.
+Furthermore, depending on the performance of \nfts in \noodler, we intend to add support for symbolic representations for large alphabets using bit vectors representing sequences of bits, as used in tool \lash~cite{lash} and  transition representation specific to \nfts to encode \nft operations such as identity more easily.
+
+Since the representation of \nfts in \mata is close to BDDs, we intend to study various optimizations used for BDDs to further improve the performance of \nfts in \mata.
+
 
 %=========================================================================
 
