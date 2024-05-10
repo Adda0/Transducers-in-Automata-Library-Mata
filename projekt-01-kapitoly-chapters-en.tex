@@ -9,36 +9,39 @@
 \chapter{Introduction}
 % Finite Automata + Mata
 
-Finite automata can be found in numerous fields both in research and in practice.
-There are several automata libraries, each with their own set of supported automata types and operations.
-Their respective design decisions gives various advantages and disadvantages for each library.
-Recently, a new finite automata library, called \mata, emerged.
-\mata aims to remain simple, yet perform very fast for a large set of automata operations commonly used in various applications such as string constraints solving, reasoning about regular expressions, regular model checking, or in decision procedures for logics such as WS1S or quantified Presburger arithmetic.
+\emph{Finite automata} can be found in numerous fields both in research and in industry.
+Handling finite automata for specific use cases can be a complex task.
+Therefore, a number of finite automata libraries have emerged throughout the years, each with their own set of supported automata types and operations.
+Their respective design and implementation decisions give various advantages and disadvantages to each library.
+Recently, a new finite automata library, called \mata, has been introduced~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
+\mata aims to run fast for a large set of automata operations commonly used in various applications such as \emph{string constraints solving}, \emph{reasoning about regular expressions}, \emph{regular model checking}, or in \emph{decision procedures for logics} such as \emph{WS1S} or \emph{quantified Presburger arithmetic}, yet still remain simple and accessible.
 
-Efficiency of automata algorithms used in these fields is crutial since problems from all of these fields are computationally hard.
-Many automata libraries are well-optimized on only one subset of operations, or presume a certain general approach to using them.
-\mata points at fast computation of operations in various frameworks, providing optimized general operations on finite automata as well as several purpose-specific algorithms used in specific fields.
+\emph{Efficiency} of automata algorithms used in these fields is crutial since problems from all these fields are computationally hard and every small decrease in performance of the often used low-level operations causes a significant slowdowns of the whole algorithm.
+Many automata libraries are well-optimized on only a subset of operations, presume a certain specific approach to using them, or make limitations on how one can utilize the library.
+\mata wants to achieve fast computation of operations in various frameworks, providing optimized general operations on finite automata as well as several purpose-specific algorithms, especially for its applications in string solving.
 
-\mata's underlying data structures are designed in such a way that they provide sufficient performance, but also enable easy modification by the user for their own uses and extensible framework for adding new automata types, purpose-specific operations, or additional maintanence of related context while keeping the existing infrastructure working with as minimal number of changes required as possible.
+\mata's underlying data structures are designed in such a way that they provide sufficient performance, but also enable \emph{easy modification} by the user for their own use cases, and give an \emph{extensible} framework for adding new automata models, purpose-specific operations, or additional maintanence abilities of a related context while keeping the existing infrastructure working with as a minimal number of modifications required as possible.
 
-In this work, we intend on utilizing the extensibility of \mata and its underlying data structures to add support for finite state transducers while maintaining the main ideas of \mata: being fast, and easy to extend or modify.
+In this work, we intend to utilize the extensibility of \mata and its underlying data structures to add support for \emph{finite state transducers} while maintaining the main ideas of \mata: being fast, and easy to extend or modify.
 
 % Finite Transducers
-Finite transducers are finite-state machines.
-They are similar to finite automata, but finite transducers work with multiple memory tapes.
-Each tape represents a regular language where finite transducers performs mapping between these languages, and, more preciselly, between words in each language.
-Finite transducers model relations (called \emph{rational relations}) between regular languages, subsets of carthesian product of regular languages.
-Heneforth, each finite transducer can be thought of as a translator translating (transducing) between the languages (a 2-tape finite transducer precisely models a translator from an input language to a output language, modelling a so-called \emph{binary rational relation}), a subset of $\Sigma^* \times \Sigma^*$.
-In this work, we usually work with binary rational relations, but in general an \emph{n-ary rational relation} can be modelled by a n-tape transducer.
+The same as finite automata, finite state transducers are finite-state machines.
+They differ from finite automata by working with \emph{multiple memory tapes} (where finite automata work with only one memory tape).
+Each tape represents a regular language.
+While finite automata model a single regular language, finite transducers perform mapping between these languages, and, more preciselly, between words in each language.
+
+Finite transducers have interesting uses, e.g., as translators in natural language processing research and applications for phonological and morphological analysis, input parsers, machines to perform browser transductions and user input saturation and more.
+
+The purpose for adding support for finite state transducers in \mata is using finite transducers as translators in string constraint solving for deciding satisfiability of SMT formulae with replace operations which can be conveniently encoded into transducers.
 
 % String Solving + Noodler
-In the recent decades, we have seen a rapid growth of  various procedures for SMT string solving, implemented in numerous state-of-the-art SMT solvers.
-The importance of efficient algorithms for deciding satisfiability of SMT formulae is underlined by everyday applications in the industry such as AWS~\cite{Rungta2022} or the ongoing anual competion SMT-COMP~\cite{smt_comp}.
+In the recent decades, we have seen a rapid growth of various procedures for SMT string constraint solving, implemented in numerous state-of-the-art SMT solvers.
+The importance of efficient algorithms for deciding satisfiability of SMT formulae is underlined by everyday applications in the industry such as running a billion SMT queries a day in Amazon Web Services to verify safety of user inputs~\cite{Rungta2022} or the ongoing annual competion SMT-COMP~\cite{smt_comp} comparing a number of SMT solver on various benchmarks both from the industry and the research solving complex problems.
 
 Recent advances in analysis of programs manipulating strings, string solving, automatically solving string constraints over string languages, have heightened the importance of modelling string replacement operations.
 Such operations allow for replacing a substring specified by a regular language with another string.
 The appliations are widely used in web applications such as implicit browser transductions, or replace functions such as \emph{replace} and \emph{replace-all} functions.
-One of the most important applications of string-replace operations is defense against attacks such as cross-site scripting or code injection in web applications.
+The area of active research with huge demand and practical applicability in the industry and one of the most important applications of string-replace operations is defense against attacks such as cross-site scripting or code injection in web applications.
 Untrusted inputs from a user are to be sanitized (e.g. by escaping the input string) in order to prevent arbitrary malicious code execution.
 We need a toolset to verify that such sanitizations are correct and safe.
 SMT solver with support for replace operations can be used to decide this.
@@ -239,6 +242,8 @@ Unless we explicitly state the number of tapes, we will further consider 2-tape 
 \mata is a new finite automata library, built with simplicity, extensibility and performance in mind.
 \mata currently supports only (non)deterministic finite automata.
 
+\mata not only provides the user with a clear and understandable interface to common automata operations, but also allows for precises low-level access to the underlying data structures to better optimize for user- and use case-specific operations.
+
 The performance of \mata have been evaluated in~\cite{cade23_reasoning_regular_properties_comparision_DBLP:conf/cade/FiedorHHRSV23} (as \enfa), \cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
 Furthermore, \mata is used as an underlying finite automata library for a novel string solver \noodler in~\cite{fm23fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23,tacas24_noodler_10.1007/978-3-031-57246-3_2}, where \mata handles creation and storing of finite automata and performing automata operations on them.
 
@@ -250,17 +255,37 @@ To further extend the applicability of \mata in string solving, abstract regular
 One of such automata are finite transducers.
 Other types include binary decision diagrams (BDDs), finite automata with registers for counting operations, or arbitrary registers.
 
-
 % $\Delta$ stores in memory only those state-posts (a, post(q, a)) where
 % \mid \post(q, a) \neq \emptyset
 
+\section{Other Automata Libraries}
+There are a large number of other automata libraries.
+Each is written in different programming language, usually providing the interface for that programming language alone.
+Each library uses different data structures for storing the automata instances.
+And each library represents the transition relation and transition symbols differently.
+
+For example, automata library \automatapy~\cite{automatapy} is an automata library with a support for \nfas and \dfas.
+\automatapy stores transitions in a hash map mapping source states to a hash map of symbols with set of target states.
+
+This all makes it hard for the user to choose one automata library which can be used for their work.
+The choice often depends on multiple factors where not all of them can be fully satisfied.
+\mata tries to provide an all-around good set of features to allow for easy experimenting with new idea, implementing prototypes of new algorithms, and when the prototype is feasible, optimizing the implementation to sufficiently replace a state-of-the-art purpose-specific automata library.
+For our use cases (mainly string solving), this approach seems to work well.
+Henceforth, \mata is a clear choice for our intend to add support for generally usable finite transducers, which are performant enough to be applicable in string solving in \noodler.
+
+
 % Mona?
 \section{Finite Transducers}
+
+Finite transducers model \emph{relations} (called \emph{rational} or \emph{regular} relations) between regular languages, subsets of carthesian product of regular languages.
+Henceforth, each finite transducer can be thought of as a translator translating (transducing) between the languages (a 2-tape finite transducer precisely models a translator from an input language to an output language, modelling a so-called \emph{binary rational relation}), a subset of $\Sigma^* \times \Sigma^*$.
+In this work, we usually work with binary rational relations, but in general an \emph{n-ary rational relation} can be modelled by a n-tape transducer.
 
 \section{String Solving}
 
 During the last two decades, a great development efforts have been put on improving SMT solvers for specific theories (specific constraint languages).
 Namely, modelling and deciding constraints over a language of strings, also known as \emph{string solving}, is one of the dominant fields of active research.
+The problems being solved are complex, computationally-expensive problems, often PSPACE-complete or harder, with a lot of still open questions, even after decades of active research.
 
 The advances in string solving are supported by the application of string solvers (SMT solvers supporting solving constraints over the language of strings) in verification of web services.
 String solvers are used to prevent cross-site scripting or code execution attacks by discovering security vulnerabilities in web applications and web service APIs, as presented by works:~\cite{String_constraints_with_concatenation_and_transducers_solved_efficiently, Composing_Static_and_Dynamic_Analysis_to_Validate_Sanitization_in_Web_Applications, Satisfiability_Modulo_Theories_Introduction_and_Applications, Simple_linear_string_constraints,Z3-str_a_z3-based_string_solver_for_web_application_analysis,S3_A_Symbolic_String_Solver_for_Vulnerability_Detection_in_Web_Applications} and many more.
