@@ -475,9 +475,13 @@ Therefore, in a representation of a $n$-tape \nft, vector of state levels maps t
 One transition in \nft corresponds to $n$ transitions in \nfaClass.
 
 Each transition in \nfaClass corresponds to one level of the \nft, i.e., one tape of the \nft.
-\nft transition always starts in level $0$. Transition from level $0$ to level $1$ represents the operation on the first \nft tape, from level $1$ to level $2$ the second \nft tape operation and so on.
+\nft transition always starts at level $0$. Transition from level $0$ to level $1$ represents the operation on the first \nft tape, from level $1$ to level $2$ the second \nft tape operation and so on.
 Finally, the transition from state with level $n-1$ back to state with level $0$ corresponds to the last tape in the \nft.
-For 2-tape (input/output) \nft, the levels used will be $0$ and $1$, where transitions from states with levels $0$ represent the ipnut transitions and transitions from states with levels $1$ represent the output transitions.
+
+For 2-tape (input/output) \nft, the levels used will be $0$ and $1$, where transitions from states with levels $0$ represent the input transitions and transitions from states with levels $1$ represent the output transitions.
+
+We denote a level $l$ of a state $x$ as $l = \level{x}$.
+In this work, we use terms \emph{level} and \emph{tape} interchangeably.
 
 For this reason, \nfts can have as initial or final states only states with state level $0$.
 This is crutial for many algorithms (more in~\ref{sec:Algorithms}) which rely on certain invariants in the representation of \nfts, such as that \nfts always synchronize in states with state level $0$ and each step in operations must consider the entire state levels sequence from $0$ to $n-1$ as a single \emph{abstract} step.
@@ -545,39 +549,40 @@ Furthermore, we have implemented several transducer-specific operations.
 
 All operations performing some kind of traversal over the transitions start the compution from states with level $0$.
 \nfts are always synchronized on states with level $0$, that is, after each \nft transition is completed (all tape operations are handled).
-If the macro-state in a worklist contains only states of multiple \nfts with levels $0$, the \nfts are synchronized and the next macro-state can be computed.
+If the macrostate in a worklist contains only states of multiple \nfts with levels $0$, the \nfts are synchronized and the next macrostate can be computed.
 When the synchronized \nfts perform one transition, due to the supported jumps, the new macro state may contain states with different levels.
-Only the state in the macro-state with the level furthest behind is expanded.
-The others are at least one step ahead and therefore cannot be expanded and must wait for the states behind to get to at least their levels first before being expanded themselves.
+Only the state in the macrostate with the level furthest behind is expanded (performs its transitions, if possible).
+The others are at least one level ahead and therefore cannot be expanded and must wait for the states behind to get to at least their levels first before being expanded themselves.
 
-Since jumps can jump at most to the next state with level $0$, we always know which states in the macro-state are ahead and which are behind by the following method.
-If we expand a macro-state with states with levels $k$ and $l$ where $k > l$, we know that state with level $k$ must be ahead of the state with level $l$.
+Since jumps can jump at most to the next state with level $0$, we always know which states in the macrostate are ahead and which are behind by the following method.
+If we expand a macrostate with states with levels $k$ and $l$ where $k > l$, we know that state with level $k$ must be ahead of the state with level $l$.
 If any of the states has level $0$ (and there are other states with nonzero levels), we know that the state $0$ must be ahead of all the other states with nonzero levels, and synchronized with all other states with levels $0$.
 That holds since the states with levels $0$ can only be the next states with levels $0$, and not the states with level $0$ behind (as the first step from the synchronized states is to move immediately out of the states with level $0$ behind).
 
 The same holds for BDDs utilizing the same data structure and constraints as \nfts.
 
 \begin{example}
-  If we perform synchronization over three $4$-tape \nfts, starting from macro-state with levels $(0, 0, 0)$, we perform one transition and may end up in a macro-state with levels $(3, 1, 0)$ where the first \nft made a jump of length $3$, the second performed normal transition (jump of length $0$), and the last \nft performed a jump to the next state with level $0$.
-  When expanding the macro-state $(3, 1, 0)$ later on, we know that the state with level $0$ is ahead of the other states with levels $3$ and $1$. And we further know that state with level $3$ must be ahead of the state with level $1$. Therefore, the state with level $1$ must be expanded up until the level reaches $3$ or greater (the next level $0$).
-  Then we may get $(3, 3, 0)$, both the first and the second state are expanded to states with levels $(0, 0, 0)$ and the macro-state is synchronized again.
+  If we perform synchronization over three $4$-tape \nfts, starting from macrostate with levels $(0, 0, 0)$, we perform one transition and may end up in a macrostate with levels $(3, 1, 0)$ where the first \nft made a jump of length $3$, the second performed normal transition (jump of length $0$), and the last \nft performed a jump to the next state with level $0$.
+  When expanding the macrostate $(3, 1, 0)$ later on, we know that the state with level $0$ is ahead of the other states with levels $3$ and $1$. And we further know that state with level $3$ must be ahead of the state with level $1$. Therefore, the state with level $1$ must be expanded up until the level reaches $3$ or greater (the next level $0$).
+  Then we may get $(3, 3, 0)$, both the first and the second state are expanded to states with levels $(0, 0, 0)$ and the macrostate is synchronized again.
 \end{example}
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[scale=0.7, keepaspectratio]{obrazky-figures/jumps_synchronization.drawio.pdf}
+  \includegraphics[scale=0.5, keepaspectratio]{obrazky-figures/jumps_synchronization.drawio.pdf}
   \caption{
     An example of allowed jumps in $4$-tape \nfts during synchronization.
     Jumps can start in state with any level and jump up to the next state with level $0$.
     The jumps cannot jump over states with level $0$, however.
+    The numbers denote the levels for the corresponding states below.
+    The highlighted states depict the states with level $0$, the vertical lines visually set apart \nft transitions (there is one \nft transition, consisting of several tapes, between each pair of vertical lines).
   }
 
 \end{figure}
 
-
 \paragraph{Alternative representation of jumps.}
 If the restriction of allowed jumps being only to the next state with level $0$ is too strict, an alternative approach where jumps are allowed to jump over (potentially multiple) states with level $0$ can be chosen.
-However, during operations such as product construction, an additional information must be added to the worklist containing macro-states containing a list of lengths of each jump performed during the expansion of the last macro state in order to know how far ahead are the states jumped to in relation to the other states in the macro-state.
+However, during operations such as product construction, an additional information must be added to the worklist containing macrostates containing a list of lengths of each jump performed during the expansion of the last macro state in order to know how far ahead are the states jumped to in relation to the other states in the macrostate.
 
 We deem this approach inferior to our chosen approach since it distorts the simplicity of a single data structure and algorithms on it for NFAs, \nfts, and BDDs.
 
@@ -624,13 +629,24 @@ If jump transitions are involved, one may need to expand the jumps into normal t
 For constructing the intersection of two \nfts, we make use of the inheritance of \nfts from \nfas and utilize the classical intersection computation on \nfa using the standard product construction algorithm (as described in Chapter~\ref{sec:Preliminaries}).
 The only modification is adding support for proper assignment of levels to new macrostates depending on the levels of the original \nft states in the macrostate, and handling of various combinations of transition symbols during the process of adding transitions leading from the macrostates.
 
-TODO
-- should it be its own subsection?
-- more of a helper function.
-- resulting level of a macrostate due to the different orig state levels
-- special handling of combinations of symbols.
-  - process epsilons
-  - process dont\_cares
+Given $\ft_1$ with $\states_1$ and $ft_2$ with $\states_2$, construct the intersection of $\ft = \ft_1 \cap \ft_2$.
+
+A new level $\level{q'}$ for a new macrostate $q' = (q'_1, q'_2)$, given a current macrostate $q = (q_1, q_2) \in \states_1 \times \states_2$ where $q'_1$ and $q'_2$ are targets of transitions from $q_1$ and $q_2$, is determined as follows:
+\begin{itemize}
+  \item If $q'_1 = 0$ or $q'_2 = 0$ (holds for both equal $0$, too), $\level{q'} = \texttt{max}(\level{q'_1}, \level{q'_2})$. If both target states have levels $0$, we are finishing an entire \nft transition and enter a synchronized macrostate $q'$, $\level{q'} = 0$. Otherwise, only $q'_1 = 0$ ($q'_2 = 0$) holds, and $q'_1$ ($q'_2$) must be "further ahead" of $q'_2$ ($q'_1$), and must wait for $q'_2$ ($q'_1$) to catch up, therefore, $0 \lq \level{q'} \lg n$.
+  \item Otherwise, $\level{q'} = \texttt{min}(\level{q'_1}, \level{q'_2})$. That is, if both $0 \lq \level{q'_1}, \level{q'_2} \lq n$, we must wait for the state further behind to catch up, so we choose the lower level as $\level{q'}$.
+\end{itemize}
+
+A new transition symbol $a \in Sigma$ for a new transition $(q, a, q')$ is chosen by the following rules:
+\begin{itemize}
+  \item If $(q_1, a, q'_1) \in \post_1$ and $(q_2, a, q'_2) \in \post_2$, $(q, a, q') \in \post$.
+  \item If $(q_1, \epsilon, q'_1) \in \post_1$ and $(q_2, \epsilon, q'_2) \in \post_2$, $(q, \epsilon, q') \in \post$. Epsilon symbols are handled here as normal symbols $a \in \Sigma$. This ensures that only matching $\epsilon$ symbols are synchronized.
+  \item If $(q_1, \dontCare, q'_1) \in \post_1$ (or $(q_2, \dontCare, q'_2) \in \post_2$), $a$ from $(q_2, a, q'_2)$ ($(q_1, a, q'_1)$) is used.
+  This holds for $(q_1, \dontCare, q'_1) \in \post_1$ and $(q_2, \dontCare, q'_2)$, too.
+  This works if one of the symbols is $\dontCare$ and the other is $\epsilon$, too: $(q, \epsilon, q')$ is produced in such a case.
+\end{itemize}
+
+$\dontCare$ transitions must be handled separately since the classic intersection algorithm does not match $\dontCare$ with any other symbol than $\dontCare$.
 
 % ==================================
 \subsection{Composition}
@@ -643,6 +659,8 @@ Using the Unix \emph{pipe} notation, we can express the same with $\ft_1 \compos
 (perform the transduction of $\ft_1$ on the input, and then pipe the result to $\ft_2$ to perform the transduction of $\ft_2$ on the result).
 
 For each \nft, we need to specify which tape(s) $T$ to synchronize on with the other \nft.
+This are the tapes we expect to act as a mediator between the output of $\ft_1$ and the input of $\ft_2$.
+To create a new product transition, the symbols on the corresponding tapes in both \nfts must be compatible (the same symbol, or pairs like $(\dontCare, a)$ for $a \in \Sigma$, etc.).
 % TODO: Explain synchronization better.
 
 \begin{example}
@@ -721,6 +739,14 @@ The symbols on the self-loops are added as follows:
 When the \nfts are balanced out and self-loops are added, we can perform an \nft intersection, as per Section~\ref{sec:intersection}.
 The intersection produces a new \nft representing the composition of $\ft = \ft_1 \composePipe \ft2$, only currently $\ft$ still contains all the tapes from the balanced $\ft_1$ and $\ft_2$.
 Other that that, the composition is complete.
+
+Note that since we added the self-loops, we no longer need to separately handle $\epsilon$ transitions.
+$\epsilon$ symbols are handled as normal transitions, producing an $\epsilon$ transition in the product iff both \nfts perform an $\epsilon$ transition, or one of them performs a $\dontCare$ transition.
+
+Furthermore, we prevent self-loops in both \nfts from synchronizing with each other.
+ That is, we cannot construct a new macrostate $q' = (q_{l1}, q_{l2})$ where both $q_{l1}$ and $q_{l2}$ are self-loop states.
+This would represent a situation where both \nfts are waiting for the other, but none moves forward.
+Since these macrostates are not useful, we prevent their creation entirely.
 
 \paragraph{Projecting out the tapes the composition synchronized on.}
 To clean up $\ft$, we need to project out the tapes $T$ we synchronized on as these are the tapes that have been "consumed" by the composition.
