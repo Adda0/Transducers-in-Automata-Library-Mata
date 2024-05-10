@@ -236,7 +236,31 @@ Unless we explicitly state the number of tapes, we will further consider 2-tape 
 
 
 \chapter{Theoretical Background}
+
+In this chapter, we lay foundation to our work, and explain the related works relevant to our research.
+
 \section{Finite Automata}
+
+Finite automata are finite state machines used to symbolically represent a set of words, conprising a regular language, which they modify using operations on finite automata representing various set operations.
+
+We can work with either deterministic, or non-deterministic finite automata, called \dfa, or \nfa, respectivelly.
+Intiutive encoding of problems into automata often leads to \nfas, while automata operations on \dfas are usually faster and simpler.
+Conversion from \nfa to \dfa, called \emph{determinization} is possible (\nfas and \dfas have the same expressive power), but it is an computationally expensive operation.
+
+Oftentimes a computation of a \emph{minimal}, or at least \emph{minimized} automaton can improve performance of operations performed on the automaton, but the operation itself is expensive and choosing the ideal minimization method (Brzozowski's~\cite{Brzozowski1962CanonicalRE}, Hopcroft's~\cite{hopcroft_71}, $\ldots$) for typical structures of finite automata appearing in one's problems might be hard.
+
+However, \nfas can succinctly represent large state space.
+This prevents exponential state-space explosion which is characteristic for working with \dfas, e.g., inclusion testing.
+The disadvantage of non-determinism is that \nfas require more complex algorithms, such as simulation-based reduction~\cite{ranzato_efficient_2010, holik_optimizing_2009, HHK95}.
+
+Many problems can be efficiently encoded into \nfas and be solved by performing operations on \nfas, such as membership or emptiness testing, reachability testing and more.
+
+We aim to build upon the successful application of finite automata in numerous areas as state models for the corresponding system.
+
+The success is underlined by the vast variety in automata libraries, each providing support for a different set of automata models, various supported operations on these models.
+
+Numerous libraries aim to serve as a general-purpose automata libraries~\cite{automatanet, tacas24_mata_10.1007/978-3-031-57249-4_7,fado} while others closely specialize on just specific use cases for which the libraries highly optimize~\cite{mona,automatajar}.
+
 \subsection{Mata}
 
 \mata is a new finite automata library, built with simplicity, extensibility and performance in mind.
@@ -255,6 +279,12 @@ To further extend the applicability of \mata in string solving, abstract regular
 One of such automata are finite transducers.
 Other types include binary decision diagrams (BDDs), finite automata with registers for counting operations, or arbitrary registers.
 
+Currently, \mata provides support for \dfas and \nfas, with the set of classic operations on finite automata (testing for membership, emptiness, inclusion or equivalence; complementation, determinization, intersection, union, minimization and reduction),
+parsing finite automata to/from a textual format and parsing \nfas from regular expressions, and options to handle large alphabets using mintermization.
+All the operations are provided in both \cpp and Python interfaces, with rich vizualization options in the Python interface.
+
+\mata also implements specialized and well-optimized algorithms for simulation-based size reduction~\cite{ranzato_efficient_2010, treesimulation08}, and antichain-based inclusion and equivalence testing~\cite{doyen-antichain-10}.
+
 % $\Delta$ stores in memory only those state-posts (a, post(q, a)) where
 % \mid \post(q, a) \neq \emptyset
 
@@ -264,7 +294,7 @@ Each is written in different programming language, usually providing the interfa
 Each library uses different data structures for storing the automata instances.
 And each library represents the transition relation and transition symbols differently.
 
-For example, automata library \automatapy~\cite{automatapy} is an automata library with a support for \nfas and \dfas.
+For example, automata libraries \fado~\cite{fado} and \automatapy~\cite{automatapy} are an automata library with a support for \nfas and \dfas.
 \automatapy stores transitions in a hash map mapping source states to a hash map of symbols with set of target states.
 The advantage is that using maps is comfortable for the user, but the disadvantage is that hashing is expensive.
 
@@ -274,16 +304,19 @@ Implicit determinization of automata after every operation provides interesting 
 \mona supports handling of large alphabets of bit vectors.
 \mona is generally a well-optimized automata libray used, beside others, for deciding WS$k$S logics.
 
+\automatajar~\cite{automatajar}, written in Java, and \automatanet~\cite{automatanet}, written in C\#, are popular finite automata libraries.
 
+\automatajar stores its transition relation as a 2D matrix of states and symbols to target states.
+It is well optimized for working with \dfas.
+
+On the other hand, \automatanet uses hash maps to stores the transition relation, but allows for utilization of effective Boolean algebras, using its predicates to annotate each transition of a symbolic \nfa.
 
 This all makes it hard for the user to choose one automata library which can be used for their work.
 The choice often depends on multiple factors where not all of them can be fully satisfied.
 \mata tries to provide an all-around good set of features to allow for easy experimenting with new idea, implementing prototypes of new algorithms, and when the prototype is feasible, optimizing the implementation to sufficiently replace a state-of-the-art purpose-specific automata library.
 For our use cases (mainly string solving), this approach seems to work well.
-Henceforth, \mata is a clear choice for our intend to add support for generally usable finite transducers, which are performant enough to be applicable in string solving in \noodler.
+Henceforth, \mata is the most viable choice for our intend to add support for generally usable finite transducers performant enough to be applicable in string solving in \noodler.
 
-
-% Mona?
 \section{Finite Transducers}
 
 Finite transducers model \emph{relations} (called \emph{rational} or \emph{regular} relations) between regular languages, subsets of carthesian product of regular languages.
@@ -374,12 +407,16 @@ element.innerHTML = '<button onclick=
 \end{listing}
 
 Sadly, such examples does not occur only in textbooks. Real websites use sanitization functions sparingly or do not sanitize user inputs at all.
+This gives a large attack vector to anyone trying to target the servers of these websites with stored user data, for example.
 
 SMT solvers with support for finite transducers can implement such sanitization functions where finite transducers are used for modelling the rewriting rules~\cite{rewriting_rules_kaplan94, rewriting_rules_karttunen97}.
 However, as we have seen in the example above, choosing the correct replacement semantics is important as well.
 Finite transducers can directly implement both the reluctant replacement and greedy replacement.
 Depending on the use-case, both semantics can be useful.
 Such SMT solver with finite transducers can be then used for automatic discovery of cross-site scripting vulnerabilities in source code as well as real-time sanitization.
+
+There are several SMT solvers which make use of finite automata as the model for encoding the solved SMT formulae or parts of the formula: namely \ziiistriiire~\cite{Z3str3RE}, \trau~\cite{Trau}, \norn~\cite{Norn}, and others, e.g.,~\cite{AnthonyComplex2019}.
+We can see that the idea of using finite automata is not entirely new, but it is still an area which has not been thoroughly explored and novel approaches showing great potential to solving SMT string constraints using automata models can be devised.
 
 \subsection{Noodler}
 
