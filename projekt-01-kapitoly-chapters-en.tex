@@ -257,6 +257,8 @@ Many problems can be efficiently encoded into \nfas and be solved by performing 
 
 We aim to build upon the successful application of finite automata in numerous areas as state models for the corresponding system.
 
+Further improvements to automata theory may be widely applicable to large-scale automata-based technologies, e.g., pattern matching, analysis and verification of complex systems, analysis of genetic information, run-time monitoring, deciding logics (linear integer arithmetic or monadic second-order logic, \ldots).
+
 The success is underlined by the vast variety in automata libraries, each providing support for a different set of automata models, various supported operations on these models.
 
 Numerous libraries aim to serve as a general-purpose automata libraries~\cite{automatanet, tacas24_mata_10.1007/978-3-031-57249-4_7,fado} while others closely specialize on just specific use cases for which the libraries highly optimize~\cite{mona,automatajar}.
@@ -319,22 +321,39 @@ Henceforth, \mata is the most viable choice for our intent to add support for ge
 
 \section{Finite Transducers}
 
+Finite automata are a generally fast and universal data structure for modelling complex problems and reasoning about them.
+Finite transducers are a natural extension of finite automata, improving capabilities of automata-based technologies.
+
 Finite transducers model \emph{relations} (called \emph{rational} or \emph{regular} relations) between regular languages, subsets of Cartesian product of regular languages.
 Henceforth, each finite transducer can be thought of as a translator translating (transducing) between the languages (a 2-tape finite transducer precisely models a translator from an input language to an output language, modelling a so-called \emph{binary rational relation}), a subset of $\Sigma^* \times \Sigma^*$.
 In this work, we usually work with binary rational relations, but in general an \emph{n-ary rational relation} can be modelled by an $n$-tape transducer.
 
 \section{String Solving}
 
-During the last two decades, a great development efforts have been put on improving SMT solvers for specific theories (specific constraint languages).
+Uses of automata theory in computer science are ubiquitous, with possible applications in a large group of domains such as reasoning about reactive systems; fast and robust regex matching; reasoning about programs using dymanic memory; and modelling, analysis, or detection of vulnerabilities in software.
+Furthermore, improvements in the area of SMT string solving may lead to wide area of possible applications such as the analysis of security policies.
+
+We currently focus primarily on detection of vulnerabilities in software.
+During the last two to three decades, a great development efforts have been put on improving SMT solvers for specific theories (specific constraint languages).
 Namely, modelling and deciding constraints over a language of strings, also known as \emph{string solving}, is one of the dominant fields of active research.
-The problems being solved are complex, computationally-expensive problems, often PSPACE-complete or harder, with a lot of still open questions, even after decades of active research.
+
+Many programs utilize strings as ubiquitous data structures, handling both the program data and user-supplied input data.
+Popular programming languages for web technologies such as JavaScript, PHP, or even Python use strings as a dominant data structure (strings are used as keys to maps, contain names for procedures to be dynamically executed, or encode other types of information which is to be decoded later on, e.g., for serialization during communication between programs, even over the internet such as communication between data servers and user web appliations).
+
+All of these examples of using strings are highly error-prone and can cause security vulnerabilities on multiple levels in the stack: database security, server-site vulnerabilities as as Node.js, application level vulnerabilities such as the the aforementioned vulnerabilities of unsafe handling of strings supplied by the users, with potentially malicious intent of stealing information or attacking the infrastrucuture.
+The problems being solved are complex, computationally-hard problems, often even beyond PSPACE-completeness, with a lot of open questions still to be answered, even after decades of active research.
 
 The advances in string solving are supported by the application of string solvers (SMT solvers supporting solving constraints over the language of strings) in verification of web services.
+Precise detection of security vulnerabilities of web applications is crutial for many players in the industry.
+The ability to detect security vulnerabilities before the software goes to production and during the production itself minimizes security risks and production costs of many a web technology today.
+
 String solvers are used to prevent cross-site scripting or code execution attacks by discovering security vulnerabilities in web applications and web service APIs, as presented by works:~\cite{String_constraints_with_concatenation_and_transducers_solved_efficiently, Composing_Static_and_Dynamic_Analysis_to_Validate_Sanitization_in_Web_Applications, Satisfiability_Modulo_Theories_Introduction_and_Applications, Simple_linear_string_constraints,Z3-str_a_z3-based_string_solver_for_web_application_analysis,S3_A_Symbolic_String_Solver_for_Vulnerability_Detection_in_Web_Applications} and many more.
 
 String solving is especially useful for analysis of security vulnerabilities related to sanitization of text inputs from users on websites.
 This prevents crackers from injecting malicious code into the website and spreading the code between the users of said website using techniques such as cross-site scripting: executing arbitrary malicious code on the user's local browser environment.
 Sanitization of text inputs is one of many use-cases where finite transducers can be utilized.
+
+To illustrate the vulnerabilities, take a look at the following typical software vulnerabilities of software manipulating strings, for example~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10,kern14} and many more.
 
 \paragraph{Cross-site scripting attack.}
 Have a look at one textbook example of a cross-site scripting attack where text inputs are sanitized incorrectly in Listing~\ref{listing:not_sanitized_example}, allowing for insertion of malicious script executing arbitrary code.
@@ -408,6 +427,12 @@ element.innerHTML = '<button onclick=
 
 Sadly, such examples do not occur only in textbooks. Real websites use sanitization functions sparingly or do not sanitize user inputs at all.
 This gives a large attack vector to anyone trying to target the servers of these websites with stored user data, for example.
+
+Other security vulnerabilities discoverable by SMT string solvers include detection of SQL-injections, security policy malfunctions.
+Precise and maily automatic analusis of these vulnerabilities and systems they appear in can save great resources and time to many industry-level projects.
+Such projects require scalability and expressiveness of applied methods, together with high level of automation.
+
+With adding support for finite transducers, we aim to improve the expressiveness, and automation, but also scalability of our proposed solution.
 
 SMT solvers with support for finite transducers can implement such sanitization functions where finite transducers are used for modelling the rewriting rules~\cite{rewriting_rules_kaplan94, rewriting_rules_karttunen97}.
 However, as we have seen in the example above, choosing the correct replacement semantics is important as well.
@@ -1168,6 +1193,9 @@ There can be between one and about 200 nested replace operations on the benchmar
 where regex $``\texttt{.d}^+\texttt{.}``$ represents a regex descrining one or more occurrences of \texttt{d} surrounded by one character from both sides. For example \texttt{adde} matches, but \texttt{aed} does not.
 
 All of these examples come with variants for replacing all or only the first occurence of the reex or literal, and with varying number of nested replacements.
+
+The general approach to extend string solvers wtih support for replace operations and string transformations in general has already been pioneered in the context of monadic decomposition-based algorithms, as seen in~\cite{AnthonyReplaceAll2018, Flatten, ChainFree, StringAFA}.
+However, adding this support for \noodler for its stabilization decision procedure is is a challenging task with interesting impactful qualities.
 
 \end{example}
 
