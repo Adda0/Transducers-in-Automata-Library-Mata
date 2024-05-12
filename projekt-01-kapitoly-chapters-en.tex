@@ -1502,7 +1502,7 @@ Table~\ref{tab:language_application} shows comparison of performance of \mata an
 
 \begin{table}[ht]
   \centering
-  \input{obrazky-figures/apply_language.tex}
+  \input{obrazky-figures/apply_language_table.tex}
   \caption{
     Table comparing performance of \mata and \mona on an operation language application on both benchmarks.
     The shown times are in milliseconds.
@@ -1518,7 +1518,7 @@ Table~\ref{tab:literal_application} shows comparison of performance of \mata and
 
 \begin{table}[ht]
   \centering
-  \input{obrazky-figures/apply_literal.tex}
+  \input{obrazky-figures/apply_literal_table.tex}
   \caption{
     Table comparing performance of \mata and \mona on an operation literal application on both benchmarks.
     The shown times are in milliseconds.
@@ -1526,6 +1526,27 @@ Table~\ref{tab:literal_application} shows comparison of performance of \mata and
   }
   \label{tab:literal_application}
 \end{table}
+
+\begin{figure}[ht]
+    \centering
+    \subfloat[
+      Literal application
+      \label{fig:apply_literal}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_literal_scatter.pdf}
+    }}%
+    \quad
+    \subfloat[
+      Language application
+      \label{fig:apply_language}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_language_scatter.pdf}
+    }}%
+    \caption{
+      Scatter plots for comparing the performance of \mata and \mona on application operations on both benchmarks.
+    }
+    \label{fig:apply_operation}%
+\end{figure}
 
 \subsection{Composition}
 
@@ -1535,7 +1556,7 @@ Table~\ref{tab:composition} shows comparison of performance of \mata and \mona o
 
 \begin{table}[ht]
   \centering
-  \input{obrazky-figures/composition.tex}
+  \input{obrazky-figures/composition_table.tex}
   \caption{
     Table comparing performance of \mata and \mona on an operation composition on both benchmarks.
     The shown times are in milliseconds.
