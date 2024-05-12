@@ -634,12 +634,11 @@ In this work, we use \nop when we want to explicitly stress the distinction betw
 For general uses of transducers in \mata, we have implemented general automata operations for creating, modifying, and manipulating transducers.
 Furthermore, we have implemented several transducer-specific operations.
 
-\begin{itemize}
-  \item Synchronization,
-  \item concatenate
-  \item get\_one\_letter\_aut
-  \item \ldots
-\end{itemize}
+\paragraph{\nfa operations.}
+The general \nfa operations such as concatenation, union, etc. can be reused from \nfa without many modifications.
+We only need to remember to correctly set levels of states when renumbering states in the result \nft.
+
+Further, we discuss several more significant modifications to existing operations and algorithms for several \nft-specific operations.
 
 \subsection{Synchronization}
 
@@ -683,7 +682,7 @@ However, during operations such as product construction, an additional informati
 We deem this approach inferior to our chosen approach since it distorts the simplicity of a single data structure and algorithms on it for NFAs, \nfts, and BDDs.
 
 % ==================================
-\subsection{Projection}
+\subsection{Projection}\label{sec:projection}
 
 The first standard operation on transducers is \emph{projection}.
 Given an $n$-tape \nft $\ft$, we can perform \emph{projection to} a specified set of tapes, or \emph{project out} a specified set of tapes.
@@ -768,9 +767,9 @@ To create a new product transition, the symbols on the corresponding tapes in bo
 The composition comprises the following steps:
 \begin{itemize}
   \item Extending the \nfts to contain matching tapes,
-  \item adding special self-loops on states with level $0$ to allow for proper handling of $\epsilon$ and $\dontCare$ symbols on the transitions,
+  \item Adding special self-loops on states with level $0$ to allow for proper handling of $\epsilon$ and $\dontCare$ symbols on the transitions,
   \item Performing \nft intersection as described in Section~\ref{sec:intersection}, and
-  \item projecting out the synchronization tapes (as described in Section~\ref{sec:projection}) which were "consumed" by the composition.
+  \item Projecting out the synchronization tapes (as described in Section~\ref{sec:projection}) which were "consumed" by the composition.
 \end{itemize}
 
 \paragraph{Extending \nfts to match each other.}
@@ -905,7 +904,7 @@ For $2$-tape $\ft$, we get a $1$-tape \nft, equal to the corresponding \nfa enco
 \chapter{Finite Transducers for String Solving}
 
 SMT String solving is a complex and diversive problem which has seen a lot of interest over the past few decades.
-Many different approaches for reasoning about word equations, word disequations, regular constraints, and length constraints have emerged, be it as a theoretical work, or implemented directly in one or more of the current state-of-the-art SMT string solvers, e.g., ~\cite{cvc4,cvc5,z3,Z3-str,Z3Str3,Z3str4,Trau,fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, tacas24_noodler_10.1007/978-3-031-57246-3_2, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
+Many different approaches for reasoning about word equations, word disequations, regular constraints, and length constraints have emerged, be it as a theoretical work, or implemented directly in one or more of the current state-of-the-art SMT string solvers, e.g.,~\cite{cvc4,cvc5,z3,Z3-str,Z3Str3,Z3str4,Trau,fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, tacas24_noodler_10.1007/978-3-031-57246-3_2, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
 Each invented approach and each string solver brings a unique set of features and advantages.
 
 We decided to try a novel approach in \noodler, entirely different from other state-of-the-art SMT string solvers (except for \ostrich).
@@ -913,7 +912,7 @@ We decided to try a novel approach in \noodler, entirely different from other st
 This approach gives \noodler a unique oportunity to efficiently encode several problems in string solving as operations on finite automata which other string solvers cannot utilize.
 
 Finite automata can encode regular languages, but string solving problems work with various SMT operations, where some of them cannot be easily encoded into only regular languages.
-Such examples are regular replacement operations, namely \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all} from the theory of strings in SMTLIB~\cite{smtlib_theory_strings}.
+Such examples are regular replacement operations, namely \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all} from the theory of strings in SMT-LIB~\cite{smtlib_theory_strings}.
 However, finite transducers naturally encode rational relations between regular languages which can be directly utilized to encode such problematic SMT operations while allowing for efficient automata (transducer) operations on the relations and languages.
 
 If \noodler could utilize finite transducers in a similar fashion to how it utilizes finite automata in its decision procedure, these SMT operations would be easy to compute and integration of finite transducers into its decision procedure would be a natural extension of the existing decision procedure.
@@ -965,7 +964,7 @@ Since SMT-LIB works only with reluctant replacements, the reluctant replacement 
 
 A reluctant single replacement is defined similarly, only the recursive replacement of $w$ is no longer performed since after the first replacement of $v$, no more patterns matchings are tried on the substring $w$ after the replaced substring $v$.
 \begin{definition}[\textbf{Reluctant single replacement}] \hfill \newline
-  A \emph{reluctant single replacement} $x^{1}_{\pi \rightarrow y}$ is defined as reluctnant all replacement, only with the recursive replacement removed:
+  A \emph{reluctant single replacement} $x^{1}_{\pi \rightarrow y}$ is defined as reluctant all replacement, only with the recursive replacement removed:
   $$x^{1}_{\pi \rightarrow y} = \{ u \concat y \concat w \} \text{.}$$
 \end{definition}
 
@@ -1207,11 +1206,10 @@ To construct $\ftLiteralRelucAll$ (or $\ftLiteralRelucSingle$), a composition of
 \begin{example}
   For literal reluctant all replacement $x^{+}_{cc  \rightarrow a}$, we can see that $\mathcal{M}(0) = \epsilon$, $\mathcal{M}(1) = c$, $\mathcal{M}(2) = cc$.
 
-  Figure~\ref{fig:literal_reluctant_replace} shows both variations for replace all and replace single \nfts for $x^{+}_{cc \rightarrow a}$.
+  Figure~\ref{fig:literal_reluctant_replace} shows both variations (replace all and replace single) \nfts for $x^{+}_{cc \rightarrow a}$.
 
-  Note that thanks to our approach, $\ftLiteralRelucAll$ and $\ftLiteralRelucSingle$ after composition maintain the same structure, only marker symbol $\$$ is replaced with $\epsilon$.
-
-
+  Thanks to our approach, $\ftLiteralRelucAll$ and $\ftLiteralRelucSingle$ after composition maintain the same structure.
+  The only difference is that marker symbols $\$$ are replaced with $\epsilon$.
 
 \begin{figure}[ht]
     \centering
@@ -1233,8 +1231,6 @@ To construct $\ftLiteralRelucAll$ (or $\ftLiteralRelucSingle$), a composition of
     }
     \label{fig:literal_reluctant_replace}%
 \end{figure}
-
-
 
 \end{example}
 
@@ -1273,7 +1269,7 @@ where regex $``\texttt{.d}^+\texttt{.}``$ represents a regex descrining one or m
 All of these examples come with variants for replacing all or only the first occurence of the reex or literal, and with varying number of nested replacements.
 
 The general approach to extend string solvers wtih support for replace operations and string transformations in general has already been pioneered in the context of monadic decomposition-based algorithms, as seen in~\cite{AnthonyReplaceAll2018, Flatten, ChainFree, StringAFA}.
-However, adding this support for \noodler for its stabilization decision procedure is is a challenging task with interesting impactful qualities.
+However, adding this support for \noodler for its stabilization decision procedure is a challenging task with interesting impactful qualities.
 
 \end{example}
 
@@ -1423,6 +1419,8 @@ Furthermore, these are the operations usually performed in any general use of tr
 
 \subsection{Projection}
 
+Table~\ref{tab:} shows comparison of performance of \mata and \mona on projection operation.
+
 \subsection{Application}
 
 \subsection{Composition}
@@ -1442,14 +1440,18 @@ We compared the performance of \nfts in \mata with a natural encoding of transdu
 
 TODO: experiment results.
 
-Overall, the implementation of \nfts in \mata is functional, performant, and widely usable, with ready-for-use support for solving SMT formulae with string replace operations in \noodler.
+Overall, the design and implementation of \nfts in \mata is feasible, functional, should perform sufficiently enough, and is widely usable, with ready-for-use support for solving SMT formulae with string replace operations in \noodler.
 
 \paragraph{Future work.}
 We continue optimizing and developing \mata and the implementation of \nfts.
 In the future, we want to apply \nfts to solving string SMT formulae in \noodler.
-Furthermore, depending on the performance of \nfts in \noodler, we intend to add support for symbolic representations for large alphabets using bit vectors representing sequences of bits, as used in tool \lash~cite{lash} and  transition representation specific to \nfts to encode \nft operations such as identity more easily.
+Furthermore, depending on the performance of \nfts in \noodler, we intend to add support for symbolic representations for large alphabets using bit vectors representing sequences of bits, as used in tool \lash~cite{lash} and transition representation specific to \nfts to encode \nft operations such as identity more easily.
+
+If the performance of composition of \nfts in \noodler proves to be a bottleneck, we can implement the optimized algorithm specialized for $2$-tape \nfts.
 
 Since the representation of \nfts in \mata is close to BDDs, we intend to study various optimizations used for BDDs to further improve the performance of \nfts in \mata.
+
+Finally, we intent to inherit the current structure for \nfts with the corresponding operations and add support for BDDs to \mata for future uses.
 
 
 %=========================================================================
