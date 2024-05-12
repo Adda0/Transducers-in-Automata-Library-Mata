@@ -1430,7 +1430,7 @@ For benchmarks, we have generated a set of benchmarks from runs of \noodler on b
 We compare the performance of \mata and \mona on operations
 \begin{itemize}
   \item projection to input/output tapes ($1749$ instances),
-  \item application of a word on an \nft ,
+  \item application of a word on an \nft ($2027$ instances),
   \item application of a language on an \nft, and
   \item composition ($2879$ instances).
 \end{itemize}
@@ -1494,7 +1494,56 @@ If the performance of \mata on projection to tape $0$ proves insufficient when s
 
 \subsection{Application}
 
+On each unique \nft, we applied a word and a language using \nft application.
+
+\subsubsection{Application of a Literal}
+
+Table~\ref{tab:language_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
+
+\begin{table}[ht]
+  \centering
+  \input{obrazky-figures/apply_language.tex}
+  \caption{
+    Table comparing performance of \mata and \mona on an operation language application on both benchmarks.
+    The shown times are in milliseconds.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+  }
+  \label{tab:language_application}
+\end{table}
+
+
+\subsubsection{Application of a Literal}
+
+Table~\ref{tab:literal_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a literal constructed as the longest word in the \texttt{pattern} of the replace operation constrainted to the maximal length of word $5$.
+
+\begin{table}[ht]
+  \centering
+  \input{obrazky-figures/apply_literal.tex}
+  \caption{
+    Table comparing performance of \mata and \mona on an operation literal application on both benchmarks.
+    The shown times are in milliseconds.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+  }
+  \label{tab:literal_application}
+\end{table}
+
 \subsection{Composition}
+
+We performed composition of various \nfts appearing in a sequence in SMT-LIB benchmarks including composition of pre-constructed partial compositions of \nfts for replace operations in these sequences.
+
+Table~\ref{tab:composition} shows comparison of performance of \mata and \mona on the composition operation on both benchmarks.
+
+\begin{table}[ht]
+  \centering
+  \input{obrazky-figures/composition.tex}
+  \caption{
+    Table comparing performance of \mata and \mona on an operation composition on both benchmarks.
+    The shown times are in milliseconds.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+  }
+  \label{tab:composition}
+\end{table}
+
 
 \chapter{Conclusion}
 
@@ -1509,9 +1558,10 @@ We further focussed on utilizing \nfts in string solving by adding algorithms to
 
 We compared the performance of \nfts in \mata with a natural encoding of transducers in the automata library \mona.
 
-TODO: experiment results.
+The experiments show that \mata performs slower than \mona, but still runs reasonably fast on the general algorithms suitable for all \nft types.
+The performance of \mata on $2$-tape \nfts can be further improved by applying the specialized algorithm for composition for $2$-tape \nfts, or by sometimes preventing execution of projection.
 
-Overall, the design and implementation of \nfts in \mata is feasible, functional, should perform sufficiently enough, and is widely usable, with ready-for-use support for solving SMT formulae with string replace operations in \noodler.
+Overall, the design and implementation of \nfts in \mata is feasible, functional, performs sufficiently enough, and is widely usable, with ready-for-use support for solving SMT formulae with string replace operations in \noodler.
 
 \paragraph{Future work.}
 We continue optimizing and developing \mata and the implementation of \nfts.
