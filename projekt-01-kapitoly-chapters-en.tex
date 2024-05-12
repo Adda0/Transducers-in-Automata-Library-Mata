@@ -1429,11 +1429,14 @@ For benchmarks, we have generated a set of benchmarks from runs of \noodler on b
 
 We compare the performance of \mata and \mona on operations
 \begin{itemize}
-  \item projection to input/output tapes,
-  \item application of a word on an \nft,
+  \item projection to input/output tapes ($1749$ instances),
+  \item application of a word on an \nft ,
   \item application of a language on an \nft, and
-  \item composition.
+  \item composition ($2879$ instances).
 \end{itemize}
+
+For construct an \nft for each unique replace operation in benchmarks from SMT-LIB solved by \noodler.
+Furthermore, we extend this list by constructing \nfts for partial compositions of a sequence of replace operations (various subsequences) which appear in the SMT-LIB benchmarks.
 
 All of these are the operations which will often be used on \nfts created to replace operations in \noodler and will make up the main set of operations on \nfts once support for transducers in introduced in \noodler as well.
 
@@ -1443,7 +1446,51 @@ Furthermore, these are the operations usually performed in any general use of tr
 
 \subsection{Projection}
 
-Table~\ref{tab:} shows comparison of performance of \mata and \mona on projection operation.
+We show the performance of projection on a $2$-tape \nfts on the input tape (projecting out the output tape), and the output tape (projecting out the input tape) separately, since in $2$-tape \nfts, both cases project the first or the last tape, which is a requires a more complex modification of the \nft than projection of a tape in the middle between another tapes.
+
+Table~\ref{tab:projection} shows comparison of performance of \mata and \mona on the projection operation on both benchmarks.
+
+\begin{table}[ht]
+  \centering
+  \input{obrazky-figures/projection_table.tex}
+  \caption{
+    Table comparing performance of \mata and \mona on projection on both benchmarks.
+    The shown times are in milliseconds.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+  }
+  \label{tab:projection}
+\end{table}
+
+The figures in Figure~\ref{fig:projection} show the same comparison between \mata and \mona with scatter plots: Figure~\ref{fig:projection_0} shows the projection to tape $1$ (projecting out the tape $0$) and Figure~\ref{fig:projection_1} the projection to tape $0$ (projecting out the tape $1$).
+
+\begin{figure}[ht]
+    \centering
+    \subfloat[
+      Scatter plots comparing the performance of \mata and \mona on projection to tape $1$ (projecting out the tape $0$).
+      \label{fig:projection_0}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{projection_scatter_0.pdf}
+    }}%
+    \quad
+    \subfloat[
+      Scatter plots comparing the performance of \mata and \mona on projection to tape $0$ (projecting out the tape $1$).
+      \label{fig:projection_1}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{projection_scatter_1.pdf}
+    }}%
+    \caption{
+      Scatter plots comparing performance of \mata and \mona on operation projection.
+    }
+    \label{fig:projection}%
+\end{figure}
+
+We can see that all projections to tape $1$ finish in under $350$ ms.
+By comparing means, we can see that the \mata is about 2 times slower than \mona, but is still fast, finishing $75\%$ of executions in under $4$ ms.
+
+On the other hand, projecting to tape $0$, i.e., projecting out the tape $1$ is more expensive operation for \mata in the implemented data structure.
+However, even than \mata finishes $0.75\%$ of executions in under $70$ ms.
+Comparing to \mona, encoding of \nfts in \mona ensures that the projecting out the tape $1$ is similarly expensive to projecting out the tape $0$.
+If the performance of \mata on projection to tape $0$ proves insufficient when support for \nfts is added in \noodler, one can omit projecting synchronization levels after every composition (and keep the synchronization levels inside the \nft), or apply the suggested specialization for composition for $2$-tape \nfts which does not need to perform projection at all.
 
 \subsection{Application}
 
