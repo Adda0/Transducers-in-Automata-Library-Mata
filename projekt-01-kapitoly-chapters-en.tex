@@ -728,8 +728,8 @@ Given $\ft_1$ with $\states_1$ and $ft_2$ with $\states_2$, construct the inters
 
 A new level $\level{q'}$ for a new macrostate $q' = (q'_1, q'_2)$, given a current macrostate $q = (q_1, q_2) \in \states_1 \times \states_2$ where $q'_1$ and $q'_2$ are targets of transitions from $q_1$ and $q_2$, is determined as follows:
 \begin{itemize}
-  \item If $q'_1 = 0$ or $q'_2 = 0$ (holds for both equal $0$, too), $\level{q'} = \texttt{max}(\level{q'_1}, \level{q'_2})$. If both target states have levels $0$, we are finishing an entire \nft transition and enter a synchronized macrostate $q'$, $\level{q'} = 0$. Otherwise, only $q'_1 = 0$ ($q'_2 = 0$) holds, and $q'_1$ ($q'_2$) must be "further ahead" of $q'_2$ ($q'_1$), and must wait for $q'_2$ ($q'_1$) to catch up, therefore, $0 \lq \level{q'} \lg n$.
-  \item Otherwise, $\level{q'} = \texttt{min}(\level{q'_1}, \level{q'_2})$. That is, if both $0 \lq \level{q'_1}, \level{q'_2} \lq n$, we must wait for the state further behind to catch up, so we choose the lower level as $\level{q'}$.
+  \item If $q'_1 = 0$ or $q'_2 = 0$ (holds for both equal $0$, too), $\level{q'} = \texttt{max}(\level{q'_1}, \level{q'_2})$. If both target states have levels $0$, we are finishing an entire \nft transition and enter a synchronized macrostate $q'$, $\level{q'} = 0$. Otherwise, only $q'_1 = 0$ ($q'_2 = 0$) holds, and $q'_1$ ($q'_2$) must be "further ahead" of $q'_2$ ($q'_1$), and must wait for $q'_2$ ($q'_1$) to catch up, therefore, $0 < \level{q'} < n$.
+  \item Otherwise, $\level{q'} = \texttt{min}(\level{q'_1}, \level{q'_2})$. That is, if both $0 < \level{q'_1}, \level{q'_2} < n$, we must wait for the state further behind to catch up, so we choose the lower level as $\level{q'}$.
 \end{itemize}
 
 A new transition symbol $a \in Sigma$ for a new transition $(q, a, q')$ is chosen by the following rules:
@@ -741,7 +741,31 @@ A new transition symbol $a \in Sigma$ for a new transition $(q, a, q')$ is chose
   This works if one of the symbols is $\dontCare$ and the other is $\epsilon$, too: $(q, \epsilon, q')$ is produced in such a case.
 \end{itemize}
 
-$\dontCare$ transitions must be handled separately since the classic intersection algorithm does not match $\dontCare$ with any other symbol than $\dontCare$.
+The rules are visualizated in the Table~\ref{tab:synchronization_rules}.
+\begin{table}[ht]
+\centering
+\begin{tabular}{ |c||c|c|c|c| }
+ \hline
+ $\cap$ & $\dontCare$ & $\epsilon$ & a & b \\
+ \hline
+ \hline
+ $\dontCare$ & $\dontCare$ & $\epsilon$ & a & b \\
+ \hline
+ $\epsilon$ & $\epsilon$ & $\epsilon$ & & \\
+ \hline
+ a & a &  & a &\\
+ \hline
+ b & b &  & & b\\
+ \hline
+\end{tabular}
+\caption{
+  Synchronization rules for transitions symbols during intersection.
+  The row lists the symbols on transitions in $\ft_1$, the column in $\ft_2$.
+}
+\label{tab:synchronization_rules}
+\end{table}
+
+Finally, $\dontCare$ transitions must be handled separately since the classic intersection algorithm does not match $\dontCare$ with any other symbol than $\dontCare$.
 
 % ==================================
 \subsection{Composition}
