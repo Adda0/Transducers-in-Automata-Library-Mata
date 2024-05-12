@@ -5,9 +5,108 @@
 %\begin{document}
 
 % Placing of table of contents of the memory media here should be consulted with a supervisor
-%\chapter{Contents of the included storage media}
+\chapter{Contents of the included storage media}
 
-%\chapter{Manual}
+The following list lists the contents of the included storage media. Listed are
+only the few top-level folders in the folder hierarchy.
+
+\begin{itemize}
+	\item \texttt{mata/}: The main folder containing the source code for \mata automata library, with the reference implementation of finite transducers.
+    \item \texttt{docs/}: The LaTeX source files for this work.
+    \item \texttt{benchmarks/}: The benchmarks generated from runs of \noodler on SMT-LIB benchmarks used in comparision of \mata with \mona.
+    \item \texttt{experiments/}: The experimental pipeline with the source code for running experiments comparing \mata with \mona, source code for \mona.
+    \begin{itemize}
+        \item \texttt{results/raw/}: The storage of raw generated CSV files when running experiments.
+
+        \item \texttt{results/processed/}: The CSV files with appropriate names prepared for analysis for experiments shown in this work.
+
+        \item \texttt{analysis}: The scripts for analysing run experiments (generate graphs and tables shown in this work).
+        \begin{itemize}
+          \item \texttt{plots/}: The graphs and plots generated from analysis of the run experiments shown in this work.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+% \chapter{Manual}
+\chapter{Reference Implementation Manual}
+
+Here, we describe how our reference implementation for transducers in \mata can be run, tested, and how one can reproduce the experiments shown in this work.
+
+
+% TODO.
+
+The experiments shown in this work were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux kernel GNU/Linux 5.15.0-106-generic x86\_64).
+The experiments should be runnable on any Unix-like system, provided the following requirements are met.
+
+The following programs are required for the implementation and experimental pipeline to run:
+\begin{itemize}
+    \item Python 3.10.12 or higher,
+    \item C++ compiler, experiments run on g++ (Ubuntu 11.4.0-1ubuntu1\textasciitilde 22.04) 11.4.0,
+    \item cmake 3.22.1 or higher,
+    \item
+\end{itemize}
+
+The experiments can be run as follows:
+\begin{itemize}
+  \item Compile and install \mata with finite transducers:
+  \\
+  \texttt{make -C mata release}
+  \\
+  \texttt{sudo make -C mata install}
+
+  \item Compile programs in experimental pipeline:
+  \\
+  \texttt{cd experiments/}
+  \\
+  \texttt{make -C mona}
+  \\
+  \texttt{make -C mata}
+
+  \item Run an experiment:
+  \\
+  \texttt{
+    ./run\_on\_benchmark.py --runs <RUNS> --timeout <TIMEOUT> <OPERATION> <PATH>
+  }
+  where \texttt{<RUNS>} is to be replacedwith the number of runs on each benchmark instance should be run; \texttt{<TIMEOUT>} is the requested timeout for each benchmark instance in seconds; \texttt{<OPERATION>} is the benchmark operation to run; and \texttt{<PATH>} is the path to a file containing a benchmark instance in \texttt{.mata} format, or a folder containing (possibly inside additional subfolders) files with the benchmark instance in \texttt{.mata} format to run the experiments on.
+
+  \item Run all experiments from this work:
+  \\
+  \texttt{./run\_all\_experiments.sh}
+
+  \item See generated CSV files with results in \texttt{results/raw/}. Copy the files over to \texttt{results/processed/} with descriptive names.
+
+  \item Analyse the results:
+  \\
+  \texttt{cd experiments/analyse}
+  \\
+  \texttt{python -m venv .venv}
+  \\
+  \texttt{source .venv/bin/activate}
+  \\
+  \texttt{pip install -r requirements.txt}
+  \\
+  \texttt{analyse.py}
+  where \texttt{analyse.py} expects the following CSV files with results in \texttt{results/processed/}:
+  \begin{itemize}
+    \item \texttt{
+    results/processed/<BENCHMARK>\_apply\_language.csv
+    }
+    \item \texttt{
+      results/processed/<BENCHMARK>\_apply\_literal.csv
+    }
+
+    \item \texttt{
+results/processed/<BENCHMARK>\_projection.csv
+    }
+
+    \item \texttt{
+results/processed/<BENCHAMRK>\_composition.csv
+    }
+  \end{itemize}
+  where \texttt{<BENCHAMRK>} is replaced with \texttt{transducer-plus} and \texttt{webapp}.
+
+\end{itemize}
+
 
 %\chapter{Configuration file}
 
@@ -15,11 +114,11 @@
 
 %\chapter{Poster}
 
-\noindent \textbf{Bibliographic citation}
+% \noindent \textbf{Bibliographic citation}
 
-\medskip
+% \medskip
 
-\noindent \textsc{Nováková}, J. \textit{Web on writing theses and dissertations} online. Edited by Jan NOVÁK. version 1.0. Brno: Brno University of Technology, Faculty of information technology, 2. February 1998 14:10. revised 12. 2. 2020. ISSN 1234-5678. Available at: \url{https://doi.org/10.1000/BC1.0}. [cit. 2020-02-12]. This is a made up citation.
+% \noindent \textsc{Nováková}, J. \textit{Web on writing theses and dissertations} online. Edited by Jan NOVÁK. version 1.0. Brno: Brno University of Technology, Faculty of information technology, 2. February 1998 14:10. revised 12. 2. 2020. ISSN 1234-5678. Available at: \url{https://doi.org/10.1000/BC1.0}. [cit. 2020-02-12]. This is a made up citation.
 
 % For compilation piecewise (see projekt.tex), it is necessary to uncomment it
 %\end{document}
