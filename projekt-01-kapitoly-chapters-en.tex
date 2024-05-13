@@ -35,8 +35,14 @@ Finite transducers have interesting uses, e.g., as translators in natural langua
 The purpose for adding support for finite state transducers in \mata is using finite transducers as translators in string constraint solving for deciding satisfiability of SMT formulae with replace operations which can be conveniently encoded into transducers.
 
 % String Solving + Noodler
-In the recent decades, we have seen a rapid growth of various procedures for SMT string constraint solving, implemented in numerous state-of-the-art SMT solvers.
-The importance of efficient algorithms for deciding satisfiability of SMT formulae is underlined by everyday applications in the industry such as running a billion SMT queries a day in Amazon Web Services to verify safety of user inputs~\cite{Rungta2022} or an ongoing annual competition SMT-COMP~\cite{smt_comp} comparing a number of SMT solver on various benchmarks both from the industry and the research solving complex problems.
+Despite the continuous effort to mitigate the vulnerabilities often found in web appliations of today, the lists of common vulnerabilities such as CVE, CWE and OWASP TOP still list the vulnerabilities related to cross-site scripting (XSS), and code injection or execution as the top critical software vulnerabilities~\cite{OWASP13,OWASP17,OWASP21,cwe-top-25-2022, cwe-top-25-2023}.
+Such attacks can be performed when working with user-submitted data without proper sanitization.
+The user with a malicious intent can inject a dangerous code which is afterwards executed at the server of a web application, or locally on victim's computers.
+And even though vulnerabilities in web applications cost the firms and users considerably more than other types of software bugs, an efficient technique for fighting these attacks is still missing.
+
+To prevent these attacks, techniques utilizing string solving have been applied.
+In the recent decades, we have seen a rapid growth of various procedures for SMT string constraint solving, implemented in numerous state-of-the-art SMT solvers used to verify the safety of handling a user inputs and analyse the possibility of exploiting user inputs for injection of malicious code.
+The importance of efficient algorithms for deciding satisfiability of SMT formulae is further underlined by everyday applications in the industry such as running a billion SMT queries a day in Amazon Web Services to analyse cloud access policies (placing first in OWASP'21~\cite{OWASP21} as the most critical software bug) and correct security configuration~\cite{Rungta2022}, or an ongoing annual competition SMT-COMP~\cite{smt_comp} comparing a number of SMT solver on various benchmarks both from the industry and the research solving complex problems.
 
 Recent advances in analysis of programs manipulating strings, string solving, automatically solving string constraints over string languages, have heightened the importance of modelling string replacement operations.
 Such operations allow for replacing a substring specified by a regular language with another string.
@@ -391,13 +397,13 @@ But if we apply greedy semantics, the user input will be correctly sanitized:
 \end{center}
 where cross-site scripting is prevented from occuring.
 
-A different example~\ref{listing:not_sanitized_implicit_browser_transductions_example} shows how incorrectly handled implicit browser transductions in JavaScript can allow for cross-site scripting attack by executing arbitrary malicious code on the user's local browser.
+A different example~\ref{listing:not_sanitized_implicit_browser_transductions_example} adapted from~\cite{kern14} shows how incorrectly handled implicit browser transductions in JavaScript can allow for cross-site scripting attack by executing arbitrary malicious code on the user's local browser.
 Having an input from a user (stored in variable \texttt{goal}), we want to show a button with the goal specified by the user which executes the corresponding action. Ideally, \texttt{performAction(goal)} function would refuse to execute the action if the action was unspecified (therefore possibly malicious).
 If we pass some valid string as a user, for example \texttt{Study \& Research}, the implicit browser transductions correctly handle the input, encode \texttt{\&} and the button is displayed.
 However, if an attacker passes a string that contains an arbitrary malicious code, constructed in such a way that escaping the input will produce an executable piece of code instead of a button, the browser can perform an action specified by the attacker (here simple \texttt{alert(danger)}) on user's browser.
 
 \begin{listing}[!ht]
-\caption{Example of an cross-site scripting attack using incorrectly handled implicit browser transductions where a malicious attacker's input can be run directly in the user's local browser.}
+\caption{Example of a classic cross-site scripting attack using incorrectly handled implicit browser transductions where a malicious attacker's input can be run directly in the user's local browser.}
 \label{listing:not_sanitized_implicit_browser_transductions_example}
 
     \begin{minted}{javascript}
@@ -408,13 +414,13 @@ element.innerHTML = '<button onclick=
     \end{minted}
 
     When inserted into the HTML, the button will look like the following examples.
-    Using the correct (expected input):
+    Using the correct (expected) input:
     \begin{minted}{html}
 <button onclick="performAction('Study &amp; Research')">
   Study &amp; Research</button>
     \end{minted}
 
-    Using an unexpected input with malicous intent:
+    However, using an unexpected input with malicous intent produces the following:
 
     \begin{minted}{html}
 <button onclick="performAction('&#39;);alert(danger);//')">
@@ -422,14 +428,20 @@ element.innerHTML = '<button onclick=
     \end{minted}
 \end{listing}
 
+We can see that even if the code tries to sanitise the input string collected from the user, the sanitization is not performed correctly, resulting in the malicious code \texttt{alert(1)} being executed.
+For the sanitization to work as expected, the sanitization functions \texttt{htmlEscape} (converting HTML special characters to their entity names) and \texttt{escapeString} (escaping control characters) need to be performed in the opposite order.
+
 Sadly, such examples do not occur only in textbooks. Real websites use sanitization functions sparingly or do not sanitize user inputs at all.
 This gives a large attack vector to anyone trying to target the servers of these websites with stored user data, for example.
 
-Other security vulnerabilities discoverable by SMT string solvers include detection of SQL-injections, security policy malfunctions.
-Precise and maily automatic analusis of these vulnerabilities and systems they appear in can save great resources and time to many industry-level projects.
+Other security vulnerabilities discoverable by SMT string solvers include detection of SQL-injections, and security policy malfunctions.
+Precise and maily automatic analysis of these vulnerabilities and systems they appear in can save resources and time to many industry-level projects.
 Such projects require scalability and expressiveness of applied methods, together with high level of automation.
 
-With adding support for finite transducers, we aim to improve the expressiveness, and automation, but also scalability of our proposed solution.
+With adding support for finite transducers, we aim to improve the expressiveness, and automation, but also scalability of our proposed solution to precisely model the possible values of strings being manipulated inside a program and work with relations between strings as well.
+Analysis of string manipulating programs is further hindered by the lack of standardization, loose syntax or the dynamic nature of languages used in web applications: mostly scripting languages such as PHP or JavaScript.
+
+And at the same time, as shown in~\cite{analjschallenges17}, classic software verification methods such as symbolic execution or model checking approaches are insufficient when working with strings.
 
 SMT solvers with support for finite transducers can implement such sanitization functions where finite transducers are used for modelling the rewriting rules~\cite{rewriting_rules_kaplan94, rewriting_rules_karttunen97}.
 However, as we have seen in the example above, choosing the correct replacement semantics is important as well.
@@ -439,6 +451,8 @@ Such SMT solver with finite transducers can be then used for automatic discovery
 
 There are several SMT solvers which make use of finite automata as the model for encoding the solved SMT formulae or parts of the formula: namely \ziiistriiire~\cite{Z3str3RE}, \trau~\cite{Trau}, \norn~\cite{Norn}, and others, e.g.,~\cite{AnthonyComplex2019}.
 We can see that the idea of using finite automata is not entirely new, but it is still an area which has not been thoroughly explored and novel approaches showing great potential to solving SMT string constraints using automata models can be devised.
+
+Other tools, such as~\cite{black_ostrich} use automata for analysis of web appliations, but are limited input filter regexes.
 
 \subsection{Noodler}
 
