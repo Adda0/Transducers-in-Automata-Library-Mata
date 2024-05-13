@@ -1530,7 +1530,7 @@ Table~\ref{tab:projection} shows comparison of performance of \mata and \mona on
   \caption{
     Table comparing performance of \mata and \mona on projection on both benchmarks.
     The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    The table shows the tool used and which projection was performed (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
   }
   \label{tab:projection}
 \end{table}
@@ -1573,20 +1573,20 @@ On each unique \nft, we applied a word and a language using \nft application.
 \subsubsection{Application of a Language}
 
 Table~\ref{tab:language_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
-The language is forward applied to the \nft ($\id{\langof{\pi}} \composePipe \ft $).
+The language is forward applied to the \nft ($\idNft{\Sigma^*} \composePipe \ft $).
 This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
 
 Table~\ref{tab:language_application_backward} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
-The language is backward applied to the \nft ($\ft \composePipe \id{\langof{\pi}}$).
-This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
+The language is backward applied to the \nft ($\ft \composePipe \idNft{\Sigma^*}$).
+This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
 
 \begin{table}[ht]
   \centering
   \input{obrazky-figures/apply_language_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on an operation language application on both benchmarks where the language is forward applied ($\id{\langof{\pi}} \composePipe \ft$), simulating the forward image propagation.
+    Table comparing performance of \mata and \mona on an operation language application on both benchmarks where the language is forward applied ($\idNft{\Sigma^*} \composePipe \ft$), simulating the forward image propagation.
     The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    The table shows the tool used; number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
   }
   \label{tab:language_application}
 \end{table}
@@ -1677,6 +1677,12 @@ Table~\ref{tab:composition} shows comparison of performance of \mata and \mona o
   \label{tab:composition}
 \end{table}
 
+
+\section{Summary}
+
+It appear that \mata has higher base runtime in comparision with \mona, but in general, $75 \%$ of examples are finished in about the same time in \mata as in \mona, finishing in under $50$ ms.
+There are instances where \mata fails to compute the composition and times out.
+For most cases, the performance should be improved by implementing the optimized composition specialized for $2$-tape \nfts which omits having to insert self-loops and additional levels into the composed \nfts.
 
 \chapter{Conclusion}
 
