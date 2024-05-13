@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-05-12T10:59:28.379Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.2.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="Du6nb63qubKhVLAJxR_7" version="24.2.5" type="device" pages="10">
+<mxfile host="Electron" modified="2024-05-13T10:26:09.053Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.2.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="5NGAGB3MAt6TvDm_Pt4X" version="24.2.5" type="device" pages="10">
   <diagram name="Page-1" id="UTsY-uwNNgUhm9dza5uz">
     <mxGraphModel dx="2460" dy="957" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
       <root>
@@ -985,8 +985,8 @@
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram id="CRR_dL1V7w0LGpf1ieH1" name="Page-2">
-    <mxGraphModel dx="1633" dy="985" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+  <diagram id="CRR_dL1V7w0LGpf1ieH1" name="example_transducer_compact">
+    <mxGraphModel dx="1633" dy="957" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1037,29 +1037,14 @@
         <mxCell id="ObQ2m46722zuNKhQEOMJ-17" value="$$&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;\begin{bmatrix}&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;c &amp;amp; a&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;\end{bmatrix}&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;$$" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="240" y="385" width="110" height="90" as="geometry" />
         </mxCell>
-        <mxCell id="ObQ2m46722zuNKhQEOMJ-25" value="$$(abc)^*$$" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="141" y="232" width="90" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="ObQ2m46722zuNKhQEOMJ-26" value="$$&lt;br&gt;\begin{align}&lt;br&gt;&amp;amp;a \rightarrow bc \\&lt;br&gt;&amp;amp;b \rightarrow \epsilon \\&lt;br&gt;&amp;amp;c \rightarrow a&lt;br&gt;\end{align}&lt;br&gt;$$" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="111" y="238" width="150" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="ObQ2m46722zuNKhQEOMJ-27" value="$$ a \hspace{4mm} b \hspace{2mm} c \hspace{4mm} a \hspace{4mm} b \hspace{2mm} c&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;$$" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="280" y="237" width="500" height="40" as="geometry" />
-        </mxCell>
         <mxCell id="ObQ2m46722zuNKhQEOMJ-28" value="" style="ellipse;shape=doubleEllipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
           <mxGeometry x="216" y="327.5" width="45" height="45" as="geometry" />
-        </mxCell>
-        <mxCell id="ObQ2m46722zuNKhQEOMJ-29" value="&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;$$ b \hspace{1mm} c \hspace{4mm}&amp;nbsp; \hspace{2mm} a \hspace{2mm} b \hspace{1mm} c \hspace{7mm} a $$&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="33" y="269" width="600" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="ObQ2m46722zuNKhQEOMJ-30" value="$$\longrightarrow$$" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="345" y="242" width="130" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram id="aTOsYEm9AeJrM6OXvGvc" name="Page-3">
-    <mxGraphModel dx="1633" dy="985" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+  <diagram id="aTOsYEm9AeJrM6OXvGvc" name="example_transducer_mata">
+    <mxGraphModel dx="1633" dy="957" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1098,23 +1083,8 @@
         <mxCell id="QS1KN_rrgW-oVOui9iB3-10" value="$$b$$" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="400" y="318" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="QS1KN_rrgW-oVOui9iB3-13" value="$$(abc)^*$$" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="141" y="206" width="90" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="QS1KN_rrgW-oVOui9iB3-14" value="$$&lt;br&gt;\begin{align}&lt;br&gt;&amp;amp;a \rightarrow bc \\&lt;br&gt;&amp;amp;b \rightarrow \epsilon \\&lt;br&gt;&amp;amp;c \rightarrow a&lt;br&gt;\end{align}&lt;br&gt;$$" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="111" y="212" width="150" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="QS1KN_rrgW-oVOui9iB3-15" value="$$ a \hspace{4mm} b \hspace{2mm} c \hspace{4mm} a \hspace{4mm} b \hspace{2mm} c&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;$$" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="280" y="211" width="500" height="40" as="geometry" />
-        </mxCell>
         <mxCell id="QS1KN_rrgW-oVOui9iB3-16" value="" style="ellipse;shape=doubleEllipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
           <mxGeometry x="216" y="327.5" width="45" height="45" as="geometry" />
-        </mxCell>
-        <mxCell id="QS1KN_rrgW-oVOui9iB3-17" value="&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;$$ b \hspace{1mm} c \hspace{4mm}&amp;nbsp; \hspace{2mm} a \hspace{2mm} b \hspace{1mm} c \hspace{7mm} a $$&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="33" y="243" width="600" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="QS1KN_rrgW-oVOui9iB3-18" value="$$\longrightarrow$$" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="345" y="217" width="130" height="30" as="geometry" />
         </mxCell>
         <mxCell id="QS1KN_rrgW-oVOui9iB3-27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="QS1KN_rrgW-oVOui9iB3-19" target="QS1KN_rrgW-oVOui9iB3-25" edge="1">
           <mxGeometry relative="1" as="geometry" />
