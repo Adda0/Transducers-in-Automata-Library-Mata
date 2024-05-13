@@ -1433,9 +1433,12 @@ Be mindful that using different tapes for some operations may affect the perform
 Since the idea of data structures and operations for \nfts in \mata was to provide the same underlying data structures as well as the interface for both \nfts and BDDs, many of the operations on \nfts and BDDs follow the same general algorithm with just slight modification in how \nfts and BDDs interpret the same instance of an \nft automaton.
 For example, when using BDDs, one will interpret jumps over several levels to represent a sequence of transitions where the first transition has the transition symbol given by the jump, but the remaining transitions have $\dontCare$ symbols as opposed to the \nft interpretation where all transitions in the jump have the jump symbol.
 
-\paragraph{Support for BDDs.}
-For the implementation of the current interface and algorithms for \nfts, we used the existing implementation for a simple prototype BDD representation using \nfas with levels, implemented previously in \mata, and expanded upon that. We further collaborated with our colleagues to define and implement the same interface for \nfts and future proper implementation of BDDs, based on \nfts.
-As a result of discussions and collaboration, we add support for \nfts (this work, utilizing the existing implementations for application, projection and composition) and plan adding support for BDDs in the future, we agreed upon a common interface, where BDDs inherit operations from \nfts where the cores of the \nft- and BDD-specific operations from Section~\ref{sec:Algorithms} (composition, projection, application) are adopted and extended versions of the existing implementations for BDD operations.
+% \paragraph{Support for BDDs.}
+For the implementation of the current interface and algorithms specific for \nfts (composition and projection), I used the existing implementation for a simple prototype BDD representation using \nfas with levels, which was implemented previously in \mata.
+I further modified the existing operations, expanded the interface with new operations, added string solving-specific operations (construction of typical \nfts used in string solving, \nfts for replace operations, \ldots).
+I collaborated with our colleagues to define the same interface for \nfts and future proper implementation of BDDs, inherited from \nfts.
+
+As a result of discussions and collaboration, I add support for \nfts (this work, utilizing the existing implementations for projection and composition) and we plan adding support for BDDs in the future: using the defined common interface, where BDDs inherit operations from \nfts where the cores of the \nft- and BDD-specific operations from Section~\ref{sec:Algorithms} (composition, projection) are modified and extended versions of the existing implementations for BDD operations.
 
 Thanks to this collaboration, we are able to add official support for BDDs into \mata easily by inheriting \nft and modifying handling of jump transitions and several additional changes.
 Therefore, \nft projection will be similar to BDD projection, \nft application is similar to BDD application, etc.
