@@ -223,17 +223,11 @@ An $n$-tape \emph{deterministic finite state transducer} (\emph{DFST}; \emph{det
 
 % TODO: Synchronized transducer and synchronized rational language + its properties?
 
-In this work, we will often limit ourselves to 2-tape \nfts (\dfts), called \emph{((non)deterministic) finite state input output transducers} where the first tape is the \emph{input tape} and the second tape is the \emph{output tape}.
+In this work, we will often limit ourselves to $2$-tape \nfts (\dfts), called \emph{((non)deterministic) finite state input output transducers} where the first tape is the \emph{input tape} and the second tape is the \emph{output tape}.
+Unless we explicitly state the number of tapes, we will further consider $2$-tape \nfts.
 
-Unless we explicitly state the number of tapes, we will further consider 2-tape \nfts.
-
-% TODO: Input, output projection.
-% TODO: Composition, Application.
-
-
-
-
-
+We will sometimes abuse the notation for transitions, especially for transition symbols, to simplify the depiction of design ideas and algorithms.
+We might use words, or even entire automata as transition symbols, which symbolically represents that the transition (or a single transducer tape) is replaced with the correposning sequence of transitions containing the transitions in the word or automaton.
 
 \chapter{Theoretical Background}
 
@@ -383,18 +377,18 @@ However, this sanitization function may be incorrect.
 Depending on the replace semantics, the replacement of \texttt{.*} (Kleene star) can be performed either greedily (at which point the function would sanitize correctly) or reluctantly (the function would sanitize incorrectly).
 Let us see an example of cracker's input:
 \begin{center}
- \texttt{<<script></script>script>perform\_malicious\_action("danger")</script>}
+ \texttt{<<script></script>script>perform\_malicious\_action(''danger'')</script>}
 \end{center}
 which will be replaced with the reluctant semantics to
 \begin{center}
- \texttt{<script>perform\_malicious\_action("danger")</script>}
+ \texttt{<script>perform\_malicious\_action(''danger'')</script>}
 \end{center}
 
 matching only the inner pair of \texttt{<script>}, \texttt{</script>} tags.
 
 But if we apply greedy semantics, the user input will be correctly sanitized:
 \begin{center}
- \texttt{""}
+ \texttt{''''}
 \end{center}
 where cross-site scripting is prevented from occuring.
 
@@ -414,12 +408,16 @@ element.innerHTML = '<button onclick=
 "performAction(\'' + action + '\')">' + text + '</button>';
     \end{minted}
 
-    \begin{minted}{javascript}
+    When inserted into the HTML, the button will look like the following examples.
+    Using the correct (expected input):
+    \begin{minted}{html}
 <button onclick="performAction('Study &amp; Research')">
   Study &amp; Research</button>
     \end{minted}
 
-    \begin{minted}{javascript}
+    Using an unexpected input with malicous intent:
+
+    \begin{minted}{html}
 <button onclick="performAction('&#39;);alert(danger);//')">
   &#39;);alert(1);//')</button>
     \end{minted}
@@ -728,7 +726,7 @@ Given $\ft_1$ with $\states_1$ and $ft_2$ with $\states_2$, construct the inters
 
 A new level $\level{q'}$ for a new macrostate $q' = (q'_1, q'_2)$, given a current macrostate $q = (q_1, q_2) \in \states_1 \times \states_2$ where $q'_1$ and $q'_2$ are targets of transitions from $q_1$ and $q_2$, is determined as follows:
 \begin{itemize}
-  \item If $q'_1 = 0$ or $q'_2 = 0$ (holds for both equal $0$, too), $\level{q'} = \texttt{max}(\level{q'_1}, \level{q'_2})$. If both target states have levels $0$, we are finishing an entire \nft transition and enter a synchronized macrostate $q'$, $\level{q'} = 0$. Otherwise, only $q'_1 = 0$ ($q'_2 = 0$) holds, and $q'_1$ ($q'_2$) must be "further ahead" of $q'_2$ ($q'_1$), and must wait for $q'_2$ ($q'_1$) to catch up, therefore, $0 < \level{q'} < n$.
+  \item If $q'_1 = 0$ or $q'_2 = 0$ (holds for both equal $0$, too), $\level{q'} = \texttt{max}(\level{q'_1}, \level{q'_2})$. If both target states have levels $0$, we are finishing an entire \nft transition and enter a synchronized macrostate $q'$, $\level{q'} = 0$. Otherwise, only $q'_1 = 0$ ($q'_2 = 0$) holds, and $q'_1$ ($q'_2$) must be ''further ahead'' of $q'_2$ ($q'_1$), and must wait for $q'_2$ ($q'_1$) to catch up, therefore, $0 < \level{q'} < n$.
   \item Otherwise, $\level{q'} = \texttt{min}(\level{q'_1}, \level{q'_2})$. That is, if both $0 < \level{q'_1}, \level{q'_2} < n$, we must wait for the state further behind to catch up, so we choose the lower level as $\level{q'}$.
 \end{itemize}
 
@@ -793,7 +791,7 @@ The composition comprises the following steps:
   \item Extending the \nfts to contain matching tapes,
   \item Adding special self-loops on states with level $0$ to allow for proper handling of $\epsilon$ and $\dontCare$ symbols on the transitions,
   \item Performing \nft intersection as described in Section~\ref{sec:intersection}, and
-  \item Projecting out the synchronization tapes (as described in Section~\ref{sec:projection}) which were "consumed" by the composition.
+  \item Projecting out the synchronization tapes (as described in Section~\ref{sec:projection}) which were ''consumed'' by the composition.
 \end{itemize}
 
 \paragraph{Extending \nfts to match each other.}
@@ -830,7 +828,7 @@ As an optimization, when adding multiple subsequent $\dontCare$ transitions duri
 
 \paragraph{Adding self-loops.}
 The next step is to add self-loops to all states with level $0$ in both \nfts.
-These self-loops serve the purpose of nondeterministic "waiting" loops for waiting at the beginning of an \nft transition in one \nft for the other \nft for epsilon transitions on the tapes being synchronized on.
+These self-loops serve the purpose of nondeterministic ''waiting'' loops for waiting at the beginning of an \nft transition in one \nft for the other \nft for epsilon transitions on the tapes being synchronized on.
 
 The self-loops is a symbolic name since they are self-loops in the sense of \nft transitions (from state with level $0$ back to the same state), but they lead over several tapes (i.e., several states with transitions).
 
@@ -843,12 +841,12 @@ The symbols on the self-loops are added as follows:
 \end{itemize}
 
 \begin{example}
-  Figure~\ref{fig:composition_nfts_extension_loops} shows how a single transition in \nfts looks after adding the "waiting" self-loops.
+  Figure~\ref{fig:composition_nfts_extension_loops} shows how a single transition in \nfts looks after adding the ''waiting'' self-loops.
   \begin{figure}[ht]
     \centering
     \includegraphics[keepaspectratio, width=0.5\textwidth]{jumps_synchronization-composition_nfts_extension_loops.pdf}
     \caption{
-      A depiction of a single transition in \nfts $\ft_1$ (top) and $\ft_2$ (bottom) after adding the "waiting" self-loops.
+      A depiction of a single transition in \nfts $\ft_1$ (top) and $\ft_2$ (bottom) after adding the ''waiting'' self-loops.
     }
     \label{fig:composition_nfts_extension_loops}
   \end{figure}
@@ -868,7 +866,7 @@ This would represent a situation where both \nfts are waiting for the other, but
 Since these macrostates are not useful, we prevent their creation entirely.
 
 \paragraph{Projecting out the tapes the composition synchronized on.}
-To clean up $\ft$, we need to project out the tapes $T$ we synchronized on as these are the tapes that have been "consumed" by the composition.
+To clean up $\ft$, we need to project out the tapes $T$ we synchronized on as these are the tapes that have been ''consumed'' by the composition.
 
 \begin{example}
   To finish out example, Figure~\ref{fig:composition_nfts_extension_final} depicts a single product transition after composition is performed and the synchronization tapes are projected out.
@@ -888,7 +886,7 @@ To clean up $\ft$, we need to project out the tapes $T$ we synchronized on as th
 For working with only $2$-tape \nfts, a specialized algorithm for composition can be utilized.
 The algorithm would still utilize the general idea of \nft intersection, but now no extension of \nfts and no self-loops are necessary.
 For each macrostate, we would first perform a step in $\ft_1$ on level $0$, then perform the synchronized step on levels $1$ in $\ft_1$ and $0$ in $\ft_2$ (if such a step is possible as per \nft intersection rules), then finish the composition of the current transition by performing a step in $\ft_2$ on level $1$, constructing a new macrostate from targets of transitions on levels $1$ of both \nfts.
-Handling of jumps is similar to \nft intersection: waiting for the state "left behind" to catch up with the state jumped to.
+Handling of jumps is similar to \nft intersection: waiting for the state ''left behind'' to catch up with the state jumped to.
 
 When adding support for transducers to \noodler, it may be advantageous to utilize this specialized variation of composition as string replace operations in \noodler only ever work with $2$ tapes.
 
@@ -1051,7 +1049,7 @@ Thus the only outgoing transition from $s$ is the epsilon transition and we did 
 Then, all states except for states $s$ where $\finalStates \cap \mathcal{M}(s) \neq \emptyset$ are made final since we want to accept any arbitrary input.
 We omit the original final states since reaching these states is a significant event in reading an arbitrary input which we need to handle separately.
 
-$\aut^{\text{gen}}_{\reverse{\pi}}$ represents an \dfa which states how "far" into $\reverse{\pi}$ we are when reading an arbitrary input.
+$\aut^{\text{gen}}_{\reverse{\pi}}$ represents an \dfa which states how ''far'' into $\reverse{\pi}$ we are when reading an arbitrary input.
 Each symbol either resets the \dfa (simulating manual backtracking) to some previous matched state or all the way up to $s_0$ (no even partial match was found, we start from the beginning of the pattern), or advances to the next state in the \dfa following the pattern.
 
 Now, $\aut^{\text{gen}}_{\reverse{\pi}}$ accepts any string $x$ on its input.
@@ -1122,7 +1120,7 @@ This is why we use the same marker for symbols for both the begin and end marker
 They mark the same location, only once operating on $\reverse{\pi}$, then on $\pi$.
 
 However, marking beginnings is non-deterministic operation since we cannot know in advance whether the currently read symbol in an arbitrary input string marks a beginning of a full match in $\pi$.
-Henceforth, we have introduce another source of non-determinism, which gives us the smart "look-ahead" ability for marking beginnings for only those inputs that will later on truly match in $\pi$.
+Henceforth, we have introduce another source of non-determinism, which gives us the smart ''look-ahead'' ability for marking beginnings for only those inputs that will later on truly match in $\pi$.
 All potentially incorrectly inserted begin markers in the input word end in a non-accepting run for the word with such begin markers.
 We add a new initial state $s'_0$ and add an epsilon transducer transition $\move{s'_0}{\epsilon}{s}$ ($\epsilon$ as the transition symbol on all tapes) leading to all states $s$ which are final in $\aut^{\text{gen}}_{\reverse{\pi}}$, that is, all except those which map to set of states containing the original final state from $\aut_{\reverse{\pi}}$.
 The previous initial state of $\ftBeginMarker$ is set as the only final state and is removed from the initial states.
@@ -1139,7 +1137,7 @@ We already can non-deterministically find the correct begin markers, but we now 
 We construct an \nft $\ftRegexRelucReplaceAll$ which models the actual reluctant replacement.
 The idea is that we read the input string annotated with begin markers and output the same symbols unmodified on the output tape.
 Once we encounter the begin marker, we know we have found the first left-most match which needs to be replaced.
-Therefore, we switch to a "replacement" mode where we read the match without outputting anything, removing all symbols of the match and all additional begin markers inside the match.
+Therefore, we switch to a ''replacement'' mode where we read the match without outputting anything, removing all symbols of the match and all additional begin markers inside the match.
 Afterwards, the match is read and we can insert the replacement for the match onto the output tape.
 When the replacement is inserted, we return to the beginning to potentially perform replacement on another match.
 
@@ -1211,14 +1209,14 @@ Second, we need to construct an \nft $\ftLiteralRelucReplaceAll$ for replacing a
 $\ftLiteralRelucReplaceAll = (\states, \Gamma, \post, \{ q_0 \}, \{ q_f \})$ can be constracted using the following method.
 We construct an \nft for $z$ where $z$ represents the input tape and a sequence of $\epsilon$ symbols represents the corresponding output tape.
 Each state $q$ uniquely maps to its corresponding substring of $y$: $\mathcal{M}: \states \rightarrow \Sigma^*$ is a bijection where $\mathcal{M}(q_0) = \epsilon$, $\mathcal{M}(q_1) = y[0:1]$, $\mathcal{M}(q_1) = y[0:2]$, $\mathcal{M}(q_2) = y[0:3]$, etc.
-Each state therefore represents a "buffer" of symbols read so far on the input tape which have not been outputted on the output tape yet.
+Each state therefore represents a ''buffer'' of symbols read so far on the input tape which have not been outputted on the output tape yet.
 We already have transitions as constructed from $z$ for each state.
 
 Now we add additional transitions as follows:\newline
 \begin{itemize}
   \item If $\marker$ is read on the input tape, we output the contents of the buffer $\mathcal{M}(q)$ where $q$ is the current state (symbols read from the input word but not outputted onto the output tape yet) and move to $q_f$.
   When we succeed by locating prefix starting at index $i$, we split $\mathcal{M}(q) \concat a$ into $l$ and $r$, where $l = p[0:i]$ and $r = p[i:|p|]$.
-  We output $l$ onto the output tape (as a sequence of transition symbols) and move to state $q' = \mathcal{M}(r)$ which reprents the longest prefix of $y$ currently being "buffered" and not processed yet.
+  We output $l$ onto the output tape (as a sequence of transition symbols) and move to state $q' = \mathcal{M}(r)$ which reprents the longest prefix of $y$ currently being ''buffered'' and not processed yet.
   \item If $a \in \Sigma, z = \mathcal{M}(q) \concat a$ ($a$ is the last symbol in $y$), we perform the replacement: outputting $y$, and move to the beginning $q_0$ to continue replacing the next matches.
   \item If $a \in \Sigma, a \neq z[|\mathcal{M}(q)|:|\mathcal{M}(q)| + 1]$ ($a$ is not the next symbol in $z$---those transitions are already in  $\ftLiteralRelucReplaceAll$), we determine the longest prefix $p$ of $z$ from $\mathcal{M}(q) \concat a$ from left to right.
 \end{itemize}
@@ -1272,7 +1270,7 @@ The formulae solved by \noodler which contain replace operations always follow t
 $$ x \in \ldots \land u = \texttt{replace}(\ldots (\texttt{replace}(\texttt{replace}(x, \pi_1, y_1), \pi_2, y_2)\ldots), \pi_n, y_n) \land u \in \ldots \text{.}$$
 
 We have a sequence of nested replace operations.
-There can be between one and about 200 nested replace operations on the benchmarks from industry solved by \noodler, usually working with small tens of unique transition symbols\footnote{This is thanks to that our decision procedure in \noodler substitutes transition symbols not explicitly worked with in the formula with just two "dummy" transition symbols.}.
+There can be between one and about 200 nested replace operations on the benchmarks from industry solved by \noodler, usually working with small tens of unique transition symbols\footnote{This is thanks to that our decision procedure in \noodler substitutes transition symbols not explicitly worked with in the formula with just two ''dummy'' transition symbols.}.
 
 \begin{example}\label{ex:smt_replace_sequence}
   An encoding for operation \texttt{toUpper} which replaces all lowercase letters in $x$ with uppercase letters looks like this:
@@ -1352,7 +1350,7 @@ To get the relationship between the actual letters $a \in \Sigma$ inside the $n$
 % TODO: What needs to be modified.
 The existing decision procedure of \noodler will have to be modified further as follows:
 \begin{itemize}
-  \item Add saturation of replace operations, similarly to how \noodler saturates other string functions,
+  \item Adding saturation of replace operations, similarly to how \noodler saturates other string functions,
   \item Inclusion graph~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23} used by \noodler will have to be extended to support replace operations.
 \end{itemize}
 
@@ -1380,7 +1378,7 @@ We represent both transitions with a transition over an epsilon symbol $\epsilon
 To distinguish between both, we check whether the epsilon transition leads from a state with level $k$ to a state with level $k + 1 \mod n$ or not whenever we encounter the symbol in algorithms.
 This operation has constant complexity since a set of levels in \mata is a state-idexable vector of levels.
 
-We decided for this approach since all operations in \mata already support epsilon transitions, checking for existence of epsilon transitions and accessing them has constant complexity, and adding handling for yet another special transition symbol is further complicates the logic for many operations which do not have to distinguish between epsilon and no operation transitions.
+We decided for this approach since all operations in \mata already support epsilon transitions, checking for existence of epsilon transitions and accessing them has constant complexity, and adding handling for yet another special transition symbol further complicates the logic for many operations which do not have to distinguish between epsilon and no operation transitions.
 
 \paragraph{Words and identity insertion.}
 We also implemented a few utility functions which are useful when constructing or modifying \nfts\footnote{Especially for modelling the replace and other operations in string solving.} such as
@@ -1399,15 +1397,16 @@ Since we aim to implement \nfts in \mata so they are usable for general purposes
 
 Be mindful that using different tapes for some operations may affect the performance of these operations. For example, application on the first tape is more performant than the application on the last tape in an $n$-tape \nft.
 
-\section{Similarities with Operations on BDDs}
-
+\section{Similarities with operations on BDDs.}
 Since the idea of data structures and operations for \nfts in \mata was to provide the same underlying data structures as well as the interface for both \nfts and BDDs, many of the operations on \nfts and BDDs follow the same general algorithm with just slight modification in how \nfts and BDDs interpret the same instance of an \nft automaton.
 For example, when using BDDs, one will interpret jumps over several levels to represent a sequence of transitions where the first transition has the transition symbol given by the jump, but the remaining transitions have $\dontCare$ symbols as opposed to the \nft interpretation where all transitions in the jump have the jump symbol.
 
-As a foundation for \nft-specific operations from Section~\ref{sec:Algorithms}, we have utilized the existing implementations of intersection for BDDs.
+\paragraph{Support for BDDs.}
+The implementation was started by utilizing the existing interface for simple BDD representation in \mata and created in collaboration with the effort to add support for BDDs in \mata.
+As a result of discussions and collaboration between the sides interested in adding support for \nfts and BDDs, we agreed upon a common interface, where BDDs inherit operations from \nfts where the cores of the \nfts- and BDDs-specific operations from Section~\ref{sec:Algorithms} (composition, projection, application) are adopted and extended versions of the existing implementations for BDD operations.
 Thanks to this, we are able to add official support for BDDs into \mata easily by inheriting \nft and modifying handling of jump transitions and several additional changes.
 Therefore, \nft projection will be similar to BDD projection, \nft application is similar to BDD application, and so on.
-
+The proper support for BDDs inheriting from \nfts is planned to be implemented in the future when the current implementation for \nfts matures enough.
 
 \chapter{Experimental Evaluation}
 
@@ -1427,7 +1426,9 @@ Intuitively, \mata performs modified \nfa operations on \nfts while \mona perfor
 \paragraph{Benchmarks.}
 
 For benchmarks, we have generated a new set of benchmarks from runs of \noodler on benchmarks from SMT-LIB~\cite{SMTLIB} which contain string replace operations \texttt{str.replace}, \texttt{str.replace\_all}, \texttt{str.replace\_re} and \texttt{str.replace\_re\_all}.
-The replace operations appear in SMT-LIB benchmarks
+The replace operations appear in SMT-LIB benchmarks \texttt{
+non-incremental/QF\_SLIA/20230331-transducer-plus} (called \texttt{transducer plus} in our experiments) and \texttt{
+non-incremental/QF\_SLIA/20230403-webapp} (called \texttt{webapp} in our experiments).
 
 We compare the performance of \mata and \mona on benchmarks for the following operations
 \begin{itemize}
@@ -1443,14 +1444,37 @@ Furthermore, we extend this list by constructing \nfts for partial compositions 
 \paragraph{Projection benchmark.}
 The projection benchmark consists of unique single $2$-tape \nfts for replace operations found in SMT-LIB formulae solved by \noodler.
 We perform projection to tape $0$ (projecting out the tape $1$), and projection to tape $1$ (projecting out the tape $0$).
-We remove duplicated \nfts in each benchmark which in total produces $1749$ instances.
+We remove duplicated \nfts in each benchmark which in total produces $1749$ instances ($202$ from \texttt{webapp}, $1547$ from \texttt{transducer plus}).
 
 \paragraph{Application of a literal benchmark.}
-The appliation of a literal benchmark consists of pairs ($u$, $\ft$) where $u$ is a string literal and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
+The application of a literal benchmark consists of pairs ($u$, $\ft$) where $u$ is a string literal and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
 $u$ is constructed as the longest word in the \texttt{pattern} of the replace operation constrainted to the maximal length of word $5$.
 We perform the forward application of $u$ to $\ft$ ($\id{u} \composePipe \ft $).
 This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
-We remove duplicated pairs ($u$, $\ft$) in each SMT-LIB benchmark which leaves us in total with $2027$ instances.
+We remove duplicated pairs ($u$, $\ft$) in each SMT-LIB benchmark which leaves us in total with $2027$ instances ($211$ from \texttt{webapp}, $1816$ from \texttt{transducer plus}).
+
+% In addition, we create a second benchmark perorming the backward application of $u$ to $\ft$ ($ \ft \composePipe \id{u}$).
+% This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
+% We remove duplicated pairs ($u$, $\ft$) in each SMT-LIB benchmark which leaves us in total with $2027$ instances.
+
+\paragraph{Application of a language benchmark.}
+The application of a language benchmark consists of pairs ($\idNft{\Sigma^*}$, $\ft$) where $\idNft{\Sigma^*}$ is a regular language $\Sigma^*$ converted into an indentity \nft, and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
+We choose $\idNft{\Sigma^*}$ as the regular language being applied since $\Sigma^*$ is the most difficult case for our method to compute (for each state in $\ft$, we need to compute operations for all symbols in the language).
+We perform the forward application of $\idNft{\Sigma^*}$ to $\ft$ ($\idNft{\Sigma^*} \composePipe \ft $).
+This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
+We remove duplicated pairs ($\idNft{\Sigma^*}$, $\ft$) in each benchmark which in total produces $1750$ instances ($203$ from \texttt{webapp}, $1547$ from \texttt{transducer plus}).
+
+In addition, we create a second benchmark from forward language application benchmark, performing the backward application of $\idNft{\Sigma^*}$ to $\ft$ ($ \ft \composePipe \idNft{\Sigma^*}$).
+This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler, too.
+The number of instances is the same as for the forward language application benchmark.
+
+\paragraph{Composition.}
+Last but not least, we compare the performance of \mata and \mona on compsition operation.
+The composition benchmark contains pairs ($\ft_1$, $\ft_2$) where we perform composition $\ft_1 \composePipe \ft_2$.
+We performed composition of various \nfts appearing in a sequence in SMT-LIB benchmarks including composition of pre-constructed partial compositions of \nfts for replace operations in these sequences.
+
+We remove duplicated pairs ($\ft_1$, $\ft_2$) in each SMT-LIB benchmark which leaves us in total with $2879$ instances ($130$ from \texttt{webapp}, $2749$ from \texttt{transducer plus}).
+
 
 All of these are the operations which will often be used on \nfts created for replace operations in \noodler and will make up the main set of operations on \nfts once support for transducers is introduced in \noodler as well.
 
@@ -1459,6 +1483,8 @@ Furthermore, these are the operations usually performed in any general use of tr
 \section{Results}
 
 The experiments were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux kernel GNU/Linux 5.15.0-106-generic x86\_64) with timeout set to 120 seconds. Due to small runtimes on the majority of instances (a few milliseconds and less), each benchmark instance was run $3$ times and the resulting runtime is computed as the mean of the $3$ runs which mitigates unexpected waiting times for assigning the computation power.
+
+After computing the number of timeouts, the rows with timeouts are dropped so the tables show runtimes for instances where both tools finished.
 
 \subsection{Projection}
 
@@ -1582,8 +1608,6 @@ Table~\ref{tab:literal_application} shows comparison of performance of \mata and
 
 \subsection{Composition}
 
-We performed composition of various \nfts appearing in a sequence in SMT-LIB benchmarks including composition of pre-constructed partial compositions of \nfts for replace operations in these sequences.
-
 Table~\ref{tab:composition} shows comparison of performance of \mata and \mona on the composition operation on both benchmarks.
 
 \begin{table}[ht]
@@ -1625,7 +1649,7 @@ If the performance of composition of \nfts in \noodler proves to be a bottleneck
 
 Since the representation of \nfts in \mata is close to BDDs, we intend to study various optimizations used for BDDs to further improve the performance of \nfts in \mata.
 
-Finally, we intent to inherit the current structure for \nfts with the corresponding operations and add support for BDDs to \mata for future uses.
+Finally, we intend to inherit the current structure for \nfts with the corresponding operations and add support for BDDs to \mata for future uses.
 
 
 %=========================================================================
