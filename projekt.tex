@@ -202,7 +202,44 @@ I have listed all the literary sources, publications and other sources, which we
   acknowledgment={I would like to thank my supervisor, doc. Mgr. Lukáš Holík, Ph.D., who has allowed me to contribute to his research projects for several years now, provided essential and necessary information about the topic of this thesis, outlined possible solutions and answered every question I have had throughout the whole time.},
   % Rozšířený abstrakt (cca 3 normostrany) - lze definovat zde nebo níže / Extended abstract (approximately 3 standard pages) - can be defined here or below
   % TODO
-  extendedabstract={Do tohoto odstavce bude zapsán rozšířený výtah (abstrakt) práce v českém (slovenském) jazyce.},
+  extendedabstract={
+  % }
+    Konečné automaty nachází mnohá použití, ať už v oblasti výzkumu, nebo v průmyslu.
+    Pro jednoduchou a uniformní práci s konečnými automaty je vnodné používat některé z nabízejících se automatových knihoven.
+    Každá knihovna má své výhody a nevýhody, způsobené jejím návrem a implementovanými algoritmy či optimalizovanými datovými strukturami.
+
+    Mezi automatovými knihovnami se objevila nová automatová knihovna \mata, která si klade za cíl poskytnout uživateli rychlou automatovou knihovnu (překonávající v rychlosti i ustálené a vyspělé knihovny), která je jednoduchá ve svém návrhu, a kterou může uživatel jednoduše rozšiřovat nebo upravovat.
+
+    \mata staví na jednoduchých datových strukturách a průhledném kódu pro dobrou udržovatelnost knihovny, její rozšíření nebo rychlý iterativní vývoj nových metod.
+
+    Užitečnost knihovny \mata je zdůrazněna jejím použitím v novém SMT nástroji pro řešení omezení nad řetězci zvaném \noodler.
+    \mata tvoří základ efektivity rozhodovací procedury v nástroji \noodler, který je založený na efektivním kódování SMT formule a řetězcových omezení v ní do konečných automatů a efektivním uvažování nad vytvořenými automaty.
+
+    Seznamy Common Weakness Enumeration (CWE) a Common Vulnerabilities and Exposures (CVE), které řadí softwarové znanitelnosti podle četnosti výskytu, každým rokem ukazují, stále jedním z největších rizikových vektorů v mnohých webových aplikacích je problém saturace neověřených vstupů od uživatelů, a jejich správná analýza pro vyloučení škodlivých kódů z těchto vstupů.
+    Tyto problémy jsou však komplexní a i přes značnou snahu expertů a programátorů jsou tyto chyby stále jedním z nejčastějších znanitelností v moderních webových aplikacích, které ročně stojí firmy značné sumy peněž, a uživatelé přijdou o bezpečí a své soukromí.
+
+    V nástroji \noodler je třeba, mimo jiné, řešit omezení daná operacemi nahrazení řetězce nebo regulárního vzoru v řetězci za literál, která mohou vzniknout právě kódováním takových znanitelností do SMT formule.
+    Řešením takové formule je potom možné ověřit možnost existence škodlivých kódů ve vstupech od uživatele, čehož mnohé firmy, například Amazon Web Services (AWS), denně využívají k ochraně svých serverů a webových aplikací.
+
+    Jelikož však \mata nyní podporuje pouze konečné deterministické a nedeterministické automaty, není možné používat \noodler \\k~účinnnému řešení SMT formulí s operacemi nahrazení.
+    Kdyby \mata dokázala vhodně kódovat i operace nahrazení řetězce nebo regulárního vzoru, \noodler by bylo možné použít i k~řešení těchto omezení, která jako jediná z teorie řetěžců z formátu SMT-LIB \noodler nedokáže řešit.
+
+    Cílem této práce je proto přidání podpory konečných převodníků do knihovny \mata.
+    Konečné převodníky jsou automatové modely reprezentující relace mezi regulárními jazyky.
+    Intiutivně můžeme konečné převodníky chápat a používat jako překladače mezi vstupními řetězci a výstupními řetězci, podobně jako překladače přirozených jazyků.
+    Tyto automatové modely jsou také vhodné ke kódování operací jako implicitní transdukce v prohlížečích, nebo operace nahrazení řetězce nebo regulárního vzoru.
+    Obecně jimi můžeme modelovat situace, kde se v moderních programovacích jazycích manipuluje s řetězci v podobě nahrazení znaků v řetězci nebo podřetězců literály.
+
+    Implementací konečných převodníků do knihovny \mata rozšíříme možnosti využití knihovny \mata a umožníme řešit operace nahrazení v nástroji \noodler.
+
+    V této práci navrhneme datové struktury pro efektivní reprezentaci konečných převodníků, algoritmy pro prácí s převodníky, a konstrukci převodníků pro modelování operací nahrazení potřebných pro nástroj \noodler.
+    datové struktury a algoritmy navrhujeme tak, aby byly kompatibilní s existující infrastrukturou knihovny \mata, a co nejjednodušeji umožňovaly zapojení konečných převodníků do knihovny a jejich interakci s konečnými automaty.
+    Proto jsme založili implementaci konečných převodníků na datových strukturách a algoritmech odvozených od existujících datových struktur a algoritmů pro konečné automaty, které jsme pouze upravily pro účely konečných převodníků a přidali operace specifické pro konečné převodníku.
+    Tento přístup nám navíc umožní následně jednoduše rožšířit knihovnu \mata o podporu binárních rozhodovacích diagramů, které mohou využít navrhované infrastruktury pro konečné převodníky s pouze minimálními změnami potřebnými pro správné fungování binární rozhodovacích diagramů.
+
+    Navrhované struktury a algoritmy implementujeme do knihovny \mata.
+    Dále vytvoříme novou experimentační sadu příkladů problému řešení operace nahrazení z běhů nástroje \noodler na standardní sadu příkladů pro porovnávání efektivity SMT nástrojů SMT-LIB a porovnáme efektivitu implementace konečných převodníků v knihovně \mata s další automatovou knihovnou, \mona, která použitím binárních rozhodovacích diagramů dokáže vhodně kódovat operace podobné operacím pro konečné převodníky.
+  },
   %extabstract.odd={true}, % Začít rozšířený abstrakt na liché stránce? / Should extended abstract start on the odd page?
   %faculty={FIT}, % FIT/FEKT/FSI/FA/FCH/FP/FAST/FAVU/USI/DEF
   faculty.cs={Fakulta informačních technologií}, % Fakulta v češtině - pro využití této položky výše zvolte fakultu DEF / Faculty in Czech - for use of this entry select DEF above
