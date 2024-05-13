@@ -1263,6 +1263,7 @@ However, for our uses in \noodler, we currently do not solve any industry benchm
 Further, when modelling finite regex replacement for regex $\pi$ with the maximal length $n$ of a string $u \in \langof{\pi}$, one needs to create states for all possible substrings of $\Sigma^{\leq n}$, each with the transitions similar to those in $\ftLiteralRelucAll$.
 
 \section{Solving SMT Formulae with Replace Operations}
+\label{sec:string_solving_with_replace}
 
 The main decision procedure of \noodler rewrites SMT formulae into a form where the formula contains regular constraints (where both the variables and regular constraints have assigned regular language) and \noodler checks whether the languages for variables after restricting the languages by the string constraints are non-empty.
 If during the procedure a language of some variable becomes empty, there is no assignment for the formula which could assign the variable a word satisfying the constraints.
@@ -1425,20 +1426,33 @@ Intuitively, \mata performs modified \nfa operations on \nfts while \mona perfor
 
 \paragraph{Benchmarks.}
 
-For benchmarks, we have generated a set of benchmarks from runs of \noodler on benchmarks from SMT-LIB~\cite{SMTLIB} which contain string replace operations \texttt{str.replace}, \texttt{str.replace\_all}, \texttt{str.replace\_re} and \texttt{str.replace\_re\_all}.
+For benchmarks, we have generated a new set of benchmarks from runs of \noodler on benchmarks from SMT-LIB~\cite{SMTLIB} which contain string replace operations \texttt{str.replace}, \texttt{str.replace\_all}, \texttt{str.replace\_re} and \texttt{str.replace\_re\_all}.
+The replace operations appear in SMT-LIB benchmarks
 
-We compare the performance of \mata and \mona on operations
+We compare the performance of \mata and \mona on benchmarks for the following operations
 \begin{itemize}
-  \item projection to input/output tapes ($1749$ instances),
-  \item application of a word on an \nft ($2027$ instances),
-  \item application of a language on an \nft, and
+  \item projection to input/output tapes,
+  \item application of a literal (forward/backward),
+  \item application of a language (forward/backward) ($1750$), and
   \item composition ($2879$ instances).
 \end{itemize}
 
-For construct an \nft for each unique replace operation in benchmarks from SMT-LIB solved by \noodler.
+We collect \nfts for each unique replace operation in benchmarks from SMT-LIB solved by \noodler.
 Furthermore, we extend this list by constructing \nfts for partial compositions of a sequence of replace operations (various subsequences) which appear in the SMT-LIB benchmarks.
 
-All of these are the operations which will often be used on \nfts created to replace operations in \noodler and will make up the main set of operations on \nfts once support for transducers in introduced in \noodler as well.
+\paragraph{Projection benchmark.}
+The projection benchmark consists of unique single $2$-tape \nfts for replace operations found in SMT-LIB formulae solved by \noodler.
+We perform projection to tape $0$ (projecting out the tape $1$), and projection to tape $1$ (projecting out the tape $0$).
+We remove duplicated \nfts in each benchmark which in total produces $1749$ instances.
+
+\paragraph{Application of a literal benchmark.}
+The appliation of a literal benchmark consists of pairs ($u$, $\ft$) where $u$ is a string literal and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
+$u$ is constructed as the longest word in the \texttt{pattern} of the replace operation constrainted to the maximal length of word $5$.
+We perform the forward application of $u$ to $\ft$ ($\id{u} \composePipe \ft $).
+This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
+We remove duplicated pairs ($u$, $\ft$) in each SMT-LIB benchmark which leaves us in total with $2027$ instances.
+
+All of these are the operations which will often be used on \nfts created for replace operations in \noodler and will make up the main set of operations on \nfts once support for transducers is introduced in \noodler as well.
 
 Furthermore, these are the operations usually performed in any general use of transducers, since they comprise all the transducer-specific operations one needs when working with transducers.
 
@@ -1499,22 +1513,38 @@ On each unique \nft, we applied a word and a language using \nft application.
 \subsubsection{Application of a Literal}
 
 Table~\ref{tab:language_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
+The language is forward applied to the \nft ($\id{\langof{\pi}} \composePipe \ft $).
+This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
+
+Table~\ref{tab:language_application_backward} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
+The language is backward applied to the \nft ($\ft \composePipe \id{\langof{\pi}}$).
+This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
 
 \begin{table}[ht]
   \centering
   \input{obrazky-figures/apply_language_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on an operation language application on both benchmarks.
+    Table comparing performance of \mata and \mona on an operation language application on both benchmarks where the language is forward applied ($\id{\langof{\pi}} \composePipe \ft$), simulating the forward image propagation.
     The shown times are in milliseconds.
     The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
   }
   \label{tab:language_application}
 \end{table}
 
+\begin{table}[ht]
+  \centering
+  \input{obrazky-figures/apply_language_backward_table.tex}
+  \caption{
+    Table comparing performance of \mata and \mona on an operation language application on both benchmarks where the language is backward applied on the \nft ($\ft \composePipe \id{\langof{\pi}}$), simulating backward image propagation as described in Section~\ref{sec:string_solving_with_replace}.
+    The shown times are in milliseconds.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+  }
+  \label{tab:language_application_backward}
+\end{table}
 
 \subsubsection{Application of a Literal}
 
-Table~\ref{tab:literal_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a literal constructed as the longest word in the \texttt{pattern} of the replace operation constrainted to the maximal length of word $5$.
+Table~\ref{tab:literal_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a literal.
 
 \begin{table}[ht]
   \centering
