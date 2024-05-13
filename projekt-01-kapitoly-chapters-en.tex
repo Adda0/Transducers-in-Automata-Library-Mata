@@ -1458,6 +1458,8 @@ Furthermore, these are the operations usually performed in any general use of tr
 
 \section{Results}
 
+The experiments were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux kernel GNU/Linux 5.15.0-106-generic x86\_64) with timeout set to 120 seconds. Due to small runtimes on the majority of instances (a few milliseconds and less), each benchmark instance was run $3$ times and the resulting runtime is computed as the mean of the $3$ runs which mitigates unexpected waiting times for assigning the computation power.
+
 \subsection{Projection}
 
 We show the performance of projection on a $2$-tape \nfts on the input tape (projecting out the output tape), and the output tape (projecting out the input tape) separately, since in $2$-tape \nfts, both cases project the first or the last tape, which is a requires a more complex modification of the \nft than projection of a tape in the middle between another tapes.
@@ -1470,7 +1472,7 @@ Table~\ref{tab:projection} shows comparison of performance of \mata and \mona on
   \caption{
     Table comparing performance of \mata and \mona on projection on both benchmarks.
     The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
   }
   \label{tab:projection}
 \end{table}
@@ -1526,7 +1528,7 @@ This simulates the forward image propagation, as described in~\ref{sec:string_so
   \caption{
     Table comparing performance of \mata and \mona on an operation language application on both benchmarks where the language is forward applied ($\id{\langof{\pi}} \composePipe \ft$), simulating the forward image propagation.
     The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
   }
   \label{tab:language_application}
 \end{table}
@@ -1537,7 +1539,7 @@ This simulates the forward image propagation, as described in~\ref{sec:string_so
   \caption{
     Table comparing performance of \mata and \mona on an operation language application on both benchmarks where the language is backward applied on the \nft ($\ft \composePipe \id{\langof{\pi}}$), simulating backward image propagation as described in Section~\ref{sec:string_solving_with_replace}.
     The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
   }
   \label{tab:language_application_backward}
 \end{table}
@@ -1552,7 +1554,7 @@ Table~\ref{tab:literal_application} shows comparison of performance of \mata and
   \caption{
     Table comparing performance of \mata and \mona on an operation literal application on both benchmarks.
     The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
   }
   \label{tab:literal_application}
 \end{table}
@@ -1590,7 +1592,7 @@ Table~\ref{tab:composition} shows comparison of performance of \mata and \mona o
   \caption{
     Table comparing performance of \mata and \mona on an operation composition on both benchmarks.
     The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
   }
   \label{tab:composition}
 \end{table}
