@@ -19,11 +19,12 @@ Recently, a new finite automata library called \mata has been introduced in~\cit
 However, in order for \mata to work well in other applications such as \emph{regular model checking}, or \emph{deciding logics} such as \emph{WS1S} or \emph{quantified Presburger arithmetic}, support for \emph{finite transducers} is necessary.
 In this work, we add \emph{finite transducers} to \mata.
 
-The same as finite automata, finite state transducers are finite-state machines.
+The same as finite automata, finite state transducers are finite state machines.
 They differ from finite automata by working with \emph{multiple memory tapes} (where finite automata work with only one memory tape).
 Each run represents an $n$-tuple of words (each tape represents a single word).
 While finite automaton models a regular language, finite transducer models a relation between regular languages.
 That is, finite transducer models a set of $n$-tuples of words.
+Finite state transducers are of immense practical use in numerous domains such as language and speech processing (computational linguisticts)~\cite{DBLP:journals/coling/Mohri97}, software compilers~\cite{compilers}, parameterized unit testing~\cite{DBLP:conf/icst/VeanesHT10}, code parallelization~\cite{DBLP:journals/nle/Watson96}, web security~\cite{DBLP:conf/uss/HooimeijerLMSV11}, or verification of software programs~\cite{DBLP:books/ws/automata12}.
 
 The two distinctive features of \mata which determine our work in this thesis are \emph{efficiency} and \emph{simplicity}.
 
@@ -67,6 +68,9 @@ The representation for finite transducers simultaneously serves as a common repr
 We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB.
 
 Finally, we run an experimental evaluation of performance of finite transducers in \mata on a new benchmark with replace operations from runs of \noodler.
+The approach is feasible and ready for use in \noodler.
+The experimental results show that even though \mata is slower than the state-of-the-art, it performs well enough for our use cases.
+%  and even outperforms the state-of-the-art
 
 \paragraph{Contribution.}
 The contributions of this work can be summarized as follows:
@@ -282,7 +286,7 @@ The success of finite automata is underlined by the vast variety in automata lib
 
 Numerous libraries aim to serve as a general-purpose automata libraries (e.g., ~\cite{automatanet, tacas24_mata_10.1007/978-3-031-57249-4_7,fado}) while others closely specialize on just specific use cases for which the libraries highly optimize (e.g., in~\cite{mona,automatajar}).
 
-\subsection{Mata}
+\section{Mata}
 
 \mata is a new finite automata library introduced in~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}
 \mata is built with simplicity, extensibility, and performance in mind.
@@ -1036,26 +1040,9 @@ The application of a language $\langof{\aut}$, similarly to the application of a
 The resulting \nft encodes the result.
 For $2$-tape $\ft$, we get a $1$-tape \nft, equal to the corresponding \nfa encoding the regular language of the result.
 
-
-
-% Basic approach, operations, representation
 \chapter{Transducers for String Solving}
 
-SMT String solving is a complex and diversive problem which has seen a lot of interest over the past few decades.
-Many different approaches for reasoning about word equations, word disequations, regular constraints, and length constraints have emerged, be it as a theoretical work, or implemented directly in one or more of the current state-of-the-art SMT string solvers, e.g.,~\cite{cvc4,cvc5,z3,Z3-str,Z3Str3,Z3str4,Trau,fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, tacas24_noodler_10.1007/978-3-031-57246-3_2, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
-Each invented approach and each string solver brings a unique set of features and advantages.
-
-We decided to try a novel approach in \noodler, entirely different from other state-of-the-art SMT string solvers (except for \ostrich).
-\noodler utilizes finite automata to encode the SMT formulae into a set of regular language constraints where the operations on finite automata as well as the representation of the finite automata themselves is handled by \mata.
-This approach gives \noodler a unique oportunity to efficiently encode several problems in string solving as operations on finite automata which other string solvers cannot utilize.
-
-Finite automata can encode regular languages, but string solving problems work with various SMT operations, where some of them cannot be easily encoded into only regular languages.
-Such examples are regular replacement operations, namely \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all} from the theory of strings in SMT-LIB~\cite{smtlib_theory_strings}.
-However, finite transducers naturally encode rational relations between regular languages which can be directly utilized to encode such problematic SMT operations while allowing for efficient automata (transducer) operations on the relations and languages.
-
-If \noodler could utilize finite transducers in a similar fashion to how it utilizes finite automata in its decision procedure, these SMT operations would be easy to compute and integration of finite transducers into its decision procedure would be a natural extension of the existing decision procedure.
-
-Thus, we discuss in this chapter how to utilize finite transducers in \noodler to solve SMT string constraints \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all}.
+We discuss in this chapter how to utilize finite transducers in \noodler to solve SMT string constraints \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all}.
 
 \section{Replace Operations}
 A general regular replacement operation has the following form:
@@ -1080,7 +1067,7 @@ Since SMT-LIB defines only replacement operations of type reluctant replacement 
 
 We denote reluctant regular replacement as $x_{\pi \rightarrow y}$ as where $x$ is the \texttt{input\_string}, $\pi$ is the regular \texttt{pattern} (a literal or a regular language) and $y$ is the \texttt{replacement}.
 
-\section{Encoding Reluctant Regular Replacement as Finite Transducers}
+\section{Encoding Reluctant Regular Replacement as Transducers}
 
 SMT-LIB suports two types of reluctant replacements: a \emph{reluctant all replacement} which replaces all occurrences of the shortest left-most matches of \texttt{pattern}, and \emph{reluctant single replacement} which replaces only the first shortest left-most occurrence of \texttt{pattern}.
 
@@ -1110,7 +1097,7 @@ A reluctant single replacement is defined similarly, only the recursive replacem
   For $a, b, c \in \Sigma$: $aabaaba^{+}_{aa \rightarrow c} = \{ cbcba \}$; $aabaaba^{1}_{aa \rightarrow c} = \{ cbaaba \}$;
 \end{example}
 
-\section{Finite Transducer for Regex Reluctant Replacement}
+\section{Transducers for Regex Reluctant Replacement}
 
 First, we introduce a method for constructing a finite transducer $\ftRegexRelucAll$ for the most general case of reluctant regular replacement, a \emph{regex reluctant all replacement} $x^{+}_{\pi \rightarrow y}$, where the pattern $\pi$ being replaced is specified as a regular language and we replace all occurrences of $\pi$.
 
@@ -1303,7 +1290,7 @@ We have constructed $\ftBeginMarker$ to insert non-deterministically begin marke
 $\ftRegexRelucAll$ (and similarly $\ftRegexRelucSingle$) can be constructed by connecting these two \nfts into a sequence using composition: $\ftRegexRelucAll = \ftBeginMarker \composePipe \ftRegexRelucReplaceAll$ and $\ftRegexRelucSingle = \ftBeginMarker \composePipe \ftRegexRelucReplaceSingle$.
 $\langof{\ftRegexRelucAll} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{+}_{\pi \rightarrow y} \} $ and $\langof{\ftRegexRelucSingle} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{1}_{\pi \rightarrow y} \} $.
 
-\section{Finite Transducer for Literal Reluctant Replacement}
+\section{Transducers for Literal Reluctant Replacement}
 
 Constructing \nfts for regex reluctant replacement is expensive.
 Therefore, when the \texttt{pattern} to be replaced is of a simpler form, namely a string literal, or even a single symbol, a corresponding \nft for reluctant replacement can be constructed faster.
