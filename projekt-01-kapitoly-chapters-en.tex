@@ -11,7 +11,7 @@
 
 \emph{Finite automata} can be found in numerous fields, both in research and in industry.
 In some use cases, handling finite automata can be computationally costly.
-Therefore, a number of finite automata libraries have emerged throughout the years, each with their own set of supported automata types and operations.
+Therefore, a number of automata libraries have emerged throughout the years, each with their own set of supported automata types and operations.
 Their respective design and implementation decisions give various advantages and disadvantages to each library.
 Recently, a new finite automata library called \mata has been introduced in~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
 
@@ -20,11 +20,11 @@ However, in order for \mata to work well in other applications such as \emph{reg
 In this work, we add \emph{finite transducers} to \mata.
 
 The same as finite automata, finite state transducers are finite state machines.
-They differ from finite automata by working with \emph{multiple memory tapes} (where finite automata work with only one memory tape).
+They differ from finite automata by working with \emph{multiple memory tapes} (whereas finite automata work with only one memory tape).
 Each run represents an $n$-tuple of words (each tape represents a single word).
 While finite automaton models a regular language, finite transducer models a relation between regular languages.
 That is, finite transducer models a set of $n$-tuples of words.
-Finite state transducers are of immense practical use in numerous domains such as language and speech processing (computational linguisticts)~\cite{DBLP:journals/coling/Mohri97}, software compilers~\cite{compilers}, parameterized unit testing~\cite{DBLP:conf/icst/VeanesHT10}, code parallelization~\cite{DBLP:journals/nle/Watson96}, web security~\cite{DBLP:conf/uss/HooimeijerLMSV11}, or verification of software programs~\cite{DBLP:books/ws/automata12}.
+Finite state transducers are of immense practical use in numerous domains such as language and speech processing (computational linguistics)~\cite{DBLP:journals/coling/Mohri97}, software compilers~\cite{compilers}, parameterized unit testing~\cite{DBLP:conf/icst/VeanesHT10}, code parallelization~\cite{DBLP:journals/nle/Watson96}, web security~\cite{DBLP:conf/uss/HooimeijerLMSV11}, or verification of software programs~\cite{DBLP:books/ws/automata12}.
 
 The two distinctive features of \mata which determine our work in this thesis are \emph{efficiency} and \emph{simplicity}.
 
@@ -32,7 +32,7 @@ The \emph{Efficiency} of automata algorithms is crucial since in many use cases,
 Many automata libraries are well-optimized on only a subset of operations, presume a certain specific approach to using them, or make limitations on how one can utilize the library.
 \mata wants to achieve fast computation on operations in various applications, providing optimized general operations on finite automata as well as several purpose-specific algorithms, especially for its applications in string solving.
 
-The \emph{simplicity} of \mata focuses on delivering an approachable interface for automata operations, easy integration of \mata into one's toolchain, and further extensibility and modifiability of implemented algorithms and automata models in \mata.
+The \emph{simplicity} of \mata focuses on delivering an approachable interface for automata operations, easy integration of \mata into the existing tools, and further extensibility and modifiability of implemented algorithms and automata models.
 
 The underlying data structures in \mata are designed to make it possible for \mata to run sufficiently fast, but also enable \emph{easy modification} by the user for their own use cases, and give an \emph{extensible} interface for adding new automata models, or purpose-specific operations.
 
@@ -1602,8 +1602,9 @@ For the purpose of experimental evaluation, we simplify the pattern as follows: 
 The pattern reads as: match any word that have symbol \texttt{a} $i$ symbols away from the end of the word.
 
 Usually, the integers for repetitions in pattern matching are parametrtic, giving us a parametric benchmark \symbolFromEnd with varying numbers of repetitions.
-We have limited our benchmark to numbers $i$ between $1$ and $150$.
+We have limited our benchmark to numbers $i$ between $1$ and $150$
 We construct $\ftRegexRelucAll$ and $\ftRegexRelucSingle$ for the regular pattern \texttt{\^.*a.\{i\}} replacing the pattern with an empty string.
+In total, we create $300$ instanes in \symbolFromEnd benchmark.
 
 We compare the performance of \mata and \mona on operations application of a language (applying a language of the matched pattern), and composition constructing the resulting \nft for replace operation.
 
@@ -1822,7 +1823,68 @@ Table~\ref{tab:composition_construct_replace} shows comparison of performance of
     \label{fig:composition}%
 \end{figure}
 
-We can see that performance of \mata is comparable to the performance of \mona on a large number of instances for composition constructing replace \nfts, but there is also a similarly large group of instances in the \transducerPlus benchmark where \mata
+We can see that performance of \mata is comparable to the performance of \mona on a large number of instances for composition constructing replace \nfts, but there is also a similarly large group of instances in the \transducerPlus benchmark where \mata runs slower.
+\mata also has 15 timeouts on the largest compositions created as a partial compositions of a long sequence of compositions.
+
+In general, the runtime of \mata is sufficient.
+We can see that $75 \%$ of instances common in string solving are solved in less than $28$ ms in \mata compared to $21$ ms in \mona.
+Only the partial compositions containing considerably larger \nfts show noticeable slowdown for \mata.
+
+As mentioned earlier, if the performance of \nfts in \mata proves to be a bottleneck in string solving, a specialized algorithm for composition of $2$-tape \nfts can be used instead of the general algorithm for multi-tape \nfts.
+
+\subsection{Pattern matching benchmark.}
+
+The Table~\ref{tab:symbol_from_end_apply_language} shows the comparison of \mata and \mona on pattern matching benchmark \symbolFromEnd on language application operation.
+
+\begin{table}[ht]
+  \centering
+  \input{obrazky-figures/symbol_from_end_apply_language_table.tex}
+  \caption{
+    Language application on \symbolFromEnd.
+  }
+  \label{tab:symbol_from_end_apply_language}
+\end{table}
+
+The Table~\ref{tab:symbol_from_end_construct_replace} shows the comparison of \mata and \mona on pattern matching benchmark \symbolFromEnd on the construction of the replace \nft operation.
+
+\begin{table}[ht]
+  \centering
+  \input{obrazky-figures/symbol_from_end_construct_replace_table.tex}
+  \caption{
+    Composition for replace construction on \symbolFromEnd.
+  }
+  \label{tab:symbol_from_end_construct_replace}
+\end{table}
+
+\begin{figure}[ht]
+    \centering
+    \subfloat[
+      Language application.
+      \label{fig:symbol_from_end_apply_language}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{symbol_from_end_apply_language_scatter.pdf}
+    }}%
+    \quad
+    \subfloat[
+      Composition constructing replace operations.
+      \label{fig:symbol_from_end_composition_construct_replace}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{symbol_from_end_construct_replace_scatter.pdf}
+    }}%
+    \caption{
+      Scatter plots for comparing the performance of \mata and \mona on \symbolFromEnd.
+    }
+    \label{fig:symbol_from_end}%
+\end{figure}
+
+\mata computed all pattern matching benchmarks quickly, running at most $8$ s on the largest instance with $150$ repetitions on the language application operation.
+\mona managed to compute only the first smallest $14$ instances (for both the replace single and replace all variants, in total finishing $28$ on instances).
+In the remaining $272$ instances, \mona fails to determinize the pattern and runs out of memory.
+
+The similar results can be seen in construction of replace \nfts. Even if the intermediate \nfts are small compared to the final \nfts for replace operations, \mona manages to compute only the first smallest $35$ instances (for both the replace single and replace all variants, in total finishing on $70$ instances).
+In the remaining $232$ instances, \mona fails to determinize the pattern and runs out of memory.
+
+This benchmark clearly shows that once you start using \nfts on problems from practice more complex than the simple replace operations in string solving benchmarks from SMT-LIB, the ability to use explicit symbols on transitions and handling nondeterminism becomes crutial to all tools applicable to these problem domains.
 
 \section{Summary}
 
@@ -1841,7 +1903,8 @@ When applying \nfts to examples from practice from other domains, e.g., pattern 
 With the larger patterns, the advantage of \mata being able to handle nondeterminism naturally should prove to be crutial for efficient creation and handling the corresponding \nfts, quickly outperforming tools without proper support for nondeterminism.
 That is because the complexity of determinization of similar patterns usually increases exponentially to the number in counters.
 
-We conclude that \nfts in \mata are prepared and ready to be used in \noodler and the experimental evaluation shows that the performance of \mata should be sufficient for both string solving and general use of \nfts in \mata.
+We conclude that \nfts in \mata are prepared and ready to be used in \noodler and the experimental evaluation shows that the performance of \mata should be sufficient for the uses in string solving.
+Moreover, we conclude that \nfts in \mata are capable of handling complex tasks such as working with regular expressions with counting operations and are generally applicable to a large group of domains beside string solving.
 
 \chapter{Conclusion}
 
@@ -1856,7 +1919,8 @@ We further focussed on utilizing \nfts in string solving by adding algorithms to
 
 We compared the performance of \nfts in \mata with a natural encoding of transducers in the automata library \mona.
 
-The experiments show that \mata performs slower than \mona, but still runs reasonably fast on the general algorithms suitable for all \nft types.
+The experiments show that \mata performs slower than \mona in string solving, but still runs reasonably fast.
+When applied on complex regular expressions such as pattern matching, \mata clearly outperforms approaches without proper handling for explicit alphabets with nondeterminism.
 The performance of \mata on $2$-tape \nfts can be further improved by applying the specialized algorithm for composition for $2$-tape \nfts, or by sometimes preventing execution of projection.
 
 Overall, the design and implementation of \nfts in \mata is feasible, functional, performs sufficiently enough, and is widely usable, with ready-for-use support for solving SMT formulae with string replace operations in \noodler.

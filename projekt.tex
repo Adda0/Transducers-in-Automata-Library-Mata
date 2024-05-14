@@ -238,6 +238,75 @@ I have listed all the literary sources, publications and other sources, which we
   extendedabstract={
   % }
     Konečné automaty nachází mnohá použití, ať už v oblasti výzkumu, nebo v průmyslu.
+    Práce s konečnými automaty může ale v některých případech být výpočetně náročná.
+    Z toho důvodu, postupně se objevil značný počet automatových knihoven, každá s vlastními podporovanými typy automatů a operací nad nimi.
+    Návrh implementace každé z knihoven dává určité výhody a nevýhody.
+    Nedávno byla předvedena nová automatová knihovna \mata.
+
+    \mata je již nyní používána pro uvažování nad regulárními výrazy a pro řešení omezení nad řetěžci.
+    Aby však \mata dobře pracovala i v jiných doménách jako regulární \emph{model checking} nebo rozhodování logik jako WS1S nebo kvantifikovaná Presburgerova aritmetika, podpora pro konečné převodníky je nutná.
+    V této práci přidáváme konečné převodníky do knihovny \mata.
+
+    Podobně jako konečné automaty, konečné převodníky jsou konečné stavové stroje.
+    Odlišují se od konečných automatů tím, že pracují s více paměťovými páskami (zatímco konečné automaty pracují pouze s jednou páskou).
+    Každý běh reprezentuje n-tici slov (každá páska reprezentuje jedno slovo).
+    Zatímco konečné automaty modelují regulární jazyky, konečné převodníky modelují relace mezi regulárními jazyky.
+    Konkrétně, konečné převodníky modelují množinu n-tic slov.
+    Konečné převodníky mají rozsáhlé využití v mnoha aplikačních doménách jako zpracování řeči a jazyka (výpočetní lingvistika), překladačích programů, parametrické \emph{unit} testování, parelelizace kódu, webová bezpečnost, nebo verifikace programů.
+
+    Hlavními charakteristikami knihovny \mata určující povahu této práce je efektivita a jednoduchost.
+
+    Efektivita automatových algoritmů je důležitá pro mnohé příklady použití, kde jsou automatové problémy výpočetné náročné a každé zpomalení práce s automatem způsobuje značné zpomalení celkově.
+    Mnohé automatové knihovny jsou dobře optimalizované na vybranou množinu operací, předpokládají určitý způsob práce s knihovnou, nebo limitují, jak je možné knihovnu využívat.
+    Cílem knihovny \mata je dosáhnout rychlého výpočtu operací v různých aplikacích, poskytovat optimalizované obecné algoritmy i speciální konkrétně zaměřené algoritmy, obzvláště pro její aplikaci v uvažování omezení nad řetězci.
+
+    Jednoduchost knihovny se zaměřuje na dodání pochopitelného a přístupného rozhraní pro automatové operace, jednoduchou integraci knihovny do existujících nástrojů a jednoduchou rozšiřitelnost a upravitelnost implementovaných algoritmů a automatových modelů.
+
+    \mata využívá datových struktur navržených tak, aby umožnily knihvně rychlé výpočty, ale také jejich jednoduchou modifikaci uživatelem pro vlastní použití a poskytující rozšiřitelné rozhraní pro přidávání nových automatových modelů, nebo speciálních operací.
+
+    Naším prvním a hlavním případem použití pro konečné převodníky v knihovně \mata je uvažování o omezeních nad řetězci.
+
+    V posledních dvou desetiletích se oblast uvažování o řetěžcových omezeních dočkala značné pozornosti od výzkumu i z praxe.
+    Výzkum je hlavně motivován použitím nástrojů pro analůzu programvů pro webové aplikace.
+    Uvažování o omezeních na řetězci zabraňuje útokům jako cross-site scripting (XSS) nebo code injection objevováním zranitelností v programech.
+
+    Existuje velké množství SMT nástrojů pro uvažování nad řetěžcovými omezeními, každý implementující vlastní techniky a optimalizace.
+
+    Použití přístupů k uvažování o omezeních nad řetězci založených na automateh nedávno získalo značnou popularitu.
+    Použití automatů pro uvažování o omezeních nad řetězci je přirozeným krokem, neboť řetěžcová omezení obsahují hodně regulárních výrazů a regulárních omezení.
+
+    Tato práce je značně motivována existujícími technikami založenými na automatech jako
+
+
+The work in this thesis is highly motivated by an automata-based technique introduced recently in a novel SMT string solver \noodler.
+\noodler uses automata as the backbone of its decision procedure.
+\noodler can solve word equations with regular constraints, but cannot be used to solve word equations and constraints with replace operations such as \texttt{replaceAll}(replacing all words or a regular patterns with a string literal), as explored in~\cite{10.1145/3158091} for analysis of string manipulating programs in web applications.
+One of the main motivations for adding finite transducers to \mata is encoding replace operations in \noodler.
+
+The broader context of string solving and related work relevant to this thesis is given in Chapter~\ref{chap:string_solving}.
+
+In this work, we design the representation and algorithms for finite transducers in \mata.
+We adjust the design to fit the simplicity and efficiency requirements of \mata.
+We model finite transducers using inherited data structures inherited from finite automata in \mata.
+We extend the data structure for finite transducers as a finite automaton with levels for states.
+This also allows us to inherit large portions of finite automata operations for finite transducers with only slight modifications.
+
+The representation for finite transducers simultaneously serves as a common representation for the finite transducers and future representation of binary decision diagrams.
+
+We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB.
+
+Finally, we run an experimental evaluation of performance of finite transducers in \mata on a new benchmark with replace operations from runs of \noodler.
+The approach is feasible and ready for use in \noodler.
+The experimental results show that even though \mata is slower than the state-of-the-art, it performs well enough for our use cases.
+
+
+
+
+
+
+
+
+
     Pro jednoduchou a uniformní práci s konečnými automaty je vnodné používat některé z nabízejících se automatových knihoven.
     Každá knihovna má své výhody a nevýhody, způsobené jejím návrhem a implementovanými algoritmy či optimalizovanými datovými strukturami.
 
