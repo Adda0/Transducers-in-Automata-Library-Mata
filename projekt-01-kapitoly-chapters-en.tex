@@ -372,14 +372,17 @@ Henceforth, \mata is the most viable choice for our intent to add support for ge
 
 % Strin solving in general.
 
-Despite the continuous effort to mitigate the vulnerabilities often found in web appliations of today, the lists of common vulnerabilities such as CVE, CWE and OWASP TOP still list the vulnerabilities related to cross-site scripting (XSS), and code injection or execution attacks as the top critical software vulnerabilities~\cite{OWASP13,OWASP17,OWASP21,cwe-top-25-2022, cwe-top-25-2023}.
+Despite the continuous effort to mitigate the vulnerabilities often found in web appliations of today, the lists of common vulnerabilities such as CVE, CWE and OWASP TOP still list the vulnerabilities related to cross-site scripting (XSS), and code injection (including SQL-injection) or execution attacks as the top critical software vulnerabilities~\cite{OWASP13,OWASP17,OWASP21,cwe-top-25-2022, cwe-top-25-2023}.
 And even though vulnerabilities in web applications cost the firms and users considerably more than other types of software bugs, an efficient technique for fighting these attacks is still missing.
+Precise detection of security vulnerabilities of web applications is crutial for many players in the industry.
+The ability to detect security vulnerabilities before the software goes to production and during the production itself minimizes security risks and production costs of many a web technology today.
 
 During the last two to three decades, a great development efforts have been put into improving SMT solvers for specific theories (specific constraint languages).
 Namely, modelling and deciding constraints over a language of strings, also known as \emph{string constraint solving}, is one of the dominant fields of active research.
 
-In order to prevent the aforementioned attacks, techniques utilizing string solving are often used.
+In order to prevent the aforementioned attacks, techniques utilizing string solving are often used to discover security vulnerabilities in web applications and web service APIs, as presented by works:~\cite{String_constraints_with_concatenation_and_transducers_solved_efficiently, Composing_Static_and_Dynamic_Analysis_to_Validate_Sanitization_in_Web_Applications, Satisfiability_Modulo_Theories_Introduction_and_Applications, Simple_linear_string_constraints,Z3-str_a_z3-based_string_solver_for_web_application_analysis,S3_A_Symbolic_String_Solver_for_Vulnerability_Detection_in_Web_Applications} and many more..
 Besides XSS and code injection, string solving is also successfuly applied to analysis of smart contracts~\cite{AltBHS22}, and analysis of user accept policies (e.g., as used in Amazon Web Services~\cite{hadarean_mosca, stringsAWS18} where there are run a billion SMT queries a day~\cite{Rungta2022} to analyse cloud access policies---placing first in OWASP'21~\cite{OWASP21} as the most critical software bug---and correct security configurations).
+
 
 This greatly motivates the research of tools for string solving and the corresponding techniques, usually as an extension of the existing SMT solvers implementing a solver for the theory of strings.
 Using an existing SMT solver has an advantages of being able to seamlessly integrate with solvers for other theories, notably the theory of integers (used for lengths of strings), or the theory of arrays (reasoning about array data structures).
@@ -392,57 +395,58 @@ We have seen a rapid growth of various procedures for SMT string constraint solv
 Some of the most prominent SMT solvers
 % , based on the classic DPLL(T) approach
 with string solving capabilities include \cvcv~\cite{cvc5}, \ziii~\cite{z3}, or their derivations such as \trau~\cite{Trau}, \ziiistriiire~\cite{Z3str3RE, BerzishDGKMMN23}, \ziiistriv~\cite{Z3str4}.
-To name another independent string solver, a well known string solver is \ostrich~\cite{AnthonyComplex2019} and others.
+To name a few more independent string solvers, a well known string solvers include \ostrich~\cite{AnthonyComplex2019}, \norn~\cite{Norn} and others.
 
 To futher motivate the development of string solving, SMT string solvers are annyally compared in a competition SMT-COMP~\cite{smt_comp} on various benchmarks both from the industry and research, solving instances of practical problems.
 
+\section{Noodler}
+There are several SMT solvers which make use of finite automata as the model for encoding the solved SMT formulae or parts of the formula, namely \ziiistriiire~\cite{Z3str3RE}, \trau~\cite{Trau}, \norn~\cite{Norn}, and others, e.g.,~\cite{AnthonyComplex2019}.
+We can see that the idea of using finite automata is not entirely new, but it is still an area which has not been thoroughly explored and novel approaches showing great potential to solving SMT string constraints using automata models can be devised.
+Other tools, such as~\cite{black_ostrich}, use automata for analysis of web appliations, but are limited input filter regexes.
+
+A new SMT string solver called \noodler~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23,tacas24_noodler_10.1007/978-3-031-57246-3_2} have been recently introduced, already outperforming the well-established state-of-the-art string solvers.
+\noodler is derived from \ziii~\cite{z3} where it replaces its theory of string.
+
+\noodler brings a novel approach to solving string constraints using a method called \emph{stabilization}, a new procedure for solving word (dis)equations in combination with regular constraints.
+The stabilization-based procedure is seamlessly integrates with the well-used existing algorithms such as
+Align\& Split (first implemented in a string solver \norn~\cite{Norn,AutomataSplitting}, and later adopted by a multitude of other state-of-the-art string solvers---\ostrich~\cite{AnthonyTowards2016,AnthonyReplaceAll2018,AnthonyComplex2019,AnthonyRegex2022,AnthonyInteger2020},
+\ziiistriiire~\cite{Z3str3RE,BerzishDGKMMN23}, \sloth~\cite{holik_string_2018}, \ldots
+), used for converting regular constraints into length constraints, and
+Nielsen transformation~\cite{nielsen1917}, used for solving quadratic equations.
+
+Thanks to this combination of approaches, \noodler is able to uniquely utilize information from both the regular constraints (encoded as finite automata) and word equations to efficiently prune the searched state space, mitigating the effects of possible combinatorial state space explosion.
+
+The stabilization-based procedure makes \noodler superior to other state-of-the-art string solvers on many benchmarks, as seen in the latest results from \noodler~\cite{tacas24_noodler_10.1007/978-3-031-57246-3_2}, and in previous articles~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
+
+\noodler, as opposed to many other state-of-the-art SMT string solvers, is based on automata techniques, utilizing finite automata to intuitively encode regular constraints.
+\noodler uses \mata as the underlying automata library.
+
+This gives \noodler unique oportunities for efficient string solving of SMT formulae which other SMT solvers cannot utilize.
+Using finite automata models as much as possible allows us to solve the satisfiability of the SMT formula by performing standard automata operations on finite automata representing regular languages of string variables in the formula and corresponding constraints.
+The performance results of \noodler clearly show that, when implemented correctly, automata-based algorithms can be more performant than the classic approaches to string solving, and importantly, are often orthogonal to the techniques used in other SMT solver which gives a great improvement when adding \noodler into a portfolio of string solvers.
+This is the reason why it is so important that all implemented automata models in \mata are as performant as possible.
+
 % XSS and code injection.
 
-XSS and code injection can be performed when working with user-submitted data without proper sanitization.
-The user with a malicious intent can inject a dangerous code which is afterwards executed at the server of a web application, or locally on victim's computers.
-
-
-
-
-
-Recent advances in analysis of programs manipulating strings, string solving, and automatic solving of string constraints over string languages have heightened the importance of modelling string replacement operations.
-Such operations allow for replacing a substring specified by a regular pattern or a word with another string.
-One of the most important applications of string replace operations is defence against attacks such as cross-site scripting (XSS) or code injection in web applications.
-The applications are widely used in web applications such as implicit browser transductions, or replace functions such as \emph{replace} and \emph{replace-all} functions.
-This gives an area of active research with huge demand and practical applicability in the industry.
-Untrusted inputs from a user are to be sanitized (e.g., by escaping the input string) in order to prevent arbitrary malicious code execution.
-We need a toolset to verify that such sanitizations are correct and safe.
-The sanitized inputs are verified by testing for emptiness of intersection with the typical database of cross-site scripting attack patterns, represented as a regular language.
-SMT solver with support for replace operations can verify these properties.
-
-Implicit browser transductions codes and decodes HTML codes in the input strings (e.g., replacing ''\texttt{\&\#39;}'' by a single quote ''\texttt{'}'').
-% Application of transducers for string solving
-Finite transducers are ideal for modelling both the sanitization operations and the implicit browser transductions.
-Both applications create binary rational relations between two languages, giving a relation between strings from one language and strings in the other language.
-Such constraints are presented to an SMT solver to decide its satisfiability.
-
-We currently focus primarily on detection of vulnerabilities in software.
+\section{Software Vulnerabilities in Web Appplications}
 
 Many programs utilize strings as ubiquitous data structures, handling both the program data and user-supplied input data.
-Popular programming languages for web technologies such as JavaScript, PHP, or even Python use strings as a dominant data structure (strings are used as keys to maps, contain names for procedures to be dynamically executed, or encode other types of information which is to be decoded later on, e.g., for serialization during communication between programs, even over the internet such as communication between data servers and user web appliations).
+Popular programming languages for web technologies such as JavaScript, PHP, or even Python use strings as a dominant data structure (strings are used as keys to maps, contain names for procedures to be dynamically executed, or encode other types of information which is to be decoded later on, e.g., for serialization during communication between programs, even over the internet such as communication between data servers and user web applications).
+Analysis of string manipulating programs is further hindered by the lack of standardization, loose syntax or the dynamic nature of languages used in web applications: mostly scripting languages such as PHP or JavaScript.
 
-All of these examples of using strings are highly error-prone and can cause security vulnerabilities on multiple levels in the stack: database security, server-site vulnerabilities as as Node.js, application level vulnerabilities such as the the aforementioned vulnerabilities of unsafe handling of strings supplied by the users, with potentially malicious intent of stealing information or attacking the infrastrucuture.
-The problems being solved are complex, computationally-hard problems, often even beyond PSPACE-completeness, with a lot of open questions still to be answered, even after decades of active research.
+At the same time, as shown in~\cite{analjschallenges17}, classic software verification methods such as symbolic execution or model checking approaches are insufficient when working with strings.
+Using strings is highly error-prone and can cause security vulnerabilities on multiple levels in the stack: database security, server-site vulnerabilities as as Node.js, application level vulnerabilities such as the the aforementioned vulnerabilities of unsafe handling of strings supplied by the users, with potentially malicious intent of stealing information or attacking the infrastrucuture.
+% The problems being solved are complex, computationally-hard problems, often even beyond PSPACE-completeness, with a lot of open questions still to be answered, even after decades of active research.
 
-The advances in string solving are supported by the application of string solvers (SMT solvers supporting solving constraints over the language of strings) in verification of web services.
-Precise detection of security vulnerabilities of web applications is crutial for many players in the industry.
-The ability to detect security vulnerabilities before the software goes to production and during the production itself minimizes security risks and production costs of many a web technology today.
+XSS and code injection can be performed when working with strings submitted by an untrusted and unverified user without proper sanitization.
 
-String solvers are used to prevent cross-site scripting or code execution attacks by discovering security vulnerabilities in web applications and web service APIs, as presented by works:~\cite{String_constraints_with_concatenation_and_transducers_solved_efficiently, Composing_Static_and_Dynamic_Analysis_to_Validate_Sanitization_in_Web_Applications, Satisfiability_Modulo_Theories_Introduction_and_Applications, Simple_linear_string_constraints,Z3-str_a_z3-based_string_solver_for_web_application_analysis,S3_A_Symbolic_String_Solver_for_Vulnerability_Detection_in_Web_Applications} and many more.
+Untrusted inputs from a user should be sanitized (e.g., by escaping the input string) in order to prevent arbitrary malicious code execution.
+The user with a malicious intent can inject a dangerous code which is afterwards executed at the server of a web application, or locally on victim's computers.
 
-String solving is especially useful for analysis of security vulnerabilities related to sanitization of text inputs from users on websites.
-This prevents crackers from injecting malicious code into the website and spreading the code between the users of said website using techniques such as cross-site scripting: executing arbitrary malicious code on the user's local browser environment.
-Sanitization of text inputs is one of many use-cases where finite transducers can be utilized.
-
-To illustrate the vulnerabilities, take a look at the following typical software vulnerabilities of software manipulating strings, for example~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10,kern14} and many more.
+To illustrate the vulnerabilities, take a look at the following typical software vulnerabilities of software programs manipulating strings, for example~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10,kern14} and many more.
 
 \paragraph{Cross-site scripting attack.}
-Have a look at one textbook example of a cross-site scripting attack where text inputs are sanitized incorrectly in Listing~\ref{listing:not_sanitized_example}.
+Take a look at one textbook example of a cross-site scripting attack where text inputs are sanitized incorrectly in Listing~\ref{listing:not_sanitized_example}.
 This code allows for insertion of malicious script executing an arbitrary code.
 \begin{listing}[!ht]
 \caption{Example of a cross-site scripting attack. An incorrectly sanitized user input can be stored directly in the database and execute an arbitrary malicious code.}
@@ -483,9 +487,11 @@ But if we apply greedy semantics, the user input will be correctly sanitized:
 \begin{center}
  \texttt{''''}
 \end{center}
-where cross-site scripting is prevented from occuring.
+where XSS is prevented from occuring.
 
-A different example~\ref{listing:not_sanitized_implicit_browser_transductions_example} adapted from~\cite{kern14} shows how incorrectly handled implicit browser transductions in JavaScript can allow for cross-site scripting attack by executing arbitrary malicious code on the user's local browser.
+A different example~\ref{listing:not_sanitized_implicit_browser_transductions_example} adapted from~\cite{kern14} shows how incorrectly handled implicit browser transductions in JavaScript can allow for XSS attack by executing arbitrary malicious code on the user's local browser.
+Implicit browser transductions codes and decodes HTML codes in the input strings (e.g., replacing string containing a single quote with its HTML code ''\texttt{\&\#39;}'').
+
 Having an input from a user (stored in variable \texttt{goal}), we want to show a button with the goal specified by the user which executes the corresponding action. Ideally, \texttt{performAction(goal)} function would refuse to execute the action if the action was unspecified (therefore possibly malicious).
 If we pass some valid string as a user, for example \texttt{Study \& Research}, the implicit browser transductions correctly handle the input, encode \texttt{\&} and the button is displayed.
 However, if an attacker passes a string that contains an arbitrary malicious code, constructed in such a way that escaping the input will produce an executable piece of code instead of a button, the browser can perform an action specified by the attacker (here simple \texttt{alert(danger)}) on user's browser.
@@ -521,62 +527,29 @@ For the sanitization to work as expected, the sanitization functions \texttt{htm
 
 Sadly, such examples do not occur only in textbooks. Real websites use sanitization functions sparingly or do not sanitize user inputs at all.
 This gives a large attack vector to anyone trying to target the servers of these websites with stored user data, for example.
+Henceforth, there is a high demand for a toolset to verify that such sanitizations are correct and safe, and implicit browser transductions are handled properly.
 
-Other security vulnerabilities discoverable by SMT string solvers include detection of SQL-injections, and security policy malfunctions.
-Precise and maily automatic analysis of these vulnerabilities and systems they appear in can save resources and time to many industry-level projects.
-Such projects require scalability and expressiveness of applied methods, together with high level of automation.
+Consider recent works~\cite{tarsis24,MSAzure20} which perform static analysis of JavaScript code using abstract automata-based domains for symbolic execution and static analysis, but cannot reason about relations between string variables in the program: modifications of strings such as sanitization functions cannot be properly modelled and reasoned about, and reasoning about additional constraints such as integers, arrays and more in conjunction with strings becomes quickly problematic.
 
-With adding support for finite transducers, we aim to improve the expressiveness, and automation, but also scalability of our proposed solution to precisely model the possible values of strings being manipulated inside a program and work with relations between strings as well.
-Analysis of string manipulating programs is further hindered by the lack of standardization, loose syntax or the dynamic nature of languages used in web applications: mostly scripting languages such as PHP or JavaScript.
+\section{Replace Operations in String Solving}
+One of the most needed appliations for finite transducers, beside others, is modelling both the input sanitization functions and the implicit browser transductions.
+Both applications create binary rational relations between two languages, giving a relation between strings from one language and strings in the other language.
+Such operations allow for replacing a substring specified by a regular pattern or a word with another string.
+String replace operations and the rewriting rules~\cite{rewriting_rules_kaplan94, rewriting_rules_karttunen97} can be easily encoded as finite transducers, and resolved by applying standard finite transducer operations on the computed transducers.
+However, as we have seen in the examples above, choosing the correct replacement semantics is important as well.
+Finite transducers directly implement both the reluctant replacement and greedy replacement.
+Depending on the use-case, both semantics are useful.
 
-And at the same time, as shown in~\cite{analjschallenges17}, classic software verification methods such as symbolic execution or model checking approaches are insufficient when working with strings.
+The sanitized inputs are verified by testing for emptiness of intersection with the typical database of XSS attack patterns, represented as a regular languages.
+SMT solvers with support for finite transducers can reason about sanitization functions and implicit browser transductions to verify the requested properties.
 
-SMT solvers with support for finite transducers can implement such sanitization functions where finite transducers are used for modelling the rewriting rules~\cite{rewriting_rules_kaplan94, rewriting_rules_karttunen97}.
-However, as we have seen in the example above, choosing the correct replacement semantics is important as well.
-Finite transducers can directly implement both the reluctant replacement and greedy replacement.
-Depending on the use-case, both semantics can be useful.
-Such SMT solver with finite transducers can be then used for automatic discovery of cross-site scripting vulnerabilities in source code as well as real-time sanitization.
-
-\subsection{Noodler}
-There are several SMT solvers which make use of finite automata as the model for encoding the solved SMT formulae or parts of the formula, namely \ziiistriiire~\cite{Z3str3RE}, \trau~\cite{Trau}, \norn~\cite{Norn}, and others, e.g.,~\cite{AnthonyComplex2019}.
-We can see that the idea of using finite automata is not entirely new, but it is still an area which has not been thoroughly explored and novel approaches showing great potential to solving SMT string constraints using automata models can be devised.
-Other tools, such as~\cite{black_ostrich}, use automata for analysis of web appliations, but are limited input filter regexes.
-
-Consider also recent works~\cite{tarsis24,MSAzure20} which perform static analysis of JavaScript code using abstract automata-based domains for symbolic execution and static analysis, but cannot reason about relations between string variables in the program: modifications of strings such are sanitization functions cannot be properly modelled and reasoned about, and reasoning about additional constraints such as integers, arrays and more in conjunction with strings becomes quickly problematic.
-
-A new SMT string solver called \noodler~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23,tacas24_noodler_10.1007/978-3-031-57246-3_2} have been recently introduced, already outperforming the well-established state-of-the-art string solvers.
-\noodler is derived from \ziii~\cite{z3} where it replaces its theory of string.
-
-\noodler brings a novel approach to solving string constraints using a method called \emph{stabilization}, a new procedure for solving word (dis)equations in combination with regular constraints.
-The stabilization-based procedure is seamlessly integrates with the well-used existing algorithms such as
-Align\& Split (first implemented in a string solver \norn~\cite{Norn,AutomataSplitting}, and later adopted by a multitude of other state-of-the-art string solvers---\ostrich~\cite{AnthonyTowards2016,AnthonyReplaceAll2018,AnthonyComplex2019,AnthonyRegex2022,AnthonyInteger2020},
-\ziiistriiire~\cite{Z3str3RE,BerzishDGKMMN23}, \sloth~\cite{holik_string_2018}, \ldots
-), used for converting regular constraints into length constraints, and
-Nielsen transformation~\cite{nielsen1917}, used for solving quadratic equations.
-
-Thanks to this combination of approaches, \noodler is able to uniquely utilize information from both the regular constraints (encoded as finite automata) and word equations to efficiently prune the searched state space, mitigating the effects of possible combinatorial state space explosion.
-
-The stabilization-based procedure makes \noodler superior to other state-of-the-art string solvers on many benchmarks, as seen in the latest results from \noodler~\cite{tacas24_noodler_10.1007/978-3-031-57246-3_2}, and in previous articles~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}.
-
-\noodler, as opposed to many other state-of-the-art SMT string solvers
-(with the exception of \ostrich)
-is based on automata techniques, utilizing finite automata to intuitively encode regular constraints.
-\noodler uses \mata as the underlying automata library.
-
-
-This gives \noodler unique oportunities for efficient string solving of SMT formulae which other SMT solvers cannot utilize.
-Using finite automata models as much as possible allows us to solve the satisfiability of the SMT formula by performing standard automata operations on finite automata representing regular languages of string variables in the formula and corresponding constraints.
-The performance results of \noodler clearly show that, when implemented correctly, automata-based algorithms can be more performant than the classic approaches to string solving, and importantly, are often orthogonal to the techniques used in other SMT solver which gives a great improvement when adding \noodler into a portfolio of string solvers.
-This is the reason why it is so important that all implemented automata models in \mata are as performant as possible.
+By adding support for finite transducers in \mata, we primarily focus on using finite transducers in \noodler to allow \noodler to solve replace operations in web applications.
 
 The only unsupported operations in \noodler are at the time of writing string operations \texttt{str.replace\_all} and \texttt{str.replace\_re\_all} from the theory of strings in SMTLIB~\cite{smtlib_theory_strings}.
 Furthermore, the string operations \texttt{str.replace} and \texttt{str.replace\_re} are handled by a modified \noodler version of theory rewriter (replacing \ziii own theory rewriter) applying rewriting rules to convert both operations to a combination of word equations, disequations, and length and regular constraints.
-However, the generated corresponding (dis)equations and constraints negatively impact the performance of the overall procedure.
+However, the generated corresponding (dis)equations and constraints negatively impact the performance of the decision procedure.
 
-All of these operations can be easily encoded as finite transducers (with the model being implemented in \mata together with the corresponding operations on finite transducers), and resolved by applying standard finite transducer operations on the computed inputs.
-For this reason, adding support for finite transducers in \mata is paramount to the capabilities of \noodler and its overall performance.
-
-% is used in analysis of string manipulating programs where it
+For this reason, adding support for finite transducers in \mata is paramount to the capabilities of \noodler and its overall expressiveness and performance.
 
 % =================================
 \chapter{Finite Transducers in \mata}
