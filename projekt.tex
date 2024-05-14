@@ -186,19 +186,39 @@
   % Abstrakt / Abstract
   % TODO
   abstract.cs={
-    Cílem této práce je přidání podpory konečných převodníků do nové rychlé a jednoduché automatové knihovny \mata, použitelných v SMT nástroji pro řešení formulí s omezeními nad řetězci \noodler pro kódování operací nahrazení řetězce nebo regulárního vzoru literálem, které se používájí při prevenci útoků na webové aplikace jako \emph{cross-site scripting} a \emph{code injection}.
+    V této práci implementujeme konečné převodníky do nové rychlé a jednoduché automatové knihovny \mata.
+    Konečné převodníky jsou konečné stavové stoje modelující regulární relace nad regulárními jazyky.
+    Naše hlavní použití pro konečné převodníky je kódovaní operací nahrazení (nahrazení slova nebo regulárního vzoru řetězcem).
+    Nový SMT nástroj pro řešení formulí s omezeními nad řetězci \noodler používá knihovnu \mata jako základ pro jeho rozhodovací proceduru.
+    \noodler potřebuje konečné převodníky k analýze programů manipulujících s řetězci s operacemi nahrazení.
+    Analýzou zmíněných programů používaných ve webových aplikacích se zabrání útokům jako cross-site scripting (XSS) nebo code injection.
 
-    Navrhneme datové struktury pro efektivní reprezentaci konečných převodníků, algoritmy pro práci s převodníky, a konstrukci převodníků pro modelování operací nahrazení potřebných pro nástroj \noodler.
+    Hlavními odlišující vlastnosti knihovny \mata zahrnují jednoduchost (jednoduchá k používání, úpravě a rozšíření) a efektivitu (pracuje rychle).
+    Reprezentaci a algoritmy pro konečné převodníky jsme navrhli s ohledem na tyto vlastnosti knihovny.
 
-    Navrhované struktury a algoritmy implementujeme do knihovny \mata a experimentálně vyhodnotíme jejich efektivitu.
+    K reprezentaci konečných převodníků a jejich algoritmů znovupoužijeme a rozšíříme existující datové struktury a algoritmy pro konečné automaty v knihovně \mata.
+    Reprezentace pro konečné převodníky slouží jako společná reprezentace pro konečné převodníky a budoucí reprezentaci binárních rozhodovacích diagramů (BDD).
+
+    Navíc rozšíříme návrh o algoritmy pro konstrukci konečných převodníků modelujících operace nahrazení definovaných v SMT-LIB.
+
+    Nakonec experimentálně vyhodnotíme efektivitu konečných převodníků v knihovně \mata na nové sadě příkladů s operacemi nahrazení z běhů nástroje \noodler.
 }, % abstrakt v českém či slovenském jazyce / abstract in czech or slovak language
   abstract.en={
-    In this work we add support for finite transducers to a new fast and simple automata library \mata, which we aim to use in SMT string solver \noodler for encoding of operations of replacement of a string or a regular pattern with a string literal.
-    We can utlize these transducers for prevention of sotware attacks on web applications such as \emph{cross-site scripting} or \emph{code injection}.
+    In this work, we implement finite transducers in a new fast and simple automata library \mata.
+    Finite transducers are finite state machines modelling rational relations between regular languages.
+    Our primary use case for finite transducers is encoding replace operations (replacing a word or a regular pattern with a string literal).
+    A recent automata-based SMT string solver \noodler uses \mata as a backbone of its decision procedure.
+    \noodler needs finite transducers to analyse string manipulating programs with replace operations.
+    The analysis of said programs used in web applications prevents software attacks such as cross-site scripting (XSS) or code injection.
 
-    We design data structures for efficient representation of finite transducers, algorithms for handling finite transducers, and construction of finite transducers modelling the operations of replacing a string or a regular pattern with a string literal.
+    The distinctive features of \mata include siplicity (simple to use, modify and extend) and efficiency (fast to run).
+    We design the representation and algorithm for finite transducers to fit the simplicity and efficiency requirements.
+    We inherit and extend the existing data structures and algorithms for finite automata in \mata to represent the finite transducers and their operations.
+    The representation for finite transducers serves as a common representation for the finite transducers and future representation of BDDs.
 
-    We implement the suggested ideas in \mata and run an experimental evaluation of performance of finite transducers in \mata.
+    We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB.
+
+    Finally, we run an experimental evaluation of performance of finite transducers in \mata on a new benchmark with replace operations from runs of \noodler.
   }, % abstrakt v anglickém jazyce / abstract in english
   %abstract.en={An abstract of the work in English will be written in this paragraph.},
   % Prohlášení (u anglicky psané práce anglicky, u slovensky psané práce slovensky; u projektové praxe lze zakomentovat) / Declaration (for thesis in english should be in english; for project practice can be commented out)
@@ -219,7 +239,7 @@ I have listed all the literary sources, publications and other sources, which we
   % }
     Konečné automaty nachází mnohá použití, ať už v oblasti výzkumu, nebo v průmyslu.
     Pro jednoduchou a uniformní práci s konečnými automaty je vnodné používat některé z nabízejících se automatových knihoven.
-    Každá knihovna má své výhody a nevýhody, způsobené jejím návrem a implementovanými algoritmy či optimalizovanými datovými strukturami.
+    Každá knihovna má své výhody a nevýhody, způsobené jejím návrhem a implementovanými algoritmy či optimalizovanými datovými strukturami.
 
     Mezi automatovými knihovnami se objevila nová automatová knihovna \mata, která si klade za cíl poskytnout uživateli rychlou automatovou knihovnu (překonávající v rychlosti i ustálené a vyspělé knihovny), která je jednoduchá ve svém návrhu, a kterou může uživatel jednoduše rozšiřovat nebo upravovat.
 
