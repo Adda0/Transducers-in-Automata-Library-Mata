@@ -275,73 +275,23 @@ I have listed all the literary sources, publications and other sources, which we
     Použití přístupů k uvažování o omezeních nad řetězci založených na automateh nedávno získalo značnou popularitu.
     Použití automatů pro uvažování o omezeních nad řetězci je přirozeným krokem, neboť řetěžcová omezení obsahují hodně regulárních výrazů a regulárních omezení.
 
-    Tato práce je značně motivována existujícími technikami založenými na automatech jako
+    Tato práce je značně motivována existujícími technikami založenými na automatech nedávno uvedenými v nástroji pro uvažování o omezeních nad řetězci \noodler.
+    \noodler používá automaty jako hlavní podstatu jeho rozhodovací procedury.
+    \noodler umí řešit řetěžcové rovnice s regulárními omezeními, ale nedokáže jednoduše řešit omezení obsahující operace nahrazení jako \texttt{replaceAll} (nahrazení všech výskytů vzoru za řetězec).
+    Jednou z hlavních motivací pro tuto práci je kódování operací nahrazení v nástroji \noodler.
 
+    V této práci navrhneme reprezentaci a algoritmy pro konečné převodníky v knihovně \mata.
+    Upravíme návrh tak, aby splňoval požadavky knihovny na jednoduchost a efektivitu.
+    Modelujeme konečné převodníky pomocí zdědění existujících datových struktur pro konečné automaty v knihovně \mata.
+    Rozšíříme datové struktury pro konečné převodníky jako konečný automat s úrovněmi pro stavy.
+    Tento přístup nám umožňuje zdědit také velké množství existujících operací pro konečné automaty s pouze mírnými úpravami pro funkčnost s konečnými převodníky.
 
-The work in this thesis is highly motivated by an automata-based technique introduced recently in a novel SMT string solver \noodler.
-\noodler uses automata as the backbone of its decision procedure.
-\noodler can solve word equations with regular constraints, but cannot be used to solve word equations and constraints with replace operations such as \texttt{replaceAll}(replacing all words or a regular patterns with a string literal), as explored in~\cite{10.1145/3158091} for analysis of string manipulating programs in web applications.
-One of the main motivations for adding finite transducers to \mata is encoding replace operations in \noodler.
+    Reprezentace konečných převodníky zároveň slouží jako datová struktura i pro binární rozhodovací stromy.
 
-The broader context of string solving and related work relevant to this thesis is given in Chapter~\ref{chap:string_solving}.
+    Dále rozšíříme konečné převodníky algoritmy pro konstrukci konečných převodníků modelujících operace nahrazení definované v SMT-LIB.
 
-In this work, we design the representation and algorithms for finite transducers in \mata.
-We adjust the design to fit the simplicity and efficiency requirements of \mata.
-We model finite transducers using inherited data structures inherited from finite automata in \mata.
-We extend the data structure for finite transducers as a finite automaton with levels for states.
-This also allows us to inherit large portions of finite automata operations for finite transducers with only slight modifications.
-
-The representation for finite transducers simultaneously serves as a common representation for the finite transducers and future representation of binary decision diagrams.
-
-We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB.
-
-Finally, we run an experimental evaluation of performance of finite transducers in \mata on a new benchmark with replace operations from runs of \noodler.
-The approach is feasible and ready for use in \noodler.
-The experimental results show that even though \mata is slower than the state-of-the-art, it performs well enough for our use cases.
-
-
-
-
-
-
-
-
-
-    Pro jednoduchou a uniformní práci s konečnými automaty je vnodné používat některé z nabízejících se automatových knihoven.
-    Každá knihovna má své výhody a nevýhody, způsobené jejím návrhem a implementovanými algoritmy či optimalizovanými datovými strukturami.
-
-    Mezi automatovými knihovnami se objevila nová automatová knihovna \mata, která si klade za cíl poskytnout uživateli rychlou automatovou knihovnu (překonávající v rychlosti i ustálené a vyspělé knihovny), která je jednoduchá ve svém návrhu, a kterou může uživatel jednoduše rozšiřovat nebo upravovat.
-
-    \mata staví na jednoduchých datových strukturách a průhledném kódu pro dobrou udržovatelnost knihovny, její rozšíření nebo rychlý iterativní vývoj nových metod.
-
-    Užitečnost knihovny \mata je zdůrazněna jejím použitím v novém SMT nástroji pro řešení omezení nad řetězci zvaném \noodler.
-    \mata tvoří základ efektivity rozhodovací procedury v nástroji \noodler, který je založený na efektivním kódování SMT formule a řetězcových omezení v ní do konečných automatů a efektivním uvažování nad vytvořenými automaty.
-
-    Seznamy Common Weakness Enumeration (CWE) a Common Vulnerabilities and Exposures (CVE), které řadí softwarové znanitelnosti podle četnosti výskytu, každým rokem ukazují, že stále jedním z největších rizikových vektorů v mnohých webových aplikacích je problém saturace neověřených vstupů od uživatelů, a jejich správná analýza pro vyloučení škodlivých kódů z těchto vstupů.
-    Tyto zranitelnosti vedou na útoky typu \emph{cross-site scripting} nebo \emph{code injection} a \emph{remote code execution}.
-    Tyto problémy jsou však komplexní a i přes značnou snahu expertů a programátorů jsou tyto chyby stále jedním z nejčastějších znanitelností v moderních webových aplikacích, které ročně stojí firmy značné sumy peněž, a uživatelé přijdou o bezpečí a své soukromí.
-
-    V nástroji \noodler je třeba, mimo jiné, řešit omezení daná operacemi nahrazení řetězce nebo regulárního vzoru v řetězci za literál, která mohou vzniknout právě kódováním takových znanitelností do SMT formule.
-    Řešením takové formule je potom možné ověřit možnost existence škodlivých kódů ve vstupech od uživatele, čehož mnohé firmy, například Amazon Web Services (AWS), denně využívají k ochraně svých serverů a webových aplikací.
-
-    Jelikož však \mata nyní podporuje pouze konečné deterministické a nedeterministické automaty, není možné používat \noodler \\k~účinnnému řešení SMT formulí s operacemi nahrazení.
-    Kdyby \mata dokázala vhodně kódovat i operace nahrazení řetězce nebo regulárního vzoru, \noodler by bylo možné použít i k~řešení těchto omezení, která jako jediná z teorie řetěžců z formátu SMT-LIB \noodler nedokáže řešit.
-
-    Cílem této práce je proto přidání podpory konečných převodníků do knihovny \mata.
-    Konečné převodníky jsou automatové modely reprezentující relace mezi regulárními jazyky.
-    Intiutivně můžeme konečné převodníky chápat a používat jako překladače mezi vstupními řetězci a výstupními řetězci, podobně jako překladače přirozených jazyků.
-    Tyto automatové modely jsou také vhodné ke kódování operací jako implicitní transdukce v prohlížečích, nebo operace nahrazení řetězce nebo regulárního vzoru.
-    Obecně jimi můžeme modelovat situace, kde se v moderních programovacích jazycích manipuluje s řetězci v podobě nahrazení znaků v řetězci nebo podřetězců literály.
-
-    Implementací konečných převodníků do knihovny \mata rozšíříme možnosti využití knihovny \mata a umožníme řešit operace nahrazení v nástroji \noodler.
-
-    V této práci navrhneme datové struktury pro efektivní reprezentaci konečných převodníků, algoritmy pro práci s převodníky, a konstrukci převodníků pro modelování operací nahrazení potřebných pro nástroj \noodler.
-    Datové struktury a algoritmy navrhujeme tak, aby byly kompatibilní s existující infrastrukturou knihovny \mata, a co nejjednodušeji umožňovaly zapojení konečných převodníků do knihovny a jejich interakci s konečnými automaty.
-    Proto jsme založili implementaci konečných převodníků na datových strukturách a algoritmech odvozených od existujících datových struktur a algoritmů pro konečné automaty, které jsme pouze upravily pro účely konečných převodníků a přidali operace specifické pro konečné převodníku.
-    Tento přístup nám navíc umožní následně jednoduše rožšířit knihovnu \mata o podporu binárních rozhodovacích diagramů, které mohou využít navrhované infrastruktury pro konečné převodníky s pouze minimálními změnami potřebnými pro správné fungování binární rozhodovacích diagramů.
-
-    Navrhované struktury a algoritmy implementujeme do knihovny \mata.
-    Dále vytvoříme novou experimentační sadu příkladů problému řešení operace nahrazení z běhů nástroje \noodler na standardní sadu příkladů pro porovnávání efektivity SMT nástrojů SMT-LIB a porovnáme efektivitu implementace konečných převodníků v knihovně \mata s další automatovou knihovnou, \mona, která použitím binárních rozhodovacích diagramů dokáže vhodně kódovat operace podobné operacím pro konečné převodníky.
+    Nakonec experimentálně porovnáme čas běhu konečných převodníků implementovaných v knihovně \mata na nové sadě příkladů získaných z běhů nástroje \noodler.
+    Zvolený přístup se zdá být vhodný a přestože pro uvažování o řetězcových operacích je \mata pomalejší, pracuje dostatečně rychle pro naše případy použití.
   },
   %extabstract.odd={true}, % Začít rozšířený abstrakt na liché stránce? / Should extended abstract start on the odd page?
   %faculty={FIT}, % FIT/FEKT/FSI/FA/FCH/FP/FAST/FAVU/USI/DEF
