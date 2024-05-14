@@ -1537,8 +1537,8 @@ Our goal in these experiments is not to outperform \mona, but to compare how tec
 
 For the first group of benchmarks, we have generated a new set of benchmarks from runs of \noodler on benchmarks from SMT-LIB~\cite{SMTLIB} which contain string replace operations \texttt{str.replace}, \texttt{str.replace\_all}, \texttt{str.replace\_re} and \texttt{str.replace\_re\_all}.
 The replace operations appear in SMT-LIB benchmarks \texttt{
-non-incremental/QF\_SLIA/20230331-transducer-plus} (called \texttt{transducer plus} in our experiments) and \texttt{
-non-incremental/QF\_SLIA/20230403-webapp} (called \texttt{webapp} in our experiments).
+non-incremental/QF\_SLIA/20230331-transducer-plus} (\transducerPlus, called \texttt{transducer plus} in our experiments) and \texttt{
+non-incremental/QF\_SLIA/20230403-webapp} (\webapp, called \texttt{webapp} in our experiments).
 
 We compare the performance of \mata and \mona on benchmarks for the following operations
 \begin{itemize}
@@ -1555,25 +1555,25 @@ Furthermore, we extend this list by constructing \nfts for partial compositions 
 \paragraph{Projection benchmark.}
 The projection benchmark consists of unique single $2$-tape \nfts for replace operations found in SMT-LIB formulae solved by \noodler.
 We perform projection to tape $0$ (projecting out the tape $1$), and projection to tape $1$ (projecting out the tape $0$).
-We remove duplicated \nfts in each benchmark which in total produces $1749$ instances ($202$ from \texttt{webapp}, $1547$ from \texttt{transducer plus}).
+We remove duplicated \nfts in each benchmark which in total produces $1749$ instances ($202$ from \webapp, $1547$ from \transducerPlus).
 
 \paragraph{Application of a literal benchmark.}
 The application of a literal benchmark consists of pairs ($u$, $\ft$) where $u$ is a string literal and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
 $u$ is constructed as the longest word in the \texttt{pattern} of the replace operation constrainted to the maximal length of word $5$.
 We perform the forward application of $u$ to $\ft$ ($\id{u} \composePipe \ft $).
 This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
-We remove duplicated pairs ($u$, $\ft$) in each SMT-LIB benchmark which leaves us in total with $2027$ instances ($211$ from \texttt{webapp}, $1816$ from \texttt{transducer plus}).
+We remove duplicated pairs ($u$, $\ft$) in each SMT-LIB benchmark which leaves us in total with $2027$ instances ($211$ from \webapp, $1816$ from \transducerPlus).
 
 In addition, we create a second benchmark performing the backward application of $u$ to $\ft$ ($ \ft \composePipe \idNft{u}$).
 This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
-We remove duplicated pairs ($\ft$, $u$) in each SMT-LIB benchmark which leaves us in total with $2030$ instances ($214$ from \texttt{webapp} and $1816$ from \texttt{transducer plus}).
+We remove duplicated pairs ($\ft$, $u$) in each SMT-LIB benchmark which leaves us in total with $2030$ instances ($214$ from \webapp and $1816$ from \transducerPlus).
 
 \paragraph{Application of a language benchmark.}
 The application of a language benchmark consists of pairs ($\idNft{\Sigma^*}$, $\ft$) where $\idNft{\Sigma^*}$ is a regular language $\Sigma^*$ converted into an indentity \nft, and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
 We choose $\idNft{\Sigma^*}$ as the regular language being applied since $\Sigma^*$ is the most difficult case for our method to compute (for each state in $\ft$, we need to compute operations for all symbols in the language).
 We perform the forward application of $\idNft{\Sigma^*}$ to $\ft$ ($\idNft{\Sigma^*} \composePipe \ft $).
 This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
-We remove duplicated pairs ($\idNft{\Sigma^*}$, $\ft$) in each benchmark which in total produces $1750$ instances ($203$ from \texttt{webapp}, $1547$ from \texttt{transducer plus}).
+We remove duplicated pairs ($\idNft{\Sigma^*}$, $\ft$) in each benchmark which in total produces $1750$ instances ($203$ from \webapp, $1547$ from \transducerPlus).
 
 In addition, we create a second benchmark from forward language application benchmark, performing the backward application of $\idNft{\Sigma^*}$ to $\ft$ ($ \ft \composePipe \idNft{\Sigma^*}$).
 This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler, too.
@@ -1584,10 +1584,10 @@ Last but not least, we compare the performance of \mata and \mona on compsition 
 The composition benchmark contains pairs ($\ft_1$, $\ft_2$) where we perform composition $\ft_1 \composePipe \ft_2$.
 We performed composition of various \nfts appearing in a sequence in SMT-LIB benchmarks including composition of pre-constructed partial compositions of \nfts for replace operations in these sequences.
 
-We remove duplicated pairs ($\ft_1$, $\ft_2$) in each SMT-LIB benchmark which leaves us in total with $2879$ instances ($130$ from \texttt{webapp}, $2749$ from \texttt{transducer plus}).
+We remove duplicated pairs ($\ft_1$, $\ft_2$) in each SMT-LIB benchmark which leaves us in total with $2879$ instances ($130$ from \webapp, $2749$ from \transducerPlus).
 
 Moreover, we collect intermediate \nfts $\ftBeginMarker$ and $\ftRegexRelucReplaceAll$ (or $\ftRegexRelucReplaceSingle$) from all $\ftRegexRelucAll$ (or $\ftRegexRelucSingle$).
-We remove duplicated pairs ($\ftBeginMarker$, $\ftRegexRelucReplaceAll$) in each SMT-LIB benchmark which leaves us in total with $2282$ instances ($252$ from \texttt{webapp}, $2030$ from \texttt{transducer plus}).
+We remove duplicated pairs ($\ftBeginMarker$, $\ftRegexRelucReplaceAll$) in each SMT-LIB benchmark which leaves us in total with $2282$ instances ($252$ from \webapp, $2030$ from \transducerPlus).
 
 \paragraph{Pattern matching benchmark.}
 
@@ -1601,7 +1601,7 @@ This is one of many examples of such regular patterns.
 For the purpose of experimental evaluation, we simplify the pattern as follows: \texttt{\^.*a.\{i\}\$} where \texttt{a} stands for a single symbol and \texttt{\{ i \}} for a fixed number $i$ of repetitions.
 The pattern reads as: match any word that have symbol \texttt{a} $i$ symbols away from the end of the word.
 
-Usually, the integers for repetitions in pattern matching are parametrtic, giving us a parametric benchmark with varying numbers of repetitions.
+Usually, the integers for repetitions in pattern matching are parametrtic, giving us a parametric benchmark \symbolFromEnd with varying numbers of repetitions.
 We have limited our benchmark to numbers $i$ between $1$ and $150$.
 We construct $\ftRegexRelucAll$ and $\ftRegexRelucSingle$ for the regular pattern \texttt{\^.*a.\{i\}} replacing the pattern with an empty string.
 
@@ -1785,9 +1785,7 @@ Table~\ref{tab:composition} shows comparison of performance of \mata and \mona o
   \centering
   \input{obrazky-figures/composition_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on an operation composition on both benchmarks.
-    The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    Composition on both benchmarks.
   }
   \label{tab:composition}
 \end{table}
@@ -1823,6 +1821,8 @@ Table~\ref{tab:composition_construct_replace} shows comparison of performance of
     }
     \label{fig:composition}%
 \end{figure}
+
+We can see that performance of \mata is comparable to the performance of \mona on a large number of instances for composition constructing replace \nfts, but there is also a similarly large group of instances in the \transducerPlus benchmark where \mata
 
 \section{Summary}
 
