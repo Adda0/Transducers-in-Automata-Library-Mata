@@ -387,17 +387,11 @@ Namely, modelling and deciding constraints over a language of strings, also know
 In order to prevent the aforementioned attacks, techniques utilizing string solving are often used to discover security vulnerabilities in web applications and web service APIs, as presented by works:~\cite{String_constraints_with_concatenation_and_transducers_solved_efficiently, Composing_Static_and_Dynamic_Analysis_to_Validate_Sanitization_in_Web_Applications, Satisfiability_Modulo_Theories_Introduction_and_Applications, Simple_linear_string_constraints,Z3-str_a_z3-based_string_solver_for_web_application_analysis,S3_A_Symbolic_String_Solver_for_Vulnerability_Detection_in_Web_Applications} and many more..
 Besides XSS and code injection, string solving is also successfuly applied to analysis of smart contracts~\cite{AltBHS22}, and analysis of user accept policies (e.g., as used in Amazon Web Services~\cite{hadarean_mosca, stringsAWS18} where there are run a billion SMT queries a day~\cite{Rungta2022} to analyse cloud access policies---placing first in OWASP'21~\cite{OWASP21} as the most critical software bug---and correct security configurations).
 
-
 This greatly motivates the research of tools for string solving and the corresponding techniques, usually as an extension of the existing SMT solvers implementing a solver for the theory of strings.
-Using an existing SMT solver has an advantages of being able to seamlessly integrate with solvers for other theories, notably the theory of integers (used for lengths of strings), or the theory of arrays (reasoning about array data structures).
+Using an existing SMT solver based on the DPLL(T) approach~\cite{dpll06} has an advantage of being able to seamlessly integrate with solvers for other theories, notably the theory of integers (used for lengths of strings), or the theory of arrays (reasoning about array data structures with strings).
 We have seen a rapid growth of various procedures for SMT string constraint solving, implemented in numerous state-of-the-art SMT solvers.
 
-% DPLL(T)-based solvers in general combine a SAT solver providing
-% satisfying assignments to the Boolean skeleton of a formula with multiple theory solvers
-% for checking conjunctions of theory literals.
-
 Some of the most prominent SMT solvers
-% , based on the classic DPLL(T) approach
 with string solving capabilities include \cvcv~\cite{cvc5}, \ziii~\cite{z3}, or their derivations such as \trau~\cite{Trau}, \ziiistriiire~\cite{Z3str3RE, BerzishDGKMMN23}, \ziiistriv~\cite{Z3str4}.
 To name a few more independent string solvers, a well known string solvers include \ostrich~\cite{AnthonyComplex2019}, \norn~\cite{Norn} and others.
 
@@ -1522,20 +1516,26 @@ WIP
 
 In this chapter, we compare the performance of \nfts implemented in \mata with a state-of-the-art automata library \mona~\cite{mona}.
 
-For our experiments, we are especially interested in how \mata performs when running operations on \nfts modelling the replace operations required by \noodler.
-Since our main indent is to use \nfts in \mata as models to replace operations in \noodler, we need to optimize the \nft algorithms primarily to this use case, while keeping the \nft algorithms general enough for other use cases.
+For our experiments, we are interested in how \mata performs when running operations on \nfts modelling the replace operations required by \noodler.
+Modelling replace operations in \noodler is not the only use case for \nfts in \mata, but it is the first domain where \nfts will be used.
+% Since our main indent is to use \nfts in \mata as models to replace operations in \noodler, we need to optimize the \nft algorithms primarily to this use case, while keeping the \nft algorithms general enough for other use cases.
 
-Even if \mona does not support finite transducers directly, we have chosen \mona to compare \mata against because \mona is a well-optimized library which, thanks to its ability to encode transition relation into MTBBs, provides a reasonable model for encoding finite transducers and therefore the replace operations.
+Even if \mona does not support finite transducers directly, we have chosen \mona to compare \mata against because \mona is a well-optimized library which, thanks to its ability to encode transition relation into MTBBs, provides a reasonable model for encoding finite transducers.
 Each tape in a transducer can be encoded as a single variable in the BDD for a given transition.
 A sequence of variables then encodes an \nft transition, where the leaves of the BDD are target states and edges represent the transition symbols.
+Each transition symbol is encoded as a bit vector (a sequence of bits).
+An \nft transition is then encoded as \texttt{dummy\_1|bitvec\_1|dummy\_2|bitvec\_2}. where \texttt{|} denotes the concatenation of bit vectors. \texttt{bitvec\_i} for represents a bit vector for a transition symbol on the tape $i$.
+\texttt{dummy\_i} are additional dummy symbols used for determinization.
 
 Performing operations such as composition, projection, or application on \nfts is, thanks to how \mata encodes \nfts as a representation very close to the representation of BDDs, a natural operation for \mona in the encoding explained above.
 
-Intuitively, \mata performs modified \nfa operations on \nfts while \mona performs its BDD operations with the proper encoding, leading to a correct result of \nft operations in both libraries.
+Intuitively, \mata performs modified \nfa operations on \nfts while \mona performs its BDD operations with the proper encoding.
 
-\paragraph{Benchmarks.}
+Our goal in these experiments is not to outperform \mona, but to compare how techniques for \nfts using explicit alphabets with support for nondeterminism (\mata) perform against symbolic alphabets with binary representation of transition relations (binary bit vectors in \mona) without support for nondeterminism.
 
-For benchmarks, we have generated a new set of benchmarks from runs of \noodler on benchmarks from SMT-LIB~\cite{SMTLIB} which contain string replace operations \texttt{str.replace}, \texttt{str.replace\_all}, \texttt{str.replace\_re} and \texttt{str.replace\_re\_all}.
+\section{Benchmarks.}
+
+For the first group of benchmarks, we have generated a new set of benchmarks from runs of \noodler on benchmarks from SMT-LIB~\cite{SMTLIB} which contain string replace operations \texttt{str.replace}, \texttt{str.replace\_all}, \texttt{str.replace\_re} and \texttt{str.replace\_re\_all}.
 The replace operations appear in SMT-LIB benchmarks \texttt{
 non-incremental/QF\_SLIA/20230331-transducer-plus} (called \texttt{transducer plus} in our experiments) and \texttt{
 non-incremental/QF\_SLIA/20230403-webapp} (called \texttt{webapp} in our experiments).
@@ -1544,8 +1544,9 @@ We compare the performance of \mata and \mona on benchmarks for the following op
 \begin{itemize}
   \item projection to input/output tapes,
   \item application of a literal (forward/backward),
-  \item application of a language (forward/backward) ($1750$), and
-  \item composition ($2879$ instances).
+  \item application of a language (forward/backward),
+  \item composition of two \nfts, and
+  \item composition of \nfts used during replace \nft creation.
 \end{itemize}
 
 We collect \nfts for each unique replace operation in benchmarks from SMT-LIB solved by \noodler.
@@ -1585,20 +1586,46 @@ We performed composition of various \nfts appearing in a sequence in SMT-LIB ben
 
 We remove duplicated pairs ($\ft_1$, $\ft_2$) in each SMT-LIB benchmark which leaves us in total with $2879$ instances ($130$ from \texttt{webapp}, $2749$ from \texttt{transducer plus}).
 
+Moreover, we collect intermediate \nfts $\ftBeginMarker$ and $\ftRegexRelucReplaceAll$ (or $\ftRegexRelucReplaceSingle$) from all $\ftRegexRelucAll$ (or $\ftRegexRelucSingle$).
+We remove duplicated pairs ($\ftBeginMarker$, $\ftRegexRelucReplaceAll$) in each SMT-LIB benchmark which leaves us in total with $2282$ instances ($252$ from \texttt{webapp}, $2030$ from \texttt{transducer plus}).
 
+\paragraph{Pattern matching benchmark.}
+
+For a second benchmark, we introduce a regular pattern with counters, appearing often in works on pattern matching~\cite{10.1007/978-3-031-30829-1_19}.
+The pattern looks similar to the following regular expression:
+\texttt{\^.*u.\{i, j\}u.\{k, l\}\$} where
+\texttt{\^} denotes the beginning of a line, \texttt{.} matches any character, \texttt{*} denotes Kleene star, \texttt{\{i, j\}} denotes a repetition where the number of repetitions is between $i$ and $j$, and $\$$ denotes the end of line. \texttt{u} stands here for an arbitrary specific string, e.g., \texttt{<script>}.
+The pattern reads as follows: Starting with any sequence of characters, we match words that end with two strings \texttt{u} separated by $i$ to $j$ characters and followed by another $k$ to $l$ characters until the end of the line.
+
+This is one of many examples of such regular patterns.
+For the purpose of experimental evaluation, we simplify the pattern as follows: \texttt{\^.*a.\{i\}\$} where \texttt{a} stands for a single symbol and \texttt{\{ i \}} for a fixed number $i$ of repetitions.
+The pattern reads as: match any word that have symbol \texttt{a} $i$ symbols away from the end of the word.
+
+Usually, the integers for repetitions in pattern matching are parametrtic, giving us a parametric benchmark with varying numbers of repetitions.
+We have limited our benchmark to numbers $i$ between $1$ and $150$.
+We construct $\ftRegexRelucAll$ and $\ftRegexRelucSingle$ for the regular pattern \texttt{\^.*a.\{i\}} replacing the pattern with an empty string.
+
+We compare the performance of \mata and \mona on operations application of a language (applying a language of the matched pattern), and composition constructing the resulting \nft for replace operation.
+
+\paragraph{Rationale for chosen benchmarks.}
 All of these are the operations which will often be used on \nfts created for replace operations in \noodler and will make up the main set of operations on \nfts once support for transducers is introduced in \noodler as well.
 
 Furthermore, these are the operations usually performed in any general use of transducers, since they comprise all the transducer-specific operations one needs when working with transducers.
 
+Note that since self-loops cannot be easily added to an existing \nft in \mona, for all operations using composition, we extend the \nfts from benchmarks with additional tapes to synchronize the tapes in both \nfts and add self-loops manually before measuring the runtimes of operations.
+
 \section{Results}
 
-The experiments were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux kernel GNU/Linux 5.15.0-106-generic x86\_64) with timeout set to 120 seconds. Due to small runtimes on the majority of instances (a few milliseconds and less), each benchmark instance was run $3$ times and the resulting runtime is computed as the mean of the $3$ runs which mitigates unexpected waiting times for assigning the computation power.
+The experiments were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux kernel GNU/Linux 5.15.0-106-generic x86\_64, CPU AMD Ryzen 5 5600G @ 3.892GHz ) with timeout set to 120 seconds. Due to small runtimes on the majority of instances (a few milliseconds and less), each benchmark instance was run $3$ times and the resulting runtime is computed as the mean of the $3$ runs which mitigates unexpected runtime deviations caused by waiting for the assignment of computation unit.
 
 After computing the number of timeouts, the rows with timeouts are dropped so the tables show runtimes for instances where both tools finished.
 
+All tables in this chapter show the tool used; number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+The times shown in the tables are in milliseconds.
+
 \subsection{Projection}
 
-We show the performance of projection on a $2$-tape \nfts on the input tape (projecting out the output tape), and the output tape (projecting out the input tape) separately, since in $2$-tape \nfts, both cases project the first or the last tape, which is a requires a more complex modification of the \nft than projection of a tape in the middle between another tapes.
+We show the performance of projection on a $2$-tape \nfts on the input tape (projecting out the output tape), and the output tape (projecting out the input tape) separately, since in $2$-tape \nfts, both cases project the first or the last tape, which requires a more complex modification of the \nft than projection of a tape in the middle between another tapes.
 
 Table~\ref{tab:projection} shows comparison of performance of \mata and \mona on the projection operation on both benchmarks.
 
@@ -1606,9 +1633,7 @@ Table~\ref{tab:projection} shows comparison of performance of \mata and \mona on
   \centering
   \input{obrazky-figures/projection_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on projection on both benchmarks.
-    The shown times are in milliseconds.
-    The table shows the tool used and which projection was performed (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    Projection on both benchmarks. $-i$ after the tool name specifies which tape was projected out.
   }
   \label{tab:projection}
 \end{table}
@@ -1618,14 +1643,14 @@ The figures in Figure~\ref{fig:projection} show the same comparison between \mat
 \begin{figure}[ht]
     \centering
     \subfloat[
-      Scatter plots comparing the performance of \mata and \mona on projection to tape $1$ (projecting out the tape $0$).
+      Projection to tape $1$ (projecting out the tape $0$).
       \label{fig:projection_0}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{projection_scatter_0.pdf}
     }}%
     \quad
     \subfloat[
-      Scatter plots comparing the performance of \mata and \mona on projection to tape $0$ (projecting out the tape $1$).
+      Projection to tape $0$ (projecting out the tape $1$).
       \label{fig:projection_1}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{projection_scatter_1.pdf}
@@ -1636,8 +1661,8 @@ The figures in Figure~\ref{fig:projection} show the same comparison between \mat
     \label{fig:projection}%
 \end{figure}
 
-We can see that all projections to tape $1$ finish in under $350$ ms.
-By comparing means, we can see that the \mata is about 2 times slower than \mona, but is still fast, finishing $75\%$ of executions in under $4$ ms.
+We can see that all projections to tape $1$ finish in under $350$ ms in \mata.
+By comparing means, we can see that the \mata is about 2 times slower than \mona, but is still fast, finishing $75\%$ of executions in under $4$ ms, compared to \mona's runtime under $3$ ms.
 
 On the other hand, projecting to tape $0$, i.e., projecting out the tape $1$ is more expensive operation for \mata in the implemented data structure.
 However, even than \mata finishes $0.75\%$ of executions in under $70$ ms.
@@ -1648,23 +1673,21 @@ If the performance of \mata on projection to tape $0$ proves insufficient when s
 
 On each unique \nft, we applied a word and a language using \nft application.
 
-\subsubsection{Application of a Language}
+% \subsubsection{Application of a Language}
 
 Table~\ref{tab:language_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
 The language is forward applied to the \nft ($\idNft{\Sigma^*} \composePipe \ft $).
-This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
+This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}.
 
 Table~\ref{tab:language_application_backward} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
 The language is backward applied to the \nft ($\ft \composePipe \idNft{\Sigma^*}$).
-This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
+This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}.
 
 \begin{table}[ht]
   \centering
   \input{obrazky-figures/apply_language_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on an operation language application on both benchmarks where the language is forward applied ($\idNft{\Sigma^*} \composePipe \ft$), simulating the forward image propagation.
-    The shown times are in milliseconds.
-    The table shows the tool used; number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    Language application on both benchmarks where the language is forward applied ($\idNft{\Sigma^*} \composePipe \ft$), simulating the forward image propagation.
   }
   \label{tab:language_application}
 \end{table}
@@ -1673,14 +1696,12 @@ This simulates the backward image propagation, as described in~\ref{sec:string_s
   \centering
   \input{obrazky-figures/apply_language_backward_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on an operation language application on both benchmarks where the language is backward applied on the \nft ($\ft \composePipe \id{\langof{\pi}}$), simulating backward image propagation as described in Section~\ref{sec:string_solving_with_replace}.
-    The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    Language application on both benchmarks where the language is backward applied on the \nft ($\ft \composePipe \id{\langof{\pi}}$), simulating backward image propagation.
   }
   \label{tab:language_application_backward}
 \end{table}
 
-\subsubsection{Application of a Literal}
+% \subsubsection{Application of a Literal}
 
 Table~\ref{tab:literal_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a literal.
 
@@ -1688,9 +1709,7 @@ Table~\ref{tab:literal_application} shows comparison of performance of \mata and
   \centering
   \input{obrazky-figures/apply_literal_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on an operation literal application on both benchmarks.
-    The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    Literal application on both benchmarks.
   }
   \label{tab:literal_application}
 \end{table}
@@ -1701,9 +1720,7 @@ Table~\ref{tab:literal_application_backward} shows comparison of performance of 
   \centering
   \input{obrazky-figures/apply_literal_backward_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on an operation backward literal application on both benchmarks.
-    The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    Backward literal application on both benchmarks.
   }
   \label{tab:literal_application_backward}
 \end{table}
@@ -1711,32 +1728,23 @@ Table~\ref{tab:literal_application_backward} shows comparison of performance of 
 \begin{figure}[ht]
     \centering
     \subfloat[
-      Literal application
+      Literal application.
       \label{fig:apply_literal}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_literal_scatter.pdf}
     }}%
     \quad
     \subfloat[
-      Language application
+      Language application.
       \label{fig:apply_language}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_language_scatter.pdf}
     }}%
     \caption{
-      Scatter plots for comparing the performance of \mata and \mona on forward application operations on both benchmarks.
+      Scatter plots for comparing the performance of \mata and \mona on forward application operation on both benchmarks.
     }
     \label{fig:apply_operation}%
 \end{figure}
-
-From the results in Table~\ref{tab:literal_application} and Table~\ref{tab:language_application} and scatter plots in Figure~\ref{fig:projection}, we can see that applying a fairly constrainted language (in our case a literal) is a quick operation where \mata performs comparably with \mona.
-However, applying a large language such as $\Sigma^*$ (used in our experiments), the appliation gets considerably more expensive for \mata.
-
-This application of $\Sigma^*$ is actually the word case scenario for \mata, as with $\Sigma^*$, \mata must to apply all transition symbols $a \in \Sigma$ for each state $s \in \states$ of $\ft$.
-Nevertheless, the computation for both the forward and backward application operations for both the literal and the language finishes in $75\%$ in at most $50$ ms, which should be fast enough for \noodler, especially considering the results of the applications and computations can be cached and reused during a run of \noodler.
-
-Considering our future uses for application operation in \noodler, we will sometimes apply the whole language $\Sigma^*$, but more often we will apply a more constrained subset $L \subset \Sigma^*$ which should therefore perform better on \noodler runs.
-If the performance is then still insufficient, we can implement the aforementioned optimization for composition for $2$-tape \nfts and use in \noodler this version instead of the general application implementation for multi-tape \nfts.
 
 \begin{figure}[ht]
     \centering
@@ -1759,6 +1767,16 @@ If the performance is then still insufficient, we can implement the aforemention
     \label{fig:apply_operation_backward}%
 \end{figure}
 
+From the results in Table~\ref{tab:literal_application} and Table~\ref{tab:language_application} and scatter plots in Figures~\ref{fig:apply_operation} and~\ref{fig:apply_operation_backward}, we can see that applying a fairly constrainted language (in our case directly a literal) is a quick operation where \mata performs comparably with \mona.
+However, applying a large language such as $\Sigma^*$ (used in our experiments), the application gets considerably more expensive for \mata.
+
+This application of $\Sigma^*$ is actually the word case scenario for \mata, as with $\Sigma^*$, \mata must to apply all transition symbols $a \in \Sigma$ for each state $s \in \states$ of $\ft$.
+Nevertheless, the computation for both the forward and backward application operations for both the literal and the language finishes in $75\%$ cases in at most $50$ ms, which should be fast enough for \noodler, especially considering the results of the applications and computations can be cached and reused during a run of \noodler.
+Notice that for literal application, \mata is about $2$ to $3$ times slower, however, when the language applied gets larger ($\Sigma^*$ in our case), the performance on the 3rd quartile is comparable to \mona on the bacward language application, and only $2$ times slower on the forward language application.
+
+Considering our future uses for application operation in \noodler, we will sometimes apply the whole language $\Sigma^*$, but more often we will apply a more constrained subset $L \subset \Sigma^*$ which should therefore perform better on \noodler runs.
+If the performance is then still insufficient, we can implement the aforementioned optimization for composition for $2$-tape \nfts and use in \noodler this version instead of the general application implementation for multi-tape \nfts.
+
 \subsection{Composition}
 
 Table~\ref{tab:composition} shows comparison of performance of \mata and \mona on the composition operation on both benchmarks.
@@ -1780,9 +1798,7 @@ Table~\ref{tab:composition_construct_replace} shows comparison of performance of
   \centering
   \input{obrazky-figures/composition_construct_replace_table.tex}
   \caption{
-    Table comparing performance of \mata and \mona on an operation composition constructing \nfts for replace operations on both benchmarks.
-    The shown times are in milliseconds.
-    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+    Composition constructing \nfts for replace operations on both benchmarks.
   }
   \label{tab:composition_construct_replace}
 \end{table}
@@ -1790,14 +1806,14 @@ Table~\ref{tab:composition_construct_replace} shows comparison of performance of
 \begin{figure}[ht]
     \centering
     \subfloat[
-      Composition operation
+      Composition operation.
       \label{fig:composition_pair}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{composition_scatter.pdf}
     }}%
     \quad
     \subfloat[
-      Composition constructing replace operations
+      Composition constructing replace operations.
       \label{fig:composition_construct_replace}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{composition_construct_replace_scatter.pdf}
@@ -1810,9 +1826,22 @@ Table~\ref{tab:composition_construct_replace} shows comparison of performance of
 
 \section{Summary}
 
-It appear that \mata has higher base runtime in comparision with \mona, but in general, $75 \%$ of examples are finished in about the same time in \mata as in \mona, finishing in under $50$ ms.
-There are instances where \mata fails to compute the composition and times out.
-For most cases, the performance should be improved by implementing the optimized composition specialized for $2$-tape \nfts which omits having to insert self-loops and additional levels into the composed \nfts.
+The experiments show that \mata has higher base runtime in comparision with \mona, but in general, $75 \%$ of examples are finished in about the same time in \mata as in \mona, finishing in under $50$ ms.
+\mata runs comparably with \mona on application of a literal and projection to tape $1$.
+Otherwise, \mata runs slower than \mona, but even then its runtime is reasonable.
+There are a few instances where \mata fails to compute the composition and times out whereas \mona succeeds in computing the composition.
+
+Considering that \mona is a well-optimized library for applications on binary representations of transition symbols, we consider a success that \nfts in \mata are able to get close to the performance of \mona, and even outperform \mona in some cases.
+
+For most cases, the performance of \mata should be improved by implementing the optimized composition specialized for $2$-tape \nfts which omits having to insert self-loops and additional levels into the composed \nfts.
+
+The experiments shown are not the only use cases for \nfts in \mata, but they represent a selection of operations that will be performed in \noodler.
+Furthermore, the instances of replace operations appearing in SMT-LIB benchmarks are relatively small and easy to compute.
+When applying \nfts to examples from practice from other domains, e.g., pattern matching~\cite{10.1007/978-3-031-30829-1_19}, the patterns being matched get progressively larger and introduce more nondeterminism.
+With the larger patterns, the advantage of \mata being able to handle nondeterminism naturally should prove to be crutial for efficient creation and handling the corresponding \nfts, quickly outperforming tools without proper support for nondeterminism.
+That is because the complexity of determinization of similar patterns usually increases exponentially to the number in counters.
+
+We conclude that \nfts in \mata are prepared and ready to be used in \noodler and the experimental evaluation shows that the performance of \mata should be sufficient for both string solving and general use of \nfts in \mata.
 
 \chapter{Conclusion}
 
