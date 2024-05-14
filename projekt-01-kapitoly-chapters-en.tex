@@ -275,9 +275,12 @@ We might use words, or even entire automata as transition symbols, which symboli
 \chapter{Automata Libraries}
 \label{chap:finite_automata}
 
+Uses of automata theory in computer science are ubiquitous, with applications in a large group of domains such as reasoning about reactive systems; fast and robust regex matching; reasoning about programs using dymanic memory; and modelling, analysis, or detection of vulnerabilities in software.
+Furthermore, improvements in the area of SMT string solving may lead to wide area of possible applications such as the analysis of security policies.
+
 The success of finite automata is underlined by the vast variety in automata libraries, each providing support for a different set of automata models, and various supported operations on these models using different algorithms.
 
-Numerous libraries aim to serve as a general-purpose automata libraries (e.g., ~\cite{automatanet, tacas24_mata_10.1007/978-3-031-57249-4_7,fado}) while others closely specialize on just specific use cases for which the libraries highly optimize (e.g., ~\cite{mona,automatajar}).
+Numerous libraries aim to serve as a general-purpose automata libraries (e.g., ~\cite{automatanet, tacas24_mata_10.1007/978-3-031-57249-4_7,fado}) while others closely specialize on just specific use cases for which the libraries highly optimize (e.g., in~\cite{mona,automatajar}).
 
 \subsection{Mata}
 
@@ -293,7 +296,7 @@ All the operations are provided in both \cpp and Python interfaces, with rich vi
 
 \mata not only provides the user with a clear and understandable interface to common automata operations, but also allows for precise low-level access to the underlying data structures to better optimize for user- and use case-specific operations.
 
-The basis of the performance of \mata is its three-level data structure called \deltastruct representing a transition relation of an automaton.
+The basis of the performance of \mata is its three-level data structure called \deltastruct representing a transition relation of an automaton (see Section~\ref{sec:mata_data_structure} for an explanation of \deltastruct, its advantages and disadvantages, and appliation to finite transducers).
 
 The performance of \mata have been evaluated in~\cite{cade23_reasoning_regular_properties_comparision_DBLP:conf/cade/FiedorHHRSV23} (as \enfa), \cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
 Furthermore, \mata is used as an underlying finite automata library for a novel string solver \noodler in~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23, oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23,tacas24_noodler_10.1007/978-3-031-57246-3_2}, where \mata handles creation and storing of finite automata and performing automata operations on them.
@@ -367,44 +370,36 @@ Henceforth, \mata is the most viable choice for our intent to add support for ge
 \chapter{String Solving}
 \label{chap:string_solving}
 
-WIP
-
-The purpose of adding support for finite state transducers in \mata is using finite transducers as translators in string constraint solving for deciding satisfiability of SMT formulae with replace operations which can be conveniently encoded into transducers.
-
-
 % String Solving + Noodler
 Despite the continuous effort to mitigate the vulnerabilities often found in web appliations of today, the lists of common vulnerabilities such as CVE, CWE and OWASP TOP still list the vulnerabilities related to cross-site scripting (XSS), and code injection or execution as the top critical software vulnerabilities~\cite{OWASP13,OWASP17,OWASP21,cwe-top-25-2022, cwe-top-25-2023}.
 Such attacks can be performed when working with user-submitted data without proper sanitization.
 The user with a malicious intent can inject a dangerous code which is afterwards executed at the server of a web application, or locally on victim's computers.
 And even though vulnerabilities in web applications cost the firms and users considerably more than other types of software bugs, an efficient technique for fighting these attacks is still missing.
 
-To prevent these attacks, techniques utilizing string solving have been applied.
-In the recent decades, we have seen a rapid growth of various procedures for SMT string constraint solving, implemented in numerous state-of-the-art SMT solvers used to verify the safety of handling a user inputs and analyse the possibility of exploiting user inputs for injection of malicious code.
-The importance of efficient algorithms for deciding satisfiability of SMT formulae is further underlined by everyday applications in the industry such as running a billion SMT queries a day in Amazon Web Services to analyse cloud access policies (placing first in OWASP'21~\cite{OWASP21} as the most critical software bug) and correct security configuration~\cite{Rungta2022}, or an ongoing annual competition SMT-COMP~\cite{smt_comp} comparing a number of SMT solver on various benchmarks both from the industry and the research solving complex problems.
+During the last two to three decades, a great development efforts have been put into improving SMT solvers for specific theories (specific constraint languages).
+Namely, modelling and deciding constraints over a language of strings, also known as \emph{string solving}, is one of the dominant fields of active research.
 
-Recent advances in analysis of programs manipulating strings, string solving, automatically solving string constraints over string languages, have heightened the importance of modelling string replacement operations.
-Such operations allow for replacing a substring specified by a regular language with another string.
+In order to prevent the aforementioned attacks, techniques utilizing string solving are often used.
+We have seen a rapid growth of various procedures for SMT string constraint solving, implemented in numerous state-of-the-art SMT solvers used to verify the safety of handling user inputs and analyse the possibility of exploiting user inputs for injection of malicious code.
+The importance of efficient algorithms for deciding satisfiability of SMT formulae is further underlined by everyday applications in the industry such as running a billion SMT queries a day in Amazon Web Services to analyse cloud access policies (placing first in OWASP'21~\cite{OWASP21} as the most critical software bug) and correct security configuration~\cite{Rungta2022}, or an ongoing annual competition SMT-COMP~\cite{smt_comp} comparing a number of SMT solvers on various benchmarks both from the industry and the research solving practical problems.
+
+Recent advances in analysis of programs manipulating strings, string solving, and automatic solving of string constraints over string languages have heightened the importance of modelling string replacement operations.
+Such operations allow for replacing a substring specified by a regular pattern or a word with another string.
 The applications are widely used in web applications such as implicit browser transductions, or replace functions such as \emph{replace} and \emph{replace-all} functions.
-The area of active research with huge demand and practical applicability in the industry and one of the most important applications of string-replace operations is defence against attacks such as cross-site scripting or code injection in web applications.
-Untrusted inputs from a user are to be sanitized (e.g. by escaping the input string) in order to prevent arbitrary malicious code execution.
+This gives an area of active research with huge demand and practical applicability in the industry.
+One of the most important applications of string replace operations is defence against attacks such as cross-site scripting (XSS) or code injection in web applications.
+Untrusted inputs from a user are to be sanitized (e.g., by escaping the input string) in order to prevent arbitrary malicious code execution.
 We need a toolset to verify that such sanitizations are correct and safe.
-SMT solver with support for replace operations can be used to decide this.
+The sanitized inputs are verified by testing for emptiness of intersection with the typical database of cross-site scripting attack patterns, represented as a regular language.
+SMT solver with support for replace operations can verify these properties.
 
-Another applications are implicit browser transductions.
-HTML codes need to be coded and decoded in the input strings (replacing \texttt{\&\#39;} by a single quote \texttt{'}).
+Implicit browser transductions codes and decodes HTML codes in the input strings (e.g., replacing ''\texttt{\&\#39;}'' by a single quote ''\texttt{'}'').
 % Application of transducers for string solving
-Finite transducers are ideal for modelling both the sanitization operations and the implicit browser transductions:
-Both these applications create relations between two languages, mapping strings from one language to the other which can be modelled by finite transducers.
-Finite transducers can model implicit browser transductions directly.
-They can be used to model string-replace operations for sanitization operations and the resulting replacement (the generated language) can be tested for emptiness of intersection with the typical database of cross-site scripting attack patterns, represented as a regular language.
+Finite transducers are ideal for modelling both the sanitization operations and the implicit browser transductions.
+Both applications create binary rational relations between two languages, giving a relation between strings from one language and strings in the other language.
 Such constraints are presented to an SMT solver to decide its satisfiability.
 
-Uses of automata theory in computer science are ubiquitous, with possible applications in a large group of domains such as reasoning about reactive systems; fast and robust regex matching; reasoning about programs using dymanic memory; and modelling, analysis, or detection of vulnerabilities in software.
-Furthermore, improvements in the area of SMT string solving may lead to wide area of possible applications such as the analysis of security policies.
-
 We currently focus primarily on detection of vulnerabilities in software.
-During the last two to three decades, a great development efforts have been put on improving SMT solvers for specific theories (specific constraint languages).
-Namely, modelling and deciding constraints over a language of strings, also known as \emph{string solving}, is one of the dominant fields of active research.
 
 Many programs utilize strings as ubiquitous data structures, handling both the program data and user-supplied input data.
 Popular programming languages for web technologies such as JavaScript, PHP, or even Python use strings as a dominant data structure (strings are used as keys to maps, contain names for procedures to be dynamically executed, or encode other types of information which is to be decoded later on, e.g., for serialization during communication between programs, even over the internet such as communication between data servers and user web appliations).
@@ -425,9 +420,10 @@ Sanitization of text inputs is one of many use-cases where finite transducers ca
 To illustrate the vulnerabilities, take a look at the following typical software vulnerabilities of software manipulating strings, for example~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10,kern14} and many more.
 
 \paragraph{Cross-site scripting attack.}
-Have a look at one textbook example of a cross-site scripting attack where text inputs are sanitized incorrectly in Listing~\ref{listing:not_sanitized_example}, allowing for insertion of malicious script executing arbitrary code.
+Have a look at one textbook example of a cross-site scripting attack where text inputs are sanitized incorrectly in Listing~\ref{listing:not_sanitized_example}.
+This code allows for insertion of malicious script executing an arbitrary code.
 \begin{listing}[!ht]
-\caption{Example of a cross-site scripting attack where an incorrectly sanitized user input can be stored directly in the database.}
+\caption{Example of a cross-site scripting attack. An incorrectly sanitized user input can be stored directly in the database and execute an arbitrary malicious code.}
 \label{listing:not_sanitized_example}
 \begin{minted}
 [
@@ -554,6 +550,7 @@ However, the generated corresponding (dis)equations and constraints negatively i
 All of these operations can be easily encoded as finite transducers (with the model being implemented in \mata together with the corresponding operations on finite transducers), and resolved by applying standard finite transducer operations on the computed inputs.
 For this reason, adding support for finite transducers in \mata is paramount to the capabilities of \noodler and its overall performance.
 
+% =================================
 \chapter{Finite Transducers in \mata}
 
 This chapter describes our proposed solution for representation of \nfts in \mata. We describe how we model \nfts in \mata, what data structures we use, how we implement the neessary algorithms working with these data structures.
@@ -578,6 +575,7 @@ For example, the input word $abcabc$ is accepted on the input tape and produces 
 \end{example}
 
 \section{Data Structure}
+\label{sec:mata_data_structure}
 We propose utilizing the existing data structures in \mata (used for NFAs) for implementing finite transducers in \mata.
 The main advantage is that NFAs, \nfts, and BDDs can all be implemented using the same single data structure, utilizing a lot of the existing algorithms on the data structures.
 
