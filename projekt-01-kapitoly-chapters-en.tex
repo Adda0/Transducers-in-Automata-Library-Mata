@@ -1530,6 +1530,8 @@ The proper support for BDDs inheriting from \nfts is planned to be implemented i
 
 \chapter{Experimental Evaluation}
 
+WIP
+
 In this chapter, we compare the performance of \nfts implemented in \mata with a state-of-the-art automata library \mona~\cite{mona}.
 
 For our experiments, we are especially interested in how \mata performs when running operations on \nfts modelling the replace operations required by \noodler.
@@ -1748,6 +1750,27 @@ Nevertheless, the computation for both the forward and backward application oper
 Considering our future uses for application operation in \noodler, we will sometimes apply the whole language $\Sigma^*$, but more often we will apply a more constrained subset $L \subset \Sigma^*$ which should therefore perform better on \noodler runs.
 If the performance is then still insufficient, we can implement the aforementioned optimization for composition for $2$-tape \nfts and use in \noodler this version instead of the general application implementation for multi-tape \nfts.
 
+\begin{figure}[ht]
+    \centering
+    \subfloat[
+      Literal application
+      \label{fig:apply_literal_backward}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_literal_backward_scatter.pdf}
+    }}%
+    \quad
+    \subfloat[
+      Language application
+      \label{fig:apply_language_bacward}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_language_backward_scatter.pdf}
+    }}%
+    \caption{
+      Scatter plots for comparing the performance of \mata and \mona on backward application operations on both benchmarks.
+    }
+    \label{fig:apply_operation_backward}%
+\end{figure}
+
 \subsection{Composition}
 
 Table~\ref{tab:composition} shows comparison of performance of \mata and \mona on the composition operation on both benchmarks.
@@ -1763,6 +1786,39 @@ Table~\ref{tab:composition} shows comparison of performance of \mata and \mona o
   \label{tab:composition}
 \end{table}
 
+Table~\ref{tab:composition_construct_replace} shows comparison of performance of \mata and \mona on the composition operation constructing \nfts for replace operations on both benchmarks.
+
+\begin{table}[ht]
+  \centering
+  \input{obrazky-figures/composition_construct_replace_table.tex}
+  \caption{
+    Table comparing performance of \mata and \mona on an operation composition constructing \nfts for replace operations on both benchmarks.
+    The shown times are in milliseconds.
+    The table shows the tool and which projection was performed used (tool name and the tape being projected out); number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+  }
+  \label{tab:composition_construct_replace}
+\end{table}
+
+\begin{figure}[ht]
+    \centering
+    \subfloat[
+      Composition operation
+      \label{fig:composition_pair}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{composition_scatter.pdf}
+    }}%
+    \quad
+    \subfloat[
+      Composition constructing replace operations
+      \label{fig:composition_construct_replace}
+    ]{{
+      \includegraphics[keepaspectratio, width=0.45\textwidth]{composition_construct_replace_scatter.pdf}
+    }}%
+    \caption{
+      Scatter plots for comparing the performance of \mata and \mona on composition operations on both benchmarks.
+    }
+    \label{fig:composition}%
+\end{figure}
 
 \section{Summary}
 
