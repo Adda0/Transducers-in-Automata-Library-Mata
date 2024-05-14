@@ -52,7 +52,7 @@ Using automata for strings solving is a natural step as in string solving, we de
 
 The work in this thesis is highly motivated by an automata-based technique introduced recently in a novel SMT string solver \noodler.
 \noodler uses automata as the backbone of its decision procedure.
-\noodler can solve word equations with regular constraints, but cannot be used to solve word equations and constraints with replace operations (replacing a word or a regular pattern with a string literal) for analysis of string manipulating programs in web applications.
+\noodler can solve word equations with regular constraints, but cannot be used to solve word equations and constraints with replace operations such as \texttt{replaceAll}(replacing all words or a regular patterns with a string literal), as explored in~\cite{10.1145/3158091} for analysis of string manipulating programs in web applications.
 One of the main motivations for adding finite transducers to \mata is encoding replace operations in \noodler.
 
 The broader context of string solving and related work relevant to this thesis is given in Chapter~\ref{chap:string_solving}.
