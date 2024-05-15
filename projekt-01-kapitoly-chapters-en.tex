@@ -1489,6 +1489,7 @@ The existing decision procedure of \noodler will have to be modified further as 
 \chapter{Implementation}
 
 The proposed data structures for finite transducers, standard operations on finite transducers, and algorithms for modelling replace operations were implemented in \mata.
+The code is accessible on \mata \href{https://github.com/VeriFIT/mata/}{GitHub repository}\footnote{\url{https://github.com/VeriFIT/mata/}}.
 
 The majority of the operations on finite transducers closely follow the implementation of the corresponding operations on \nfas already existing in \mata.
 These operations are modified only in places where it is necessary to handle the differences between \nfas and \nfts, such as correctly setting and resetting the vector of levels for transducer states, or handling epsilon, \nop and don't care symbols.
@@ -1496,7 +1497,7 @@ These operations are modified only in places where it is necessary to handle the
 Furthermore, several algorithms specific for \nfts are added to \mata, namely composition of two \nfts, application (of both an \nfa and a word) on an \nft, projection (to a specified subset of \nft tapes---producing a new \nft---or to only a single tape---producing the corresponding \nfa for the specified tape).
 
 \paragraph{Levels.}
-The vector of levels is a vector of unsigned integers representin the levels indexed by states.
+The vector of levels is a vector of unsigned integers representing the levels indexed by states.
 
 Each \nft also stores the number of tapes (levels) in the \nft.
 The number of tapes defaults to $1$, which means that the \nft is equivalent to \nfa and the operations on \nfts with number of levels set to $1$ will behave the same as a corresponding \nfa (with an equivalent transition relation where all don't care transitions are replaced with transition between the same states over the whole alphabet).
@@ -1513,7 +1514,7 @@ This operation has constant complexity since a set of levels in \mata is a state
 We decided for this approach since all operations in \mata already support epsilon transitions, checking for existence of epsilon transitions and accessing them has constant complexity, and adding handling for yet another special transition symbol further complicates the logic for many operations which do not have to distinguish between epsilon and no operation transitions.
 
 \paragraph{Words and identity insertion.}
-We also implemented a few utility functions which are useful when constructing or modifying \nfts\footnote{Especially for modelling the replace and other operations in string solving.} such as
+We also implemented a few utility functions which are useful when constructing or modifying \nfts\footnote{Especially during construction of \nfts for the replace operations and other often used operations in string solving.} such as
 \begin{itemize}
   \item \emph{inserting an identity transition} over all tapes (all tapes read/write the same symbol) over the given alphabet for a specified state.
 
@@ -1521,7 +1522,7 @@ We also implemented a few utility functions which are useful when constructing o
 
   \item \emph{inserting a word} for specified tapes or \emph{inserting words}, one for each tape.
 
-  This allows one to quickly create transducers which read a specific word, replace a specific string literal with a given literal, or removes specified literal from the input word.
+  This allows one to quickly create transducers which read a specific word, replace a specific string literal with a given literal, or remove a specified literal from the input word.
 \end{itemize}
 
 \paragraph{Specifying tapes to work on.}
@@ -1529,31 +1530,29 @@ Since we aim to implement \nfts in \mata so they are usable for general purposes
 
 Be mindful that using different tapes for some operations may affect the performance of these operations. For example, application on the first tape is more performant than the application on the last tape in an $n$-tape \nft.
 
-\section{Similarities with operations on BDDs.}
+\section{Similarities with operations on BDDs}
 Since the idea of data structures and operations for \nfts in \mata was to provide the same underlying data structures as well as the interface for both \nfts and BDDs, many of the operations on \nfts and BDDs follow the same general algorithm with just slight modification in how \nfts and BDDs interpret the same instance of an \nft automaton.
 For example, when using BDDs, one will interpret jumps over several levels to represent a sequence of transitions where the first transition has the transition symbol given by the jump, but the remaining transitions have $\dontCare$ symbols as opposed to the \nft interpretation where all transitions in the jump have the jump symbol.
 
 % \paragraph{Support for BDDs.}
-For the implementation of the current interface and algorithms specific for \nfts (composition and projection), I used the existing implementation for a simple prototype BDD representation using \nfas with levels, which was implemented previously in \mata.
-I further modified the existing operations, expanded the interface with new operations, added string solving-specific operations (construction of typical \nfts used in string solving, \nfts for replace operations, \ldots).
+For the implementation of the current interface and algorithms specific for \nfts (composition and projection), I used the existing implementation for a simple prototype BDD representation using \nfas with levels (supporting simple composition and projection operations), which was implemented previously in \mata.
+I further modified the interface for the existing operations, expanded the interface with new operations, added string solving-specific operations (construction of typical \nfts used in string solving, \nfts for replace operations, \ldots).
 I collaborated with our colleagues to define the same interface for \nfts and future proper implementation of BDDs, inherited from \nfts.
 
 As a result of discussions and collaboration, I add support for \nfts (this work, utilizing the existing implementations for projection and composition) and we plan adding support for BDDs in the future: using the defined common interface, where BDDs inherit operations from \nfts where the cores of the \nft- and BDD-specific operations from Section~\ref{sec:Algorithms} (composition, projection) are modified and extended versions of the existing implementations for BDD operations.
 
 Thanks to this collaboration, we are able to add official support for BDDs into \mata easily by inheriting \nft and modifying handling of jump transitions and several additional changes.
-Therefore, \nft projection will be similar to BDD projection, \nft application is similar to BDD application, etc.
-The proper support for BDDs inheriting from \nfts is planned to be implemented in the future when the current implementation for \nfts matures enough.
+Therefore, \nft projection will be similar to BDD projection, \nft composition similar to BDD composition, etc.
+The proper support for BDDs inheriting from \nfts is planned to be implemented when the current implementation for \nfts matures enough.
 
 \chapter{Experimental Evaluation}
 \label{chap:experiments}
 
-WIP
-
-In this chapter, we compare the performance of \nfts implemented in \mata with a state-of-the-art automata library \mona~\cite{mona}.
-
 For our experiments, we are interested in how \mata performs when running operations on \nfts modelling the replace operations required by \noodler.
 Modelling replace operations in \noodler is not the only use case for \nfts in \mata, but it is the first domain where \nfts will be used.
 % Since our main indent is to use \nfts in \mata as models to replace operations in \noodler, we need to optimize the \nft algorithms primarily to this use case, while keeping the \nft algorithms general enough for other use cases.
+
+We compare the performance of \nfts implemented in \mata with a state-of-the-art automata library \mona~\cite{mona}.
 
 Even if \mona does not support finite transducers directly, we have chosen \mona to compare \mata against because \mona is a well-optimized library which, thanks to its ability to encode transition relation into MTBBs, provides a reasonable model for encoding finite transducers.
 Each tape in a transducer can be encoded as a single variable in the BDD for a given transition.
