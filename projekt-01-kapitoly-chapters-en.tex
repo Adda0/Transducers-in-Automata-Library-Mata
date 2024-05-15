@@ -1064,7 +1064,7 @@ For $2$-tape $\ft$, we get a $1$-tape \nft, equal to the corresponding \nfa enco
 
 \chapter{Transducers for String Solving}
 
-We discuss in this chapter how to utilize finite transducers in \noodler to solve SMT string constraints \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and \texttt{str.replace\_re\_all}.
+We discuss in this chapter how to utilize finite transducers in \noodler to solve SMT string constraints \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and\\\texttt{str.replace\_re\_all}.
 
 \section{Replace Operations}
 A general regular replacement operation has the following form:
@@ -1077,46 +1077,49 @@ where \texttt{replace} determines the type of the regular replacement (the seman
 \texttt{input\_string} represents the original input string where we want to replace some regular \texttt{pattern} with a \texttt{replacement} literal.
 Regular \texttt{pattern} can be a string literal (a word) or a regular language describing the substring (or substrings) of \texttt{input\_string} we are trying to replace.
 
-There are various replacement semantics for replace operations. Popular regular replacement types are \emph{reluctant replacement}, \emph{greedy replacement}, or \emph{possessive replacement}, or \emph{declarative replacement}.
-For example, reluctant replacement matches a given \texttt{pattern} (a regular language) with the shortest substring of the \texttt{input\_string}, while the greedy replacement matches the longest substring. These types produce the same result when \texttt{pattern} is a string literal.
-Possessive replacement semantics is that of the greedy one, but without backtracking on the substring matched so far.
+There are various replacement semantics for replace operations. The popular regular replacement types are \emph{reluctant replacement}, \emph{greedy replacement}, \emph{possessive replacement}, or \emph{declarative replacement}.
+For example, the reluctant replacement matches a given \texttt{pattern} (a regular language) with the shortest substring of the \texttt{input\_string}, while the greedy replacement matches the longest substring. These types produce the same result when \texttt{pattern} is a string literal.
+Possessive replacement semantics is that of the greedy one, but without backtracking on the substring matched so far (we match on the first longest match).
 Declarative replacement matches every occurrence of regular \texttt{pattern} in the given \texttt{input\_string}.
 
-In opposition, \emph{procedural} regular replacements encompass the greedy and reluctant replacements since both match in \texttt{input\_string} from the left to the right.
-The start with the first character in the word and by using backtracking continue through the word until the end of the word.
+A \emph{procedural} regular replacements enforce the matching of the left-most occurrence of \texttt{pattern}.
+Procedural replacements encompass the greedy and reluctant replacements since both match in \texttt{input\_string} from the left to the right.
+They start with the first character in the word and by using backtracking continue through the word until the end of the word.
 
 Since SMT-LIB defines only replacement operations of type reluctant replacement with the left-most matching and other types of the replacement operations are not allowed in SMT formulae in SMT-LIB format (which \noodler solves), we focus in this work solely on the reluctant replacement type.
 
-We denote reluctant regular replacement as $x_{\pi \rightarrow y}$ as where $x$ is the \texttt{input\_string}, $\pi$ is the regular \texttt{pattern} (a literal or a regular language) and $y$ is the \texttt{replacement}.
+We denote reluctant regular replacement as $x_{\pi \rightarrow y}$ where $x$ is the \texttt{input\_string}, $\pi$ is the regular \texttt{pattern} (a literal or a regular language) and $y$ is the \texttt{replacement}.
 
-\section{Encoding Reluctant Regular Replacement as Transducers}
+\section{Encoding Reluctant Replacement as Transducers}
 
 SMT-LIB suports two types of reluctant replacements: a \emph{reluctant all replacement} which replaces all occurrences of the shortest left-most matches of \texttt{pattern}, and \emph{reluctant single replacement} which replaces only the first shortest left-most occurrence of \texttt{pattern}.
 
-\paragraph{Epsilon in \texttt{pattern}.}
-If the \texttt{pattern} contains epsilon symbol, a special handling of epsilon matching needs to be performed. In such a case, one encodes the replacement operation as if $\epsilon \notin \pi$, and solves the replacement for two options:
+\paragraph{Empty word in \texttt{pattern}.}
+If the \texttt{pattern} contains an empty word $\epsilon$, a special handling of $\epsilon$ matching needs to be performed. In such a case, one encodes the replacement operation as if $\epsilon \notin \pi$, and solves the replacement for two options:
 \begin{itemize}
   \item Tries solving for just $\epsilon$ manually, and alternatively
   \item Solves the reluctant replacement without the epsilon if the $\epsilon$ match fails.
 \end{itemize}
 Since SMT-LIB works only with reluctant replacements, the reluctant replacement would always pick the shortest replacement, i.e., the $\epsilon$ replacement. The reluctant match of $\epsilon$ will always succeed and longer matches will not be needed nor accepted. SMT-LIB declares results to such patterns with $\epsilon$ to be equal to $\texttt{replacement} \concat \texttt{input\_string}$ (prepending the replacement to the \texttt{input\_string}).
+No replacement \nft needs to be constructed in this case.
 
 % Define reluctant replacement.
 
 \begin{definition}[\textbf{Reluctant all replacement}] \hfill \newline
   A \emph{reluctant all replacement} $x^{+}_{\pi \rightarrow y}$ is defined as follows: \newline
-  $$x^{+}_{\pi \rightarrow y} = \{ u \concat y \concat w^{+}_{\pi \rightarrow y} \} \text{,}$$
-  where $u, v, w, x, y \in \Sigma^*$, $\pi$ is a regular language (regex), $x = u v w$, $u \notin \Sigma^* \pi \Sigma^*$, $v \in \pi$, and to ensure the shortest left-most matching, the following must hold: $\forall u = u_1 u_2, v = v_1 v_2, w = w_1 w_2:$ if $v_2 \neq \epsilon$ then $v_1 \notin \pi$ (the shortest match as if $v_1$ is not a match, then surely the  shortest match is $v = v_1v_2$); if $u_2 \neq \epsilon$ then $u_2 v_1 \notin \pi \land u_2 v w_1 \notin \pi$ (the left-most match is $v$ since there is no match of $\pi$ before $v$).
+  $$x^{+}_{\pi \rightarrow y} = \{ u \concat y \concat w^{+}_{\pi \rightarrow y} \}$$
+  where $u, v, w, x, y \in \Sigma^*$, $\pi$ is a regular language (regex), $x = u v w$, $u \notin \Sigma^* \pi \Sigma^*$, $v \in \pi$, and to ensure the shortest left-most matching, the following must hold: $\forall u = u_1 u_2, v = v_1 v_2, w = w_1 w_2:$ if $v_2 \neq \epsilon$ then $v_1 \notin \pi$ (the shortest match---if $v_1$ is not a match, then surely the shortest match is $v = v_1v_2$);
+  if $u_2 \neq \epsilon$ then $u_2 v_1 \notin \pi \land u_2 v w_1 \notin \pi$ (the left-most match is $v$ since there is no match of $\pi$ before $v$).
 \end{definition}
 
-A reluctant single replacement is defined similarly, only the recursive replacement of $w$ is no longer performed since after the first replacement of $v$, no more patterns matchings are tried on the substring $w$ after the replaced substring $v$.
+A reluctant single replacement is defined similarly, only the recursive replacement of $w$ is no longer performed since after the first replacement of $v$, no more pattern matchings are tried on the substring $w$ after the replaced substring $v$.
 \begin{definition}[\textbf{Reluctant single replacement}] \hfill \newline
   A \emph{reluctant single replacement} $x^{1}_{\pi \rightarrow y}$ is defined as reluctant all replacement, only with the recursive replacement removed:
   $$x^{1}_{\pi \rightarrow y} = \{ u \concat y \concat w \} \text{.}$$
 \end{definition}
 
 \begin{example}
-  For $a, b, c \in \Sigma$: $aabaaba^{+}_{aa \rightarrow c} = \{ cbcba \}$; $aabaaba^{1}_{aa \rightarrow c} = \{ cbaaba \}$;
+  For $a, b, c \in \Sigma$: $(aabaaba)^{+}_{aa \rightarrow c} = \{ cbcba \}$; $(aabaaba)^{1}_{aa \rightarrow c} = \{ cbaaba \}$.
 \end{example}
 
 \section{Transducers for Regex Reluctant Replacement}
@@ -1127,16 +1130,17 @@ We follow the idea of the existing procedure for constructing \nft for regex rel
 
 The approach constructs two main \nfts where one non-deterministically finds a possible beginning of a pattern match and inserts a special symbol $\marker$ at the found location in the input word $x$. The symbol $\marker$ serves as a \emph{begin marker} for the searched pattern.
 
-Since we have a reluctant replacement matching the shortest left-most pattern, we know that when we insert the correct begin marker into the input word (followed by a match of $\pi$), we can simply read the characters following $\marker$ until we read a matching pattern. There is no need for us to explicitly mark the end of the pattern with another special symbol.\footnote{
+Since we have a reluctant replacement matching the shortest left-most pattern match, we know that when we insert the correct begin marker into the input word (followed by a match of $\pi$), we can simply read the characters following $\marker$ until we read a matching pattern. There is no need for us to explicitly mark the end of the pattern with another special symbol.\footnote{
   This would not be the case for, e.g., the greedy replacement, however.
 }
 
 However, in order to construct the \nft for the begin marker, we first construct a \dft to find a possible \emph{end marker} $\marker$\footnote{For simplicity, we use the same symbol to denote both the begin marker and the end marker. Reason for this is that these two markers are never used simultanously and there is a close connection between them. The connection will be further explained later.} which denotes the end of a pattern.
 The end marker \dft is however constructed for the reverse of the searched pattern $\pi$, $\reverse{\pi}$.
-This way, we deterministically find the ends of the reversed $\reverse{\pi}$, which gives us the potential beginning of the reverse of $\reverse{\pi}$, that is, the original $\pi$ in $x$.
+This way, we deterministically find the ends of $\reverse{\pi}$.
+This gives us the potential beginning of the reverse of $\reverse{\pi}$, that is, the original $\pi$ in $x$.
 
 We will explain the construction on a running example.
-Given $x^{+}_{\pi \rightarrow y}$ where $\pi = a^+b^+c$ and $y = d$, construct $\ft_{x^{+}_{\pi \rightarrow y}}$.
+Given $x^{+}_{\pi \rightarrow y}$ where $\pi = a^+b^+c$, construct $\ft_{x^{+}_{\pi \rightarrow y}}$.
 
 \subsection{End Marker \dft}
 Here, we construct a \dft $\ftEndMarker$ marking the end of a regular pattern $\reverse{\pi}$.
@@ -1159,7 +1163,7 @@ $\aut_{\reverse{\pi}}$ accepts $\reverse{\pi}$, but for replace operations, we n
 Therefore, we \emph{generalize} $\aut_{\reverse{\pi}}$, producing $\aut^{\text{gen}}_{\reverse{\pi}}$, which accepts any word $x \in \Sigma^*$.
 Think of $\aut^{\text{gen}}_{\reverse{\pi}}$ as the input tape of an \nft which needs to read any word on its input, and only perform a specific operation (replacement here) for a specified pattern in the input word.
 
-Given $\aut_{\reverse{\pi}} = (\states, \Sigma, \post, \{ q_0 \}, \finalStates)$, we construct $\aut^{\text{gen}}_{\reverse{\pi}} = (\states^{\text{gen}}, \Sigma, \post^{\text{gen}}, { s_0 }, \finalStates^{\text{gen}})$ where $\states^{\text{gen}} = \{ t \,\mid\, t \subseteq \states \}$ following these rules:\newline
+Given $\aut_{\reverse{\pi}} = (\states, \Sigma, \post, \{ q_0 \}, \finalStates)$, we construct $\aut^{\text{gen}}_{\reverse{\pi}} = (\states^{\text{gen}}, \Sigma, \post^{\text{gen}}, \{ s_0 \}, \finalStates^{\text{gen}})$ where $\states^{\text{gen}} = \{ t \,\mid\, t \subseteq \states \}$ following these rules:\newline
 We define a bijective mapping $\mathcal{M}: \states^{\text{gen}} \rightarrow 2^{\states }$ such that $\forall s \in \states^{\text{gen}}, a \in \Sigma: s' \in \post^{\text{gen}}(s, a)$
 iff $\mathcal{M}(s') = \{ q_0 \} \cup \{ q' \,\mid\, \exists q \in \mathcal{M}(s): q' \in \post(q, a) \}$
 and $\mathcal{M}(s_0) = \{ q_0 \}$.
@@ -1170,8 +1174,8 @@ Thus, $\aut^{\text{gen}}_{\reverse{\pi}}$ remains deterministic.
 
 However, when we encounter state $s$ where $\finalStates \cap \mathcal{M}(s) \neq \emptyset$, we know that we have reached a state in the constructed $\aut^{\text{gen}}_{\reverse{\pi}}$ where the substring corresponding to $s$ is accepted by $\aut_{\reverse{\pi}}$.
 That means that we have reached an end of an accepted word in $\aut_{\reverse{\pi}}$ which we want to mark (insert an end marker $\marker$ after this substring).
-Therefore, we during the construction, we create a new final state $s_f$, and each time we encounter such a state $s$, we add a transition $\move{s}{\epsilon}{s_f}$, and redirect all transitions which would normally go from $s$ to start in $s_f$.
-Thus the only outgoing transition from $s$ is the epsilon transition and we did not introduce a non-determinisctic choice of transition from $s$.
+Therefore, during the construction, we create a new final state $s_f$, and each time we encounter such a state $s$, we add a transition $\move{s}{\epsilon}{s_f}$, and redirect all transitions which would normally go from $s$ to start in $s_f$.
+Thus the only outgoing transition from $s$ is the epsilon transition and we did not introduce a non-determinisctic choice of transitions from $s$.
 Then, all states except for states $s$ where $\finalStates \cap \mathcal{M}(s) \neq \emptyset$ are made final since we want to accept any arbitrary input.
 We omit the original final states since reaching these states is a significant event in reading an arbitrary input which we need to handle separately.
 
@@ -1179,8 +1183,8 @@ $\aut^{\text{gen}}_{\reverse{\pi}}$ represents an \dfa which states how ''far'' 
 Each symbol either resets the \dfa (simulating manual backtracking) to some previous matched state or all the way up to $s_0$ (no even partial match was found, we start from the beginning of the pattern), or advances to the next state in the \dfa following the pattern.
 
 Now, $\aut^{\text{gen}}_{\reverse{\pi}}$ accepts any string $x$ on its input.
-During the run of $x$ on $\aut^{\text{gen}}_{\reverse{\pi}}$, each time an end of a substring $x_2$ where $x_2 \in \reverse{\pi}$ and $x = x_1 x_2 x_3$ is encountered, an epsilon transition is taken.
-If we were to insert $\marker$ into $x$ each time an epsilon transition is taken, we would modify $x$ in such a way that the word would remain the same, only interspersed with $\marker$ after each end of $x_2$ (since $\aut^{\text{gen}}_{cb^+a^+}$ is deterministic, no other transition can be taken from the source state of the epsilon transition).
+During the run of $x$ on $\aut^{\text{gen}}_{\reverse{\pi}}$, each time an end of a substring $x_2$ is encountered where $x_2 \in \reverse{\pi}$ and $x = x_1 x_2 x_3$, an epsilon transition is taken.
+If we were to insert $\marker$ into $x$ each time an epsilon transition is taken, we would modify $x$ in such a way that the word would remain the same, only interspersed with $\marker$ after each end of $x_2$ (since $\aut^{\text{gen}}_{\reverse{\pi}}$ is deterministic, no other transition can be taken from the source state of the epsilon transition).
 These $\marker$ represent the end markers we want to insert with $\ftEndMarker$.
 
 See Figure~\ref{fig:generalized_end_marker_dfa} showing a generalized modification of \dfa $\aut_{cb^+a^+}$, $\aut^{\text{gen}}_{cb^+a^+}$.
@@ -1195,7 +1199,7 @@ For example, a word $cbcbba\marker a\marker a\marker bcb$ would be accepted by t
 
 Next, we can construct $\ftEndMarker$ from $\aut^{\text{gen}}_{\reverse{\pi}}$.
 We simply consider the current transitions as the input tape of $\ftEndMarker$,
-and we add transition symbols for output tape: for all $a \in Sigma$, the  symbol on the output tape is $a$ again, only for input symbol $\epsilon$, the output symbol is $\marker$.
+and we add transition symbols for output tape: for all $a \in \Sigma$, the symbol on the output tape is $a$ again, only for input symbol $\epsilon$, the output symbol is $\marker$.
 
 We can see the final $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ in Figure~\ref{fig:generalized_end_marker_dft}.
 % \vspace*{-1cm}
@@ -1232,28 +1236,30 @@ We can see the final $\ftEndMarker$ for $\aut^{\text{gen}}_{cb^+a^+}$ in Figure~
 We could start constructing the \emph{begin marker} \nft $\ftBeginMarker$ from $\ftEndMarker$ by reversing all transitions in $\ftEndMarker$.
 However, considering reversing a single transducer transition (consisting of operations on the input and output tapes), represented as a sequence of two \nfa transitions in \mata from state with level $0$ to $1$ and back to some state with level $0$, we instead utilize $\aut^{\text{gen}}_{\reverse{\pi}}$ before its conversion to $\ftEndMarker$ (and $\ftEndMarker$ is therefore never truly constructed in \mata).
 
-% \vspace*{-5cm}
-\begin{wrapfigure}{r}{0.3\textwidth}
-  \centering
-  \includegraphics[keepaspectratio, scale=0.3]{nft_begin_marker.pdf}
-  \caption{\nft $\ftBeginMarker$ for $\reverse{\aut^{\text{gen}}_{cb^+a^+}}$ inserting non-deterministically the begin markers $\marker$ at the beginning of matches in $a^+b^+c$ for the read input word.}
-  \label{fig:begin_marker_nft}
-\end{wrapfigure}
-
 We reverse all transitions in $\aut^{\text{gen}}_{\reverse{\pi}}$, effectively obtaining the foundation for an \nfa for marking beginnings of $\pi$.
-We can now construct $\ftBeginMarker$ the same way as we constructed $\ftEndMarker$ from $\aut^{\text{gen}}_{\reverse{\pi}}$ except now $\marker$ as the output symbol for the epsilon symbol on the input tape represents the begin marker instead of the end marker.
+We can now construct $\ftBeginMarker$ the same way as we constructed $\ftEndMarker$ from $\aut^{\text{gen}}_{\reverse{\pi}}$, except now $\marker$ as the output symbol for the epsilon symbol on the input tape represents the begin marker instead of the end marker.
 This is why we use the same marker for symbols for both the begin and end marker, as noted earlier.
 They mark the same location, only once operating on $\reverse{\pi}$, then on $\pi$.
 
-However, marking beginnings is non-deterministic operation since we cannot know in advance whether the currently read symbol in an arbitrary input string marks a beginning of a full match in $\pi$.
-Henceforth, we have introduce another source of non-determinism, which gives us the smart ''look-ahead'' ability for marking beginnings for only those inputs that will later on truly match in $\pi$.
+However, marking beginnings is a non-deterministic operation.
+We cannot know in advance whether the currently read symbol in an arbitrary input string marks a beginning of a full match in $\pi$.
+Henceforth, we have to introduce another source of non-determinism, which gives us the smart ''look-ahead'' ability for marking beginnings for only those inputs that will later on truly match in $\pi$.
 All potentially incorrectly inserted begin markers in the input word end in a non-accepting run for the word with such begin markers.
-We add a new initial state $s'_0$ and add an epsilon transducer transition $\move{s'_0}{\epsilon}{s}$ ($\epsilon$ as the transition symbol on all tapes) leading to all states $s$ which are final in $\aut^{\text{gen}}_{\reverse{\pi}}$, that is, all except those which map to set of states containing the original final state from $\aut_{\reverse{\pi}}$.
+We add a new initial state $s'_0$ and add $\epsilon$ transducer transitions $\move{s'_0}{\epsilon}{s}$ ($\epsilon$ as the transition symbol on all tapes) leading to all states $s$ which are final in $\aut^{\text{gen}}_{\reverse{\pi}}$, that is, all except those which map to set of states containing the original final state from $\aut_{\reverse{\pi}}$.
 The previous initial state of $\ftBeginMarker$ is set as the only final state and is removed from the initial states.
 
 The Figure~\ref{fig:begin_marker_nft} shows a $\ftBeginMarker$ for $\reverse{\aut^{\text{gen}}_{cb^+a^+}}$.
 
+% \vspace*{-5cm}
+\begin{figure}[ht]%{r}{0.3\textwidth}
+  \centering
+  \includegraphics[keepaspectratio, scale=0.3]{nft_begin_marker.pdf}
+  \caption{\nft $\ftBeginMarker$ for $\reverse{\aut^{\text{gen}}_{cb^+a^+}}$ inserting non-deterministically the begin markers $\marker$ at the beginning of matches in $a^+b^+c$ for the read input word.}
+  \label{fig:begin_marker_nft}
+\end{figure}
+
 \subsection{Reluctant Replacement \nft}
+\label{sec:reluctant_replacement_nft}
 
 When we have the begin marker \nft $\ftBeginMarker$, we can construct the second \nft performing the actual replacement.
 These two \nfts are used to finally construct the whole $\ftRegexRelucAll$.
@@ -1264,18 +1270,19 @@ We construct an \nft $\ftRegexRelucReplaceAll$ which models the actual reluctant
 The idea is that we read the input string annotated with begin markers and output the same symbols unmodified on the output tape.
 Once we encounter the begin marker, we know we have found the first left-most match which needs to be replaced.
 Therefore, we switch to a ''replacement'' mode where we read the match without outputting anything, removing all symbols of the match and all additional begin markers inside the match.
-Afterwards, the match is read and we can insert the replacement for the match onto the output tape.
+After the match is read, we can insert the replacement for the match onto the output tape.
 When the replacement is inserted, we return to the beginning to potentially perform replacement on another match.
 
 First, we convert the $\aut_{\pi}$ into a new \nfa $\aut^{\text{short}}_{\pi}$ which accepts (matches) only the shortest input words.
 This can be easily performed by removing all outgoing transitions from all final states in $\aut_{\pi}$.
-Clearly, $\langof{\aut^{\text{short}}_{\pi}} = \{ u \in \langof{\aut_{\pi}} \,\mid\, \neg \exists u' \in \langof{\aut_{\pi}}^{<|u|} \}$.
+Clearly,
+$$\langof{\aut^{\text{short}}_{\pi}} = \{ u \in \langof{\aut_{\pi}} \,\mid\, \neg \exists u', v \in \Sigma^*: u' \in \langof{\aut_{\pi}}^{<|u|} \land u = u'v \land v \neq \epsilon \}\text{.}$$
 
 $\aut^{\text{short}}_{\pi}$ now matches the shortest words in the language of $\aut_{\pi}$, but does not allow skipping over additional $\marker$ encountered during the reading of the match.
 Such $\marker$ need to be skipped since $\marker$ inside the shortest left-most match represent beginnings of potential matches further to the right than the left-most match.
 We need to therefore add a self loop to every state in $\aut^{\text{short}}_{\pi}$ with transition symbol $\marker$.
 
-Now the final modification is to keep the next begin marker for the next shortest left-most match. $\aut^{\text{short}'}_{\pi}$ can be constructed given $\Sigma^*_\marker = \Sigma^* \cup \{ \marker \}$ as $\aut^{\text{short}'}_{\pi} = \aut^{\text{short}}_{\pi} \cap \overline{\Sigma^*_\marker \concat \{ \marker \}}$.
+Now, the final modification is to keep the next begin marker for the next shortest left-most match. $\aut^{\text{short}'}_{\pi}$ can be constructed given $\Sigma^*_\marker = \Sigma^* \cup \{ \marker \}$ as $\aut^{\text{short}'}_{\pi} = \aut^{\text{short}}_{\pi} \cap \overline{\Sigma^*_\marker \concat \{ \marker \}}$.
 
 $\aut^{\text{short}'}_{\pi}$ can be converted into $\ft^{\text{short}'}_{\pi}$ where the existing transitions are the input tape transitions, and the output symbols are all $\epsilon$ (\nft only reading the input word---the match---and consuming the whole match including $\marker$ inside the match).
 
@@ -1310,7 +1317,7 @@ Here we do not return to the beginning after the first replace, but move to a ne
 
 We have constructed $\ftBeginMarker$ to insert non-deterministically begin markers into the input word and constructed $\ftRegexRelucReplaceAll$ (or $\ftRegexRelucReplaceSingle$) to perform the replacement upon encountering matches prepended with $\marker$.
 $\ftRegexRelucAll$ (and similarly $\ftRegexRelucSingle$) can be constructed by connecting these two \nfts into a sequence using composition: $\ftRegexRelucAll = \ftBeginMarker \composePipe \ftRegexRelucReplaceAll$ and $\ftRegexRelucSingle = \ftBeginMarker \composePipe \ftRegexRelucReplaceSingle$.
-$\langof{\ftRegexRelucAll} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{+}_{\pi \rightarrow y} \} $ and $\langof{\ftRegexRelucSingle} = \{ (u, v) \in \Sigma^* \,\mid\, v = u^{1}_{\pi \rightarrow y} \} $.
+$\langof{\ftRegexRelucAll} = \{ (u, v) \in \Sigma^* \times \Sigma^* \,\mid\, v = u^{+}_{\pi \rightarrow y} \} $ and $\langof{\ftRegexRelucSingle} = \{ (u, v) \in \Sigma^* \times \Sigma^* \,\mid\, v = u^{1}_{\pi \rightarrow y} \} $.
 
 \section{Transducers for Literal Reluctant Replacement}
 
@@ -1323,12 +1330,11 @@ We can construct a replacement \dft for a single symbol reluctant replacement by
 Then only modify the output transition for the input symbol by replacing it with a transition (or a sequence of transitions) outputting $y$ on the output tape ($y$ can be either a single symbol or a literal) to produce the replacement.
 The handling of all and single reluctant replacement variations is the same as for regex reluctant replacement: we either return to the original state, or create a new final state with $\id{\Sigma}$ self-loop transitions.
 
-\subsection{Replacement of Finite Literal}
+\subsection{Replacement of Finite String Literal}
 
 To construct an \nft for the replacement of a string literal $z$ with $y$, we need to construct two \nfts.
 
-First, we want to annotate the end of the input words $x$ simlarly to how $\ftEndMarker$ annotates the end of the patterns, but now a simple \nft $\ft_\marker$ with an initial state $q_0$, final state $q_f$, and transitions $(q_0, \id{\Sigma}, q_0)$, and $(q_0, (\epsilon, \marker), q_f)$ will suffice.
-$\langof{\ft_\marker} = \Sigma^* \concat \{ \marker \}$.
+First, we want to annotate the end of the input words $x$ similarly to how $\ftEndMarker$ annotates the end of the patterns, but now a simple \nft $\ft_\marker$ with an initial state $q_0$, final state $q_f$, and transitions $(q_0, \id{\Sigma}, q_0)$, and $(q_0, (\epsilon, \marker), q_f)$ will suffice. $(u, u\marker) \in \langof{\ft_\marker}$.
 
 Second, we need to construct an \nft $\ftLiteralRelucReplaceAll$ for replacing all literals, or $\ftLiteralRelucReplaceSingle$ for replacing only the first left-most shortest literal.
 
@@ -1341,13 +1347,12 @@ We already have transitions as constructed from $z$ for each state.
 Now we add additional transitions as follows:\newline
 \begin{itemize}
   \item If $\marker$ is read on the input tape, we output the contents of the buffer $\mathcal{M}(q)$ where $q$ is the current state (symbols read from the input word but not outputted onto the output tape yet) and move to $q_f$.
-  When we succeed by locating prefix starting at index $i$, we split $\mathcal{M}(q) \concat a$ into $l$ and $r$, where $l = p[0:i]$ and $r = p[i:|p|]$.
-  We output $l$ onto the output tape (as a sequence of transition symbols) and move to state $q' = \mathcal{M}(r)$ which reprents the longest prefix of $y$ currently being ''buffered'' and not processed yet.
-  \item If $a \in \Sigma, z = \mathcal{M}(q) \concat a$ ($a$ is the last symbol in $y$), we perform the replacement: outputting $y$, and move to the beginning $q_0$ to continue replacing the next matches.
-  \item If $a \in \Sigma, a \neq z[|\mathcal{M}(q)|:|\mathcal{M}(q)| + 1]$ ($a$ is not the next symbol in $z$---those transitions are already in  $\ftLiteralRelucReplaceAll$), we determine the longest prefix $p$ of $z$ from $\mathcal{M}(q) \concat a$ from left to right.
+  \item If $a \in \Sigma$ and $z = \mathcal{M}(q) \concat a$ ($a$ is the last symbol in $y$), we perform the replacement: outputting $y$, and move to the beginning $q_0$ to continue replacing the next match.
+  \item If $a \in \Sigma$ and $a \neq z[|\mathcal{M}(q)|:|\mathcal{M}(q)| + 1]$ ($a$ is not the next symbol in $z$---those transitions are already in  $\ftLiteralRelucReplaceAll$), we determine the longest prefix $p$ of $z = pv$ such that $up = \mathcal{M}(q) \concat a$ from left to right.
+  We output $u$ onto the output tape (as a sequence of transition symbols) and move to state $q' = \mathcal{M}(p)$ which represents the longest prefix of $z$ currently being ''buffered'' and not processed yet.
 \end{itemize}
 
-When constructing $\ftLiteralRelucReplaceSingle$, instead of moving to $q_0$ after reading $z$, we move, after outputting the replacement $y$, to a final state $q_f$, and add transitions to simply read the rest of the input word and output the word unmodified onto the output tape, removing $\marker$ at the end: $(q_f, \id{\Sigma}, q_f)$ and $(q_f, (\marker, \epsilon), q_f)$.
+When constructing $\ftLiteralRelucReplaceSingle$, instead of moving to $q_0$ after reading $z$ and outputting the replacement $y$, we move to a final state $q_f$, and add transitions to simply read the rest of the input word and output the word unmodified onto the output tape, removing $\marker$ at the end: $(q_f, \id{\Sigma}, q_f)$ and $(q_f, (\marker, \epsilon), q_f)$.
 
 To construct $\ftLiteralRelucAll$ (or $\ftLiteralRelucSingle$), a composition of $\ft_\marker$ and $\ftLiteralRelucReplaceAll$ (or $\ftLiteralRelucReplaceSingle$) is performed: $\ftLiteralRelucAll = \ft_\marker \composePipe \ftLiteralRelucReplaceAll$ or $\ftLiteralRelucSingle = \ft_\marker \composePipe \ftLiteralRelucReplaceSingle$.
 
@@ -1356,7 +1361,7 @@ To construct $\ftLiteralRelucAll$ (or $\ftLiteralRelucSingle$), a composition of
 
   Figure~\ref{fig:literal_reluctant_replace} shows both variations (replace all and replace single) \nfts for $x^{+}_{cc \rightarrow a}$.
 
-  Thanks to our approach, $\ftLiteralRelucAll$ and $\ftLiteralRelucSingle$ after composition maintain the same structure.
+  Thanks to our approach, $\ftLiteralRelucAll$ and $\ftLiteralRelucSingle$ maintain the same structure after composition as $\ftLiteralRelucReplaceAll$ and $\ftLiteralRelucReplaceSingle$.
   The only difference is that marker symbols $\$$ are replaced with $\epsilon$.
 
 \begin{figure}[ht]
@@ -1385,11 +1390,12 @@ To construct $\ftLiteralRelucAll$ (or $\ftLiteralRelucSingle$), a composition of
 Note that this approach could be generalized to a regex replacement where the regex has finite length, similarly to how~\cite{replace_nfts_model_ModelingRegularReplacementForStringConstraintSolving_DBLP:conf/nfm/FuL10} models finite regex replacements.
 However, for our uses in \noodler, we currently do not solve any industry benchmarks where finite regex replacement occurs.
 Further, when modelling finite regex replacement for regex $\pi$ with the maximal length $n$ of a string $u \in \langof{\pi}$, one needs to create states for all possible substrings of $\Sigma^{\leq n}$, each with the transitions similar to those in $\ftLiteralRelucAll$.
+This is computationally costrly and the constructed state space increases dramatically.
 
 \section{Solving SMT Formulae with Replace Operations}
 \label{sec:string_solving_with_replace}
 
-The main decision procedure of \noodler rewrites SMT formulae into a form where the formula contains regular constraints (where both the variables and regular constraints have assigned regular language) and \noodler checks whether the languages for variables after restricting the languages by the string constraints are non-empty.
+The main decision procedure of \noodler rewrites SMT formulae into a form where the formula contains regular constraints (where both the variables and the regular constraints have assigned regular languages) and \noodler checks whether the languages for variables after restricting the languages by the string constraints are non-empty.
 If during the procedure a language of some variable becomes empty, there is no assignment for the formula which could assign the variable a word satisfying the constraints.
 
 The formulae solved by \noodler which contain replace operations always follow the following general structure:
@@ -1413,16 +1419,16 @@ There can be between one and about 200 nested replace operations on the benchmar
   $$
     x \in \ldots \land u = \texttt{replace}(x, ``\texttt{.d}^+\texttt{.}``, ``\text{\_\$1}``)\land u \in \ldots
   $$
-where regex $``\texttt{.d}^+\texttt{.}``$ represents a regex descrining one or more occurrences of \texttt{d} surrounded by one character from both sides. For example \texttt{adde} matches, but \texttt{aed} does not.
+where regex $``\texttt{.d}^+\texttt{.}``$ represents a regex describing one or more occurrences of \texttt{d} surrounded by one character from both sides. For example \texttt{adde} matches, but \texttt{aed} does not.
 
-All of these examples come with variants for replacing all or only the first occurence of the reex or literal, and with varying number of nested replacements.
+All of these examples come with variants for replacing all or only the first occurrence of the regex or literal, and with varying number of nested replacements.
 
-The general approach to extend string solvers wtih support for replace operations and string transformations in general has already been pioneered in the context of monadic decomposition-based algorithms, as seen in~\cite{AnthonyReplaceAll2018, Flatten, ChainFree, StringAFA}.
-However, adding this support for \noodler for its stabilization decision procedure is a challenging task with interesting impactful qualities.
+The general approach to extend string solvers with support for replace operations and string transformations in general has already been pioneered in the context of monadic decomposition-based algorithms, as seen in~\cite{AnthonyReplaceAll2018, Flatten, ChainFree, StringAFA}.
+However, adding this support for \noodler for its stabilization decision procedure is a challenging task with interesting qualities.
 
 \end{example}
 
-As seen in Example~\ref{ex:smt_replace_sequence}, we often reason about regular languages for both the input and output language of the sequence of nested replace operations.
+As seen in Example~\ref{ex:smt_replace_sequence}, we often reason about regular languages for both the input and output language of a sequence of nested replace operations.
 Internally in \noodler, each level of the nested hierarchy will get assigned a new fresh variable $x_i$, so we obtain from
 $$
 x \in \ldots \land u = \texttt{replace}(\ldots (\texttt{replace}(\texttt{replace}(x, \pi_1, y_1), \pi_2, y_2)\ldots), \pi_n, y_n) \land u \in \ldots \text{.}
@@ -1442,7 +1448,7 @@ Performing projection on either tape produces an \nfa representing the language 
 The projection of \nft $\ft$ to its output tape, $\projOutput{\ft}$, gives us the forward image of $\ft$, \nfa $\aut_{\text{out}}$.
 Similarly, the projection of \nft $\ft$ to its input tape, $\projInput{\ft}$, gives us the backward image of $\ft$, \nfa $\aut_{\text{in}}$.
 
-For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the \nfas representing the regular languages assigned to variables $x$ and $u$, we can compute the language (the corresponding \nfa) of the forward image as $\projOutput{\idNft{\aut_x} \composePipe \ft_{x^+_{\pi \rightarrow y}}}$, i.e., the forward application (propagation) of $aut_x$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{u}$ for the given $\langof{x}$.
+For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the \nfas representing the regular languages assigned to variables $x$ and $u$, we can compute the language (the corresponding \nfa) of the forward image as $\projOutput{\idNft{\aut_x} \composePipe \ft_{x^+_{\pi \rightarrow y}}}$, i.e., the forward application (propagation) of $\aut_x$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{u}$ for the given $\langof{x}$.
 The backward image can be computed as $\projInput{\ft_{x^+_{\pi \rightarrow y}} \composePipe \idNft{\aut_u}}$, that is, backward application (propagation) of $\aut_u$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{x}$ for the given $\langof{u}$.
 
 \paragraph{Languages of variables as concatenations of regular languages}
