@@ -1577,12 +1577,12 @@ We also implemented a few utility functions which are useful when constructing o
 \chapter{Experimental Evaluation}
 \label{chap:experiments}
 
+We implemented \nfts with a simple data structure inherited from \nfas without having to substantially modify the \nfa algorithms.
 For our experiments, we are interested in how \mata performs when running operations on \nfts modelling the replace operations required by \noodler.
 Modelling replace operations in \noodler is not the only use case for \nfts in \mata, but it is the first domain where \nfts will be used.
-% Since our main indent is to use \nfts in \mata as models to replace operations in \noodler, we need to optimize the \nft algorithms primarily to this use case, while keeping the \nft algorithms general enough for other use cases.
+We want to see whether \mata is performant enough for our use cases and whether the performance of \mata is comparable with the well-optimized state-of-the-art.
 
-We compare the performance of \nfts implemented in \mata with a state-of-the-art automata library \mona~\cite{mona}.
-
+We compare the performance of \mata with a state-of-the-art automata library \mona~\cite{mona}.
 Even if \mona does not support finite transducers directly, we have chosen \mona to compare \mata against because \mona is a well-optimized library which, thanks to its ability to encode transition relation into MTBBs, provides a reasonable model for encoding finite transducers.
 Each tape in a transducer can be encoded as a single variable in the BDD for a given transition.
 A sequence of variables then encodes an \nft transition, where the leaves of the MTBDDs are target states and edges represent the transition symbols.
@@ -1959,23 +1959,30 @@ This benchmark clearly shows that once you start using \nfts on problems from pr
 
 \section{Summary}
 
-The experiments show that \mata has higher base runtime in comparision with \mona, but in general, $75 \%$ of examples are finished in about the same time in \mata as in \mona, finishing in under $50$ ms.
+For the string solving benchmarks, the experiments show that \mata has higher base runtime in comparision with \mona, but in general, $75 \%$ of examples are finished in about the same time in \mata as in \mona, finishing in under $50$ ms.
 \mata runs comparably with \mona on application on a literal and projection to tape $1$.
 Otherwise, \mata runs slower than \mona, but even then its runtime is reasonable.
 There are a few instances where \mata fails to compute the composition and times out whereas \mona succeeds in computing the composition.
 
-Considering that \mona is a well-optimized library for applications on binary representations of transition symbols, we consider a success that \nfts in \mata are able to get close to the performance of \mona, and even outperform \mona in some cases.
+Considering that \mona is a well-optimized library for applications on binary representations of transition symbols, and the experiments are run on the extreme cases (application on $\Sigma^*$) of the operations performed in string solving, which are the most unfavourable cases for \mata, we consider a success that \nfts in \mata are able to get close to the performance of \mona, and even outperform \mona in some cases.
 
 For most cases, the performance of \mata should be improved by implementing the optimized composition specialized for $2$-tape \nfts which omits having to insert self-loops and additional levels into the composed \nfts.
 
 The experiments shown are not the only use cases for \nfts in \mata, but they represent a selection of operations that will be performed in \noodler.
 Furthermore, the instances of replace operations appearing in SMT-LIB benchmarks are relatively small and easy to compute.
 When applying \nfts to examples from practice from other domains, e.g., pattern matching~\cite{10.1007/978-3-031-30829-1_19}, the patterns being matched get progressively larger and introduce more nondeterminism.
-With the larger patterns, the advantage of \mata being able to handle nondeterminism naturally should prove to be crutial for efficient creation and handling the corresponding \nfts, quickly outperforming tools without proper support for nondeterminism.
-That is because the complexity of determinization of similar patterns usually increases exponentially to the number in counters.
+With the larger patterns, the advantage of \mata being able to handle nondeterminism naturally proves to be crutial for efficient creation and handling the corresponding \nfts, quickly outperforming tools without proper support for nondeterminism.
+That is because the complexity of determinization of similar patterns usually increases exponentially to the numbers in counters.
 
-We conclude that \nfts in \mata are prepared and ready to be used in \noodler and the experimental evaluation shows that the performance of \mata should be sufficient for the uses in string solving.
-Moreover, we conclude that \nfts in \mata are capable of handling complex tasks such as working with regular expressions with counting operations and are generally applicable to a large group of domains beside string solving.
+Due to how close are the representations of \nfts in \mata and \mona, both libraries perform similar operations, only \mona on deterministic versions of these \nfts.
+Either \mona implements more performant data structures than \deltastruct for \nfas in \mata, or \mona uses some algorithmic heuristics unknown to us at the moment which should be however applicable to \mata if we find out about them.
+We believe that the fast performance of \mona on small replace operations from string solving shows that there is still space for optimizations of the performance of data structures and low-level operations used in \mata.
+We noticed similar problems with noticeable slowdowns on various \nfa benchmarks in our earlier work on \mata in article~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
+\mata should be able to get even closer to the performance of \mona after thorough optimization of the data structures in \mata.
+Since this is the initial implementation of \nfts, we plan to further thoroughly analyse and optimize the operations used for both the \nfas and \nfts.
+
+We conclude that \nfts in \mata are a competetive implementation of \nfts, are prepared and ready to be used in \noodler, and the experimental evaluation shows that the performance of \mata should be sufficient for the uses in string solving.
+Moreover, we conclude that \nfts in \mata are capable of handling complex tasks with nondeterminism or large regular expressions, such as working with counting regular expressions, and are generally applicable to a large group of domains beside string solving.
 
 \chapter{Conclusion}
 
