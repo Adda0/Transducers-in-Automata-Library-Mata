@@ -52,27 +52,27 @@ In this work, we design the representation and algorithms for finite transducers
 To maintain the simplicity and efficiency requirements of \mata, we want to keep the data structures and algorithms for finite transducers simple.
 Since finite transducers have normally $n$-tape alphabets, a support for special $n$-tape symbols would have to be introduced to \mata, with special operations and data structures supporting $n$ tapes.
 We did not want to introduce a new data structure just for finite transducers.
-Therefore, we designed a representation of finite transducers and algorithms for them in such a way that we reuse the existing data structures and algorithms already implemented in \mata without having to do too many changes.
+Therefore, we designed a representation of finite transducers and algorithms for them in such a way that we reuse the existing data structures and algorithms already implemented in \mata without having to do too many modifications.
 For the representation of finite transducers, we inherit the data structure for finite automata, and only extend the data structure with a mapping of states to $n$ levels, each corresponding to one tape.
 We represent the $n$-tape symbols as a simple sequence of single finite automata symbols (a sequence of finite automata transitions with states annotated with a level, one state and transition for each tape).
 All data structures for finite automata are therefore directly reusable for finite transducers.
 This also allows us to inherit large portions of finite automata operations for finite transducers with only slight modifications.
 No special data structures need to be added and the encoding of finite transducer as a finite automaton with levels is intuitive.
-
 In order to achieve this, we had to solve a few technical problems regarding especially epsilon transitions.
 A single epsilon transition between the subsequent tapes represents a no operation transition where the transducer does not read/write anything on the tape.
-We also work on a parallel project where we need to handle automata with large alphabets using binary decision diagrams (BDDs).
-BDDs also use $n$-tape symbols.
-The representation for $n$-tape transducer transitions is very close to BDD-like transitions (as seen in, e.g., \mona~\cite{mona}).
-Therefore, the representation for finite transducers simultaneously serves as a common representation for future implementation of BDDs.
-BDDs also use jumps (special transitions) and don't care symbols (matching any symbol in the alphabet, represented similarly to epsilon symbols in finite automata).
-Hence, we further design epsilon and don't care jumps for finite transducers.
-By only using levels, we are able to encode epsilon transitions (a simple change of state as for finite automata) between states with the same level, and epsilon or don't care jumps (performing multiple transitions in a single transition) between states with different levels.
-We restrict the jumps to be allowed to jump only up to the next state with the level of the first tape.
-This allows us to use the existing algorithms such as subset and product construction for finite transducers without modifications and without having to store the information about lengths of jumps into the pair of states in the worklist.
-Depending on whether one works with finite transducers or BDDs, a different interpretation of jumps is possible with a minimal change in the algorithms, all with a single transition representation: a jump in a finite transducer repeats the symbol jumped over on all transitions, whereas in BDDs, the jumped over symbol is used only for the first transition jumped over, followed by a sequence of don't care transitions.
 
-This is to our best knowledge a unique approach for encoidng finite automata, transducers and BDDs with a single automaton data structure and shared algorithms with only minimal modifications.
+We also work on a parallel project where we need to handle automata with large alphabets using automata with multi-terminal binary decision diagrams (called BDDAs here) as seen in an automata library \mona~\cite{mona}.
+BDDAs also use $n$-tape symbols.
+The representation for $n$-tape transducer transitions is very close to BDD-like transitions in \mona, integrating MTBDDs into the transition relation.
+Therefore, the representation for finite transducers simultaneously serves as a common representation for future implementation of BDDAs.
+BDDAs also use jumps (special transitions performing multiple transitions in a single transition) and don't care symbols (matching any symbol in the alphabet).
+Hence, we further design epsilon and don't care jumps for finite transducers.
+By only using levels, we are able to encode epsilon transitions (a simple change of a state as for the finite automata) between states with the same level. Levels further encode epsilon jumps (no operation is performed on the jumped over tapes), and don't care jumps (any symbol is accepted on the jumped over tapes) between states with different levels.
+We restrict the jumps to be allowed to jump only up to the next state with the level of the first tape.
+This allows us to use the existing algorithms such as subset and product construction for the finite transducers without modifications and without having to store the information about lengths of jumps into the pair of states in the worklist.
+Depending on whether one works with finite transducers or BDDAs, a different interpretation of jumps is possible with a minimal change in the algorithms, all with a single transition representation: a jump in a finite transducer repeats the symbol jumped over on all tapes, whereas in BDDAs, the jumped over symbol is used only for the first tape jumped over, followed by a sequence of don't care transitions.
+
+This is to our best knowledge a unique approach for encoding finite automata, transducers and BDDAs with a single automaton data structure and shared algorithms with only minimal modifications.
 
 We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB.
 
@@ -163,14 +163,13 @@ A state $q$ is reachable if there exists a path $q_0a_1, \ldots, a_nq$ in $\aut$
 % An NFA where all $q \in \states$ are useful is called to be \emph{trimmed}.
 
 % \paragraph{Deterministic finite automata.}
-\begin{definition}[\textbf{Deterministic finite automaton}] \hfill \newline
+\paragraph{Deterministic finite automaton.}
 We call an NFA $\aut = (\states, \Sigma
 % \SigmaEps
 , \post, \initialStates, \finalStates)$ a \emph{deterministic finite automaton} (\emph{DFA}) iff
 \\$\forall q \in \states, a \in \Sigma: |\post(q, a)| \leq 1
 % \land |\post(q, \eps)| = 0
 $, and $|\initialStates| = 1$.
-\end{definition}
 
 A conversion from \nfa to \dfa, called \emph{determinization}, is possible (\nfas and \dfas have the same expressive power), but it is a computationally expensive operation.
 
@@ -245,15 +244,12 @@ In this section, we define \emph{finite state transducers} (further also called 
 
 Finite transducers are finite state machines with multiple memory tapes.
 Each run of a finite transducer represents an $n$-tuple of words.
-While finite automaton models a regular language, finite transducer models a rational relation between regular languages.
+While finite automaton models a regular language,
+finite transducers model \emph{rational relations} (or \emph{regular} relations), subsets of Cartesian product of regular languages.
 That is, finite transducer models a set of $n$-tuples of words.
 
-
-Finite transducers model \emph{relations} (called \emph{rational} or \emph{regular} relations) between regular languages, subsets of Cartesian product of regular languages.
-
-Henceforth, each finite transducer can be thought of as a translator translating (transducing) between the languages (a 2-tape finite transducer precisely models a translator from an input language to an output language, modelling a so-called \emph{binary rational relation}), a subset of $\Sigma^* \times \Sigma^*$.
+Henceforth, each $2$-tape finite transducer can be thought of as a translator translating (transducing) between the languages: a 2-tape finite transducer precisely models a translator from an input language to an output language, modelling a so-called \emph{binary rational relation}), a subset of $\Sigma^* \times \Sigma^*$.
 In this work, we usually work with binary rational relations, but in general an \emph{n-ary rational relation} can be modelled by an $n$-tape transducer.
-
 
 \begin{definition}[\textbf{Nondeterministic finite transducer}] \hfill \newline
 An $n$-tape \emph{nondeterministic finite state transducer} (\emph{NFST}; \emph{nondeterministic finite transducer}, \emph{NFT}) over an alphabet $\Gamma$ is a 5-tuple $\ft = (\states, \Gamma, \post, \initialStates, \finalStates)$ where
@@ -277,8 +273,8 @@ When the context is clear, we sometimes omit $\circ$, similarly as for NFA.
 An alternative definition of \nfts could allow for each tape to have a different alphabet, resulting in $\Gamma = \Sigma_1 \times \Sigma_2 \times \ldots \times \Sigma_n$.
 In this thesis, we consider only \nfts where all tapes have the same alphabet, but generalization to varying alphabets is possible and all algorithms and approaches presented in this work can be easily modified to support this alternative definition.
 
-We use $\id{\Sigma}$ to denote a set of identity transducer transitions between two states, that is, for states $q, q' \in \states$, transitions
-$$(q, \id{\Sigma}, q') = \{ (q, \gamma, q') \,\mid\, \gamma = (a^1, \ldots, a^n) \in (\Sigma)^n \land a^1 = \ldots = a^n \}\text{.}$$
+We use $\id{\Sigma}$ to symbolically denote a set of identity transition symbols between two states, that is, for states $q, q' \in \states$, transitions
+$$(q, \id{\Sigma}, q') = \{ (q, \gamma, q') \,\mid\, \gamma = (a^1, \ldots, a^n) \in \Sigma^n \land a^1 = \ldots = a^n \}\text{.}$$
 
 We represent an \nft which is constructed as an identity \nft for a given \nfa, denoted as $\idNft{\aut}$.
 $\idNft{\aut}$ is constructed from $\aut$ by extending the existing $\aut$ transitions by repeating the same transition symbol as is the existing transition symbol in $\aut$ for each tape.
@@ -288,17 +284,11 @@ A (potentially infinite) set of words for which there exists an accepting run of
 Unless it is clear from the context, we will explicitly differentiate between an \emph{\nfa transition} (over a single memory tape), and an \emph{\nft transition} (over multiple memory tapes---all tapes in the \nft).
 
 % \paragraph{Deterministic finite transducers.}
-\begin{definition}[\textbf{Deterministic finite transducer}] \hfill \newline
-An $n$-tape \emph{deterministic finite state transducer} (\emph{DFST}; \emph{deterministic finite transducer}, \emph{DFT}) over an alphabet $\Gamma$ is a 5-tuple $\ft = (\states, \Gamma, \post, \initialStates, \finalStates)$ where all elements in the tuple are the same as for \nft, except for the definition of $\post$ where
-\begin{itemize}
-    \item $\post: \states \times \Gamma \rightarrow \states$ is a \emph{symbol-post function} where $\move{q}{\gamma}{q'}$ (or $(q, \gamma, q')$) for\\$q' = \post(q, \gamma)$ is a \emph{transition} for $\gamma = \begin{bsmallmatrix} a^1 & a^2 & \ldots & a^n\end{bsmallmatrix} = (a^1, a^2, \ldots, a^n) \in (\SigmaEps)^n$. That is, $|\post(q, \gamma)| \leq 1$, and
-    \item $|\initialStates| = 1$.
-\end{itemize}
-\end{definition}
-
+\paragraph{Deterministic finite transducer.}
+An $n$-tape \emph{deterministic finite state transducer}\\(\emph{DFST}; \emph{deterministic finite transducer}, \emph{DFT}) over an alphabet $\Gamma$ is an \\\nft $\ft = (\states, \Gamma, \post, \initialStates, \finalStates)$ where $|\initialStates| = 1$ and $\forall \gamma \in \Gamma, q \in \states: |\post(q,\gamma)| = 1$.
 % TODO: Synchronized transducer and synchronized rational language + its properties?
 
-In this work, we will often limit ourselves to $2$-tape \nfts (\dfts), called\\\emph{(non)deterministic finite input output transducers} where the first tape is the \emph{input tape} and the second tape is the \emph{output tape}.
+$2$-tape \nfts are called \emph{nondeterministic finite input output transducers} where the first tape is the \emph{input tape} and the second tape is the \emph{output tape}.
 Unless we explicitly state the number of tapes, we will further consider $2$-tape \nfts.
 
 We will sometimes abuse the notation for transitions, especially for transition symbols, to simplify the depiction of design ideas and algorithms.
@@ -316,7 +306,7 @@ Numerous libraries aim to serve as a general-purpose automata libraries (e.g., ~
 
 \section{Mata}
 
-\mata is a new finite automata library introduced in~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
+\mata is a new finite automata library introduced in the work~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
 \mata is built with simplicity, extensibility, and performance in mind.
 \mata currently provides support for \dfas and \nfas, with the set of classic operations on finite automata (testing for membership, emptiness, inclusion, or equivalence; complementation, determinization, intersection, union, minimization, and reduction),
 parsing finite automata to/from a textual format and parsing \nfas from regular expressions.
@@ -335,9 +325,9 @@ In these papers, \mata performs well, and outperforms even the state-of-the-art 
 
 From these results, we can see that \mata offers an interesting set of features, namely performance and extensibility, and is applicable in numerous areas for both the research and industry use-cases.
 
-To further extend the applicability of \mata in the fields of string solving, (abstract) regular model checking, etc., adding support for other finite automata types is planned.
+To further extend the applicability of \mata in the fields of string solving, (abstract) regular model checking, etc., adding support for other finite automata models is planned.
 In this work, we add finite transducers.
-Other types include binary decision diagrams (BDDs), finite automata with registers for counting operations, or finite automata with arbitrary registers.
+Other models include automata using multi-terminal binary decision diagrams (BDDAs) as in \mona for the handling of large alphabets, finite automata with registers for counting operations, or finite automata with arbitrary registers.
 
 
 % $\Delta$ stores in memory only those state-posts (a, post(q, a)) where
@@ -360,12 +350,14 @@ The advantage is that using maps is comfortable for the user, but the disadvanta
 Libraries such as \spot~\cite{spot}, \mosel~\cite{mosel}, and \owl~\cite{owl} have BDDs on their transitions to represent a set of symbols on a transition succinctly.
 
 \mona~\cite{mona} is another automata library for \dfas, written in C.
-It utilizes a symbolic representation of the transition relation with MTBDDs.
-Each MTBBD represents one set of all transitions from a given source state.
-MTBDDs even more compactly represent the transition relation.
-Implicit determinization of automata after every operation provides interesting advantages for certain algorithms, but might be unnecessarily expensive for other algorithms (as can be seen in Chapter~\ref{chap:experiments}).
-\mona supports handling of large alphabets of bit vectors.
-\mona is generally a well-optimized automata library used, beside others, for deciding WS$k$S logics.
+\mona is a well-optimized automata library used, beside others, for deciding WS$k$S logics.
+It utilizes a symbolic representation of the transition relation with MTBDDs to handle large alphabets with bit vectors.
+Implicit determinization of automata used in \mona after every operation provides interesting advantages for certain algorithms, but might be unnecessarily expensive for other algorithms (as can be seen in Chapter~\ref{chap:experiments}).
+
+\paragraph{BDD automata.}
+An automaton with MTBBDs integrated into the transition relation (we call them BDDAs in this work) is an automata machine where each MTBBD represents one set of all transitions from a given source state, as applied in \mona.
+The terminals of MTBDDs represent the successor states of the transitions (BDDs alone use only true and false values as terminals).
+Therefore, MTBDDs even more compactly represent the transition relation.
 
 Another compact symbolic representation of transition relation is used in tree automata library \vata~\cite{vata}.
 \vata also utilizes MTBBDs for transition relations from source states.
@@ -397,8 +389,8 @@ This all makes it hard for the user to choose one automata library which can be 
 The choice often depends on multiple factors, where not all of them can be fully satisfied.
 \mata tries to provide an all-around good set of features to allow for easy experimenting with new ideas, implementing prototypes of new algorithms, and when the prototype is feasible, optimizing the implementation to sufficiently replace the state-of-the-art purpose-specific automata libraries.
 For our use cases (mainly string solving as of now), this approach seems to work well.
-Henceforth, \mata is the most viable choice for our intent to add support for generally usable finite transducers performant enough to be applicable in string solving in \noodler.
-Moreover, \noodler already uses \mata for finite automata representation, so adding a different library for \nfts would be inconvenient.
+Moreover, \noodler already uses \mata for the finite automata.
+Therefore, \mata is a viable option for our intent to add support for generally usable finite transducers performant enough to be applicable in string solving in \noodler.
 
 \chapter{String Solving}
 \label{chap:string_solving}
@@ -583,47 +575,13 @@ For this reason, adding support for finite transducers in \mata is paramount to 
 % =================================
 \chapter{Finite Transducers in \mata}
 
-This chapter describes our proposed solution for representation of \nfts in \mata. We describe how we model \nfts in \mata, what data structures we use, and how we implement the necessary algorithms working with these data structures.
+This chapter describes our proposed solution for representation of \nfts in \mata. We describe how \mata models the transition relation, how we model \nfts using the transition relation, what data structures we use, and how we implement the necessary algorithms for \nfts working with these data structures.
 
-\begin{example}\label{example:2_tape_nft}
-In Figure~\ref{fig:2_tape_nft}, we show a $2$-tape input/output \nft $\ft$ accepting a rational relation with an input language of sequences of $abc$, and the corresponding output language where each input transition symbol in a sequence is replaced accoringly as: input transition symbol $a$ is replaced with $bc$, $b$ is erased, and $c$ is replaced with $a$.
-That is, for language $\Sigma = \{ a, b, c \}$, $\ft$ accepting language $(abc)^*$, the following transductions are performed on each sequence $abc$:
-$a \rightarrow bc$,
-$b \rightarrow \epsilon$, and
-$c \rightarrow a$.
+We propose utilizing the existing data structures in \mata (used for \nfas) for implementing finite transducers.
+The main idea is that \nfas, \nfts, and BDDAs can all use the same single data structure, sharing a lot of the existing algorithms on the data structures.
 
-\begin{figure}[!ht]
-  \centering
-    \includegraphics[scale=0.7,keepaspectratio]{jumps_synchronization-example_transducer_compact.pdf}
-  \caption{
-    Example of a 2-tape input/output \nft.
-  }\label{fig:2_tape_nft}
-\end{figure}
-
-For example, the input word $abcabc$ is accepted on the input tape and produces a word $bcabca$ on the output tape.
-
-\end{example}
-
-\section{Data Structure}
+\section{Transition Relation in \mata}
 \label{sec:mata_data_structure}
-We propose utilizing the existing data structures in \mata (used for NFAs) for implementing finite transducers in \mata.
-The main advantage is that NFAs, \nfts, and BDDs can all be implemented using the same single data structure, utilizing a lot of the existing algorithms on the data structures.
-
-\mata provides a base class \nfaClass which encompasses both deterministic and non-deterministic finite automata and operations on them.
-Class \nfaClass is a base class from which \nfts, BDDs, and register automata can inherit, including all operations on \nfaClass where only a few specific operations need to be modified for each respective type of finite state machines.
-This hierarchy also allows us to add model-specific operations to each type of automata without modifying operations for the other automata.
-BDDs in our representation only extend the functionality of \nfts, and can therefore inherit most of the algorithms from \nfts and only modify some of the algorithms for BDD-specific use-cases.
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.8, keepaspectratio]{jumps_synchronization-NFAs-NFSTs-BDDs-hierarchy.drawio.pdf}
-  \caption{
-    An inheritance hierarchy for NFAs, \nfts, BDDs, and register automata.
-    All of these finite state machines utilize the same data structure, with mostly the same algorithms where only a few algorithms need to be modified for each respective type of finite state machines.
-    Each type of finite state machines can further extend the set of operations by their own specific operations.
-    Since BDDs only extend the functionality of transducers, BDDs can inherit directly from \nfts, modifying a few algorithms of \nfts together with the base \nfaClass algorithms.
-  }
-\end{figure}
 
 Class \nfaClass defines which states in the represented automaton are initial (a set of initial states) and which are final (a set of final states).
 Furthermore, \nfaClass allows for storing of arbitraty context in the automaton itself.
@@ -666,7 +624,6 @@ Each symbol post for symbol $a$ represents $\post(q, a)$, storing the transition
 % {\tiny
 \begin{figure}[ht]
   \centering
-% TODO: Replace with my own image of Delta struct.
   \includegraphics[keepaspectratio, scale=1]{subset_construction-delta.pdf}
   % \resizebox{0.6\textwidth}{!}{%
     % \input{obrazky-figures/delta.tikz}
@@ -680,7 +637,9 @@ The vizualization of the three-level data structure representing the transition 
 \end{figure}
 % }
 
-Notice that since \mata supports epsilon symbols as maximal unsigned integer values, the symbol posts for epsilons are always at the end of state posts and can be therefore accessed in constant time instead of having to search the whole state post to look them up. \mata operations utilize this fact in numerous operations using epsilon symbols such as in string solving~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23}.
+Notice that since \mata supports epsilon symbols as maximal unsigned integer values, the symbol posts for epsilons are always at the end of state posts.
+Epsilon state posts can be therefore accessed in constant time instead of having to search the whole state post to look them up.
+\mata operations take advantage of this in numerous operations using epsilon symbols such as in string solving~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23}.
 
 \begin{example}
   Take a look at the example in Figure~\ref{fig:delta_struct_product_construction}.
@@ -704,8 +663,58 @@ Notice that since \mata supports epsilon symbols as maximal unsigned integer val
   We can see that we first insert into a vector of target states for $\post(2, c)$ in the product product state $3$, and only then create a new product state $4$ and append it after the product state $3$.
 \end{example}
 
-\nfts and BDDs can directly utilize \nfaClass with all of the underlying data structures where one transition in \nft is represented by several transitions in \nfaClass.
-The only modification of \nfaClass to support \nfts and BDDs is adding a vector of state \emph{levels} (represented by \texttt{std::vector}<unsigned>) indexed by automaton states, as in the first level in \deltastruct. The vector maps each automaton state to its level in the finite state machine.
+\paragraph{Class hierarchy.}
+\mata provides a base class \nfaClass which encompasses both \nfas and \dfas and operations on them.
+Class \nfaClass is a base class from which \nfts, and future BDDAs and register automata inherit, including all operations on \nfaClass where only a few specific operations need to be modified for each respective type of finite state machines.
+This hierarchy also allows us to add model-specific operations to each type of automata without modifying operations for the other automata.
+BDDAs in our representation only extend the functionality of \nfts, and can therefore inherit most of the algorithms from \nfts and only modify some of the algorithms specific to BDDA use cases.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.8, keepaspectratio]{jumps_synchronization-NFAs-NFSTs-BDDs-hierarchy.drawio.pdf}
+  \caption{
+    An inheritance hierarchy for NFAs, \nfts, BDDs, and register automata.
+    All of these finite state machines utilize the same data structure, with mostly the same algorithms where only a few algorithms need to be modified for each respective type of finite state machines.
+    Each type of finite state machines can further extend the set of operations by their own specific operations.
+    Since BDDs only extend the functionality of transducers, BDDs can inherit directly from \nfts, modifying a few algorithms of \nfts together with the base \nfaClass algorithms.
+  }
+\end{figure}
+
+
+\section{Transducers as Level Automata}
+A \emph{level automaton} is an \nfa extended with a function $\texttt{lev}: \states \rightarrow \mathbf{N}$ annotating states with levels.
+
+An $n$-tape \nft $\ft$ accepts a relation $\langof{\ft} = \{ \transWord{w} \in (\Sigma^*)^n \,\mid\, \transWord{w} = \gamma_1 \circ \gamma_2 \circ \ldots \circ \gamma_m = (a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) \circ \ldots \circ (a^1_m, a^2_m, \ldots, a^n_m) \}$.
+We represent the same automaton as a level automaton $\aut$ over the alphabet $\Sigma$ by unfolding $\ft$ transitions $(q, (a_1, a_2, \ldots, a_n), q')$ into a sequence of \nfa transitions $(q, a_1, q_1), (q_1, a_2, q_2) \ldots, (q_{n - 1}, a_n, q')$.
+$\level{q} = \level{q'} = 0$, $\forall i \in \{ 1, \ldots n - 1  \}: \level{q_i} = i$.
+The level automaton corresponding to $\ft$ accepts language $\langof{\aut} = \{ \lambda \in \Sigma^* \,\mid\, \lambda = a^1_1 \concat a^2_1 \concat \ldots \concat a^n_1 \concat a^1_2 \concat a^2_2 \concat \ldots \concat a^n_2 \concat \ldots a^1_m \concat a^2_m \concat \ldots \concat a^n_m \}$.
+That is, \nft symbol $\gamma = (a_1, a_2, \ldots, a_n) \in \Gamma$ is perceived as a word (a sequence of symbols) $a_1 \concat a_2\concat \ldots \concat a_n \in \Sigma^*$.
+A similar approach to this simplest representation with unfolding has been used in~\lash~\cite{10.1007/3-540-46419-0_1}, a tool for reasoning about arithmetic with an integrated automata library.
+
+
+\begin{example}\label{example:2_tape_nft}
+In Figure~\ref{fig:2_tape_nft}, we show a $2$-tape input/output \nft $\ft$ accepting a rational relation with an input language of sequences of $abc$, and the corresponding output language where each input transition symbol in a sequence is replaced accoringly as: input transition symbol $a$ is replaced with $bc$, $b$ is erased, and $c$ is replaced with $a$.
+That is, for language $\Sigma = \{ a, b, c \}$, $\ft$ accepting language $(abc)^*$, the following transductions are performed on each sequence $abc$:
+$a \rightarrow bc$,
+$b \rightarrow \epsilon$, and
+$c \rightarrow a$.
+
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[scale=0.7,keepaspectratio]{jumps_synchronization-example_transducer_compact.pdf}
+  \caption{
+    Example of a 2-tape input/output \nft.
+  }\label{fig:2_tape_nft}
+\end{figure}
+
+For example, the input word $abcabc$ is accepted on the input tape and produces a word $bcabca$ on the output tape.
+
+\end{example}
+
+We want to reuse \deltastruct for the representation of transition relation in finite transducers.
+
+\nfts and BDDAs can directly utilize \nfaClass with all of the underlying data structures.
+The only modification of \nfaClass to support \nfts and BDDAs is adding a vector of state \emph{levels} (represented by \texttt{std::vector}<unsigned>) indexed by automaton states. The vector maps each automaton state to its level in the finite state machine.
 $n$-tape \nft has $n$ levels.
 Therefore, in a representation of an $n$-tape \nft, vector of state levels maps to values from $0$ to $n-1$.
 One transition in \nft corresponds to $n$ transitions in \nfaClass.
@@ -724,15 +733,18 @@ For this reason, \nfts can have only states $q$ with $\level{q} = 0$ as initial 
 This is crutial for many algorithms (more in~\ref{sec:Algorithms}) which rely on certain invariants in the representation of \nfts, such as that \nfts always synchronize in states with state level $0$ and each step in operations must consider the entire state levels sequence from $0$ to $n-1$ as a single \emph{abstract} step (a single complete \nft transition).
 
 \subsection{Epsilon and Don't Care Transitions}
+The approach used in \lash does not support epsilon and don't care transitions.
+However, finite transducers need support for epsilon transitions: epsilon symbols are often used to, e.g., model a removal of a malicious substring or model sanitization function \texttt{HTMLEscape} in web applications.
+Plus, BDDAs require don't care symbols (matching any transition symbol) with don't care \emph{jumps}.
+An interesting and tricky problem is how to add support for epsilons and don't care symbols to level automata elegantly to allow reusing the existing finite automata algorithms without large modifications to the algorithms and without complicating the data structures for \nfas used to represent level automata.
+We pay close attention and to the careful design of epsilon transitions and don't care jumps which work well with \nfas and their algorithms.
 
-\nfts and BDDs also need suport for epsilon symbols and don't care symbols on transitions.
-
-\mata already supports epsilon symbols as (several) last transition symbol(s) in the range of possible transition symbols given by the data type of transition symbol.
-Adding support for \emph{don't care} symbols on transitions, matching any transition symbol on the tape, is similar to epsilon symbols.
+\mata already supports epsilon symbols $\epsilon$ as (several) last transition symbol(s) in the range of possible transition symbols given by the data type for the symbol.
+Similarly, we reserve a new symbol at the end of the range for the don't care symbol $\dontCare$.
 
 An epsilon symbol on a transition from state with level $k$ to level $k + 1 \text{ mod } n$ in \nfaClass representing an \nft means that the tape corresponding to the level $k$ does not read from~/~write on the tape $k$ any symbol.
 
-\nfts, but mainly BDDs represented as \nfaClass also require support for \emph{jumps} where the transition goes from a state with level $k$ to any other state with level $l$ where $l \neq k + 1$.
+We also allow jumps where the transition goes from a state with level $k$ to any other state with level $l$ where $l \neq k + 1$.
 However, we restrict the jumps for $n$-tape \nft as follows:
 \begin{itemize}
   \item The jump cannot jump over a state with level $0$.
@@ -742,6 +754,9 @@ However, we restrict the jumps for $n$-tape \nft as follows:
   \item Jumping from a state $q$ where $\level{q} = 0$ to a next state $q'$ where $\level{q'} = 0$ with transition symbol $\epsilon$ means that only the internal state of the \nft has changed (the state has changed) without reading or writing anything on any of the tapes.
   \item Jumping from a state $q$ where $\level{q} = 0$ to a next state $q'$ where $\level{q'} = 0$ with transition symbol $a \in \Sigma$ means that we performed an identity \nft transition over $a$ where all tapes read/write symbol $a$.
 \end{itemize}
+
+BDDAs often change the interpretation of a jump to a single transition symbol (from the jump transition) followed by a sequence of don't care symbols.
+We easily implemented this interpretation to the representation of \nfts.
 
 % TODO: Figure for jumps.
 
@@ -1981,7 +1996,7 @@ Overall, the design and implementation of \nfts in \mata is feasible, functional
 \paragraph{Future work.}
 We continue optimizing and developing \mata and the implementation of \nfts.
 In the future, we want to apply \nfts to solving string SMT formulae in \noodler.
-Furthermore, depending on the performance of \nfts in \noodler, we intend to add support for symbolic representations for large alphabets using bit vectors representing sequences of bits, as used in tool \lash~cite{lash} and transition representation specific to \nfts to encode \nft operations such as identity more easily.
+Furthermore, depending on the performance of \nfts in \noodler, we intend to add support for symbolic representations for large alphabets using bit vectors representing sequences of bits, as used in tool \lash~\cite{lash} and transition representation specific to \nfts to encode \nft operations such as identity more easily.
 
 If the performance of composition of \nfts in \noodler proves to be a bottleneck, we can implement the optimized algorithm specialized for $2$-tape \nfts.
 

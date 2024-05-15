@@ -199,7 +199,7 @@
     Reprezentaci a algoritmy pro konečné převodníky jsme navrhli s ohledem na tyto vlastnosti knihovny.
 
     K reprezentaci konečných převodníků a jejich algoritmů znovupoužijeme a rozšíříme existující datové struktury a algoritmy pro konečné automaty v knihovně \mata.
-    Reprezentace pro konečné převodníky slouží jako společná reprezentace pro konečné převodníky a budoucí reprezentaci binárních rozhodovacích diagramů (BDD).
+    Reprezentace pro konečné převodníky slouží jako společná reprezentace pro konečné převodníky a budoucí reprezentaci automatů využívajících multi-terminálních binárních rozhodovacích diagramů pro práci s velkými abecedami.
 
     Navíc rozšíříme návrh o algoritmy pro konstrukci konečných převodníků modelujících operace nahrazení definovaných v SMT-LIB.
 
@@ -217,7 +217,7 @@
     The distinctive features of \mata include simplicity (simple to use, modify and extend) and efficiency (fast to run).
     We design the representation and algorithms for finite transducers to fit the simplicity and efficiency requirements.
     We inherit and extend the existing data structures and algorithms for finite automata in \mata to represent the finite transducers and their operations.
-    The representation for finite transducers serves as a common data structure and interface for the finite transducers and future representation of binary decision diagrams (BDDs).
+    The representation for finite transducers serves as a common data structure and interface for the finite transducers and future representation of automata using multi-terminal binary decision diagrams to handle large alphabets.
 
     We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB.
 
@@ -289,7 +289,7 @@ I have listed all the literary sources, publications and other sources, which we
     Rozšíříme datové struktury pro konečné převodníky jako konečný automat s úrovněmi pro stavy.
     Tento přístup nám umožňuje zdědit také velké množství existujících operací pro konečné automaty s pouze mírnými úpravami pro funkčnost s konečnými převodníky.
 
-    Reprezentace konečných převodníků zároveň slouží jako datová struktura i pro binární rozhodovací stromy.
+    Reprezentace konečných převodníků zároveň slouží jako datová struktura i pro automaty s~multi-terminálními binárními rozhodovacími stromy pro práci s velkými abecedami.
 
     Dále rozšíříme konečné převodníky algoritmy pro konstrukci konečných převodníků modelujících operace nahrazení definované v SMT-LIB.
 
