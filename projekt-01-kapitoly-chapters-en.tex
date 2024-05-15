@@ -59,9 +59,9 @@ All data structures for finite automata are therefore directly reusable for fini
 This also allows us to inherit large portions of finite automata operations for finite transducers with only slight modifications.
 No special data structures need to be added and the encoding of finite transducer as a finite automaton with levels is intuitive.
 In order to achieve this, we had to solve a few technical problems regarding especially epsilon transitions.
-A single epsilon transition between the subsequent tapes represents a no operation transition where the transducer does not read/write anything on the tape.
+A single epsilon transition between the subsequent tapes represents a no-operation transition where the transducer does not read/write anything on the tape.
 
-We also work on a parallel project where we need to handle automata with large alphabets using automata with multi-terminal binary decision diagrams (called BDDAs here) as seen in an automata library \mona~\cite{mona}.
+We also work on a parallel project where we need to handle automata with large alphabets using automata with multi-terminal binary decision diagrams (called BDDAs here) as seen in an automata library \mona~\cite{mona} (see Section~\ref{sec:other_automata_libraries}).
 BDDAs also use $n$-tape symbols.
 The representation for $n$-tape transducer transitions is very close to BDD-like transitions in \mona, integrating MTBDDs into the transition relation.
 Therefore, the representation for finite transducers simultaneously serves as a common representation for future implementation of BDDAs.
@@ -356,6 +356,7 @@ Implicit determinization of automata used in \mona after every operation provide
 
 \paragraph{BDD automata.}
 An automaton with MTBBDs integrated into the transition relation (we call them BDDAs in this work) is an automata machine where each MTBBD represents one set of all transitions from a given source state, as applied in \mona.
+However, \mona implements BDDAs restricted to deterministic automata.
 The terminals of MTBDDs represent the successor states of the transitions (BDDs alone use only true and false values as terminals).
 Therefore, MTBDDs even more compactly represent the transition relation.
 
@@ -449,7 +450,7 @@ This is the reason why it is so important that all implemented automata models i
 
 % XSS and code injection.
 
-\section{Software Vulnerabilities in Web Appplications}
+\section{Software Vulnerabilities in Web Applications}
 
 Many programs utilize strings as ubiquitous data structures, handling both the program data and user-supplied input data.
 Popular programming languages for web technologies such as JavaScript, PHP, or even Python use strings as the dominant data structure. Strings are used as keys to maps, contain names for procedures to be dynamically executed, or encode other types of information which is to be decoded later on, e.g., for serialization during communication between programs, even over the internet such as communication between data servers and user web applications.
@@ -578,11 +579,12 @@ For this reason, adding support for finite transducers in \mata is paramount to 
 This chapter describes our proposed solution for representation of \nfts in \mata. We describe how \mata models the transition relation, how we model \nfts using the transition relation, what data structures we use, and how we implement the necessary algorithms for \nfts working with these data structures.
 
 We propose utilizing the existing data structures in \mata (used for \nfas) for implementing finite transducers.
-The main idea is that \nfas, \nfts, and BDDAs can all use the same single data structure, sharing a lot of the existing algorithms on the data structures.
+The main advantage is that \nfas, \nfts, and BDDAs can all use the same single data structure, sharing a lot of the existing algorithms on the data structures, as further explained in Sections~\ref{sec:class_hierarchy} and~\ref{sec:level_automata}, which meets the simplicity requirement of \mata.
 
 \section{Transition Relation in \mata}
 \label{sec:mata_data_structure}
 
+\mata provides a class \nfaClass which encompasses both \nfas and \dfas and operations on them.
 Class \nfaClass defines which states in the represented automaton are initial (a set of initial states) and which are final (a set of final states).
 Furthermore, \nfaClass allows for storing of arbitraty context in the automaton itself.
 
@@ -648,7 +650,7 @@ Epsilon state posts can be therefore accessed in constant time instead of having
 
   \begin{figure}
     %{r}{0.5\textwidth}
-    [ht]
+    % [ht]
     \centering
   \includegraphics[keepaspectratio, scale=0.6]{subset_construction.drawio.pdf}
   \caption{
@@ -663,34 +665,10 @@ Epsilon state posts can be therefore accessed in constant time instead of having
   We can see that we first insert into a vector of target states for $\post(2, c)$ in the product product state $3$, and only then create a new product state $4$ and append it after the product state $3$.
 \end{example}
 
-\paragraph{Class hierarchy.}
-\mata provides a base class \nfaClass which encompasses both \nfas and \dfas and operations on them.
-Class \nfaClass is a base class from which \nfts, and future BDDAs and register automata inherit, including all operations on \nfaClass where only a few specific operations need to be modified for each respective type of finite state machines.
-This hierarchy also allows us to add model-specific operations to each type of automata without modifying operations for the other automata.
-BDDAs in our representation only extend the functionality of \nfts, and can therefore inherit most of the algorithms from \nfts and only modify some of the algorithms specific to BDDA use cases.
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.8, keepaspectratio]{jumps_synchronization-NFAs-NFSTs-BDDs-hierarchy.drawio.pdf}
-  \caption{
-    An inheritance hierarchy for NFAs, \nfts, BDDs, and register automata.
-    All of these finite state machines utilize the same data structure, with mostly the same algorithms where only a few algorithms need to be modified for each respective type of finite state machines.
-    Each type of finite state machines can further extend the set of operations by their own specific operations.
-    Since BDDs only extend the functionality of transducers, BDDs can inherit directly from \nfts, modifying a few algorithms of \nfts together with the base \nfaClass algorithms.
-  }
-\end{figure}
-
-
 \section{Transducers as Level Automata}
-A \emph{level automaton} is an \nfa extended with a function $\texttt{lev}: \states \rightarrow \mathbf{N}$ annotating states with levels.
+\label{sec:level_automata}
 
-An $n$-tape \nft $\ft$ accepts a relation $\langof{\ft} = \{ \transWord{w} \in (\Sigma^*)^n \,\mid\, \transWord{w} = \gamma_1 \circ \gamma_2 \circ \ldots \circ \gamma_m = (a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) \circ \ldots \circ (a^1_m, a^2_m, \ldots, a^n_m) \}$.
-We represent the same automaton as a level automaton $\aut$ over the alphabet $\Sigma$ by unfolding $\ft$ transitions $(q, (a_1, a_2, \ldots, a_n), q')$ into a sequence of \nfa transitions $(q, a_1, q_1), (q_1, a_2, q_2) \ldots, (q_{n - 1}, a_n, q')$.
-$\level{q} = \level{q'} = 0$, $\forall i \in \{ 1, \ldots n - 1  \}: \level{q_i} = i$.
-The level automaton corresponding to $\ft$ accepts language $\langof{\aut} = \{ \lambda \in \Sigma^* \,\mid\, \lambda = a^1_1 \concat a^2_1 \concat \ldots \concat a^n_1 \concat a^1_2 \concat a^2_2 \concat \ldots \concat a^n_2 \concat \ldots a^1_m \concat a^2_m \concat \ldots \concat a^n_m \}$.
-That is, \nft symbol $\gamma = (a_1, a_2, \ldots, a_n) \in \Gamma$ is perceived as a word (a sequence of symbols) $a_1 \concat a_2\concat \ldots \concat a_n \in \Sigma^*$.
-A similar approach to this simplest representation with unfolding has been used in~\lash~\cite{10.1007/3-540-46419-0_1}, a tool for reasoning about arithmetic with an integrated automata library.
-
+In this section, we explain how we encode \nfts to reuse data structures for \nfas.
 
 \begin{example}\label{example:2_tape_nft}
 In Figure~\ref{fig:2_tape_nft}, we show a $2$-tape input/output \nft $\ft$ accepting a rational relation with an input language of sequences of $abc$, and the corresponding output language where each input transition symbol in a sequence is replaced accoringly as: input transition symbol $a$ is replaced with $bc$, $b$ is erased, and $c$ is replaced with $a$.
@@ -711,6 +689,58 @@ For example, the input word $abcabc$ is accepted on the input tape and produces 
 
 \end{example}
 
+A \emph{level automaton} is an \nfa extended with a function $\texttt{lev}: \states \rightarrow \mathbf{N}$ annotating states with levels.
+
+An $n$-tape \nft $\ft$ accepts a relation $\langof{\ft} = \{ \transWord{w} \in (\Sigma^*)^n \,\mid\, \transWord{w} = \gamma_1 \circ \gamma_2 \circ \ldots \circ \gamma_m = (a^1_1, a^2_1, \ldots, a^n_1) \circ (a^1_2, a^2_2, \ldots, a^n_2) \circ \ldots \circ (a^1_m, a^2_m, \ldots, a^n_m) \}$.
+We represent the same automaton as a level automaton $\aut$ over the alphabet $\Sigma$ by unfolding $\ft$ transitions $(q, (a_1, a_2, \ldots, a_n), q')$ into a sequence of \nfa transitions $(q, a_1, q_1), (q_1, a_2, q_2) \ldots, (q_{n - 1}, a_n, q')$.
+$\level{q} = \level{q'} = 0$, $\forall i \in \{ 1, \ldots n - 1  \}: \level{q_i} = i$.
+The level automaton corresponding to $\ft$ accepts language $\langof{\aut} = \{ \lambda \in \Sigma^* \,\mid\, \lambda = a^1_1 \concat a^2_1 \concat \ldots \concat a^n_1 \concat a^1_2 \concat a^2_2 \concat \ldots \concat a^n_2 \concat \ldots a^1_m \concat a^2_m \concat \ldots \concat a^n_m \}$.
+That is, \nft symbol $\gamma = (a_1, a_2, \ldots, a_n) \in \Gamma$ is perceived as a word (a sequence of symbols) $a_1 \concat a_2\concat \ldots \concat a_n \in \Sigma^*$.
+The symbol $\gamma$ is not read by the level automaton as a single symbol, but it is read sequentially one tape per transition.
+A similar approach to this simplest representation with unfolding has been used in~\lash~\cite{10.1007/3-540-46419-0_1}, a tool for reasoning about arithmetic with an integrated automata library.
+
+\begin{example}\label{example:2_tape_nft_in_mata}
+  The \nft from Example~\ref{example:2_tape_nft} is represented as a level automaton in the Figure~\ref{fig:2_tape_nft_in_mata}.
+
+  Transitions from states with level $0$ represent the input tape, and transitions from states with level $1$ represent the output tape.
+
+  \begin{figure}[ht]
+    \centering
+    \includegraphics[scale=0.7,keepaspectratio]{jumps_synchronization-example_transducer_mata.pdf}
+    \caption{
+      $2$-tape \nft from Example~\ref{example:2_tape_nft} represented as a level automaton with states annotated by levels.
+    }\label{fig:2_tape_nft_in_mata}
+  \end{figure}
+
+  Intuitively, we can still see that the same rewriting rules apply.
+  The input word $abcabc$ is still accepted on the input tape and produces the same word $bcabca$ on the output tape.
+  Notice that we need epsilon symbols to encode the rewriting rules applied here.
+  Efficient handling of epsilon transitions in level automata is a complicated problem.
+  We further discuss this in Section~\ref{sec:epsilon_dont_care}.
+
+\end{example}
+
+\section{Class Hierarchy}
+\label{sec:class_hierarchy}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.8, keepaspectratio]{jumps_synchronization-NFAs-NFSTs-BDDs-hierarchy.pdf}
+  \caption{
+    A class inheritance hierarchy for NFAs, \nfts, and future BDDAs and register automata.
+    All of these finite state machines utilize the same data structure, with mostly the same algorithms where only a few algorithms must be modified for each respective type of finite state machines.
+    Each type of finite state machines can further extend the set of operations by their own specific operations.
+    Since BDDAs only extend the functionality of transducers, BDDAs can inherit directly from \nfts, modifying a few algorithms of \nfts together with the base \nfaClass algorithms.
+  }
+  \label{fig:class_hierarchy}
+\end{figure}
+
+
+We propose that \nfaClass is a base class from which \nfts, and future BDDAs and register automata inherit, including all operations on \nfaClass where only a few specific operations need to be modified.
+The Figure~\ref{fig:class_hierarchy} shows the proposed class inheritance hierarchy.
+This hierarchy also allows us to add model-specific operations to each automata model without modifying operations for the other automata.
+BDDAs in our representation only extend the functionality of \nfts, and can therefore inherit most of the algorithms directly from \nfts and only modify some of the algorithms specific to BDDA use cases.
+
 We want to reuse \deltastruct for the representation of transition relation in finite transducers.
 
 \nfts and BDDAs can directly utilize \nfaClass with all of the underlying data structures.
@@ -724,25 +754,27 @@ Each transition in \nfaClass corresponds to one level of the \nft, i.e., one tap
 A transition from level $0$ to level $1$ represents the operation on the first \nft tape, from level $1$ to level $2$ the operation on the second \nft tape, and so on.
 Finally, the transition from state with level $n-1$ back to state with level $0$ corresponds to the last tape in the \nft, finishing the sequence of \nfa transitions for a single \nft transition.
 
-For 2-tape (input/output) \nft, the levels used will be $0$ and $1$, where transitions from states with levels $0$ represent the input transitions and transitions from states with levels $1$ represent the output transitions.
-
-We denote a level $l$ of a state $q$ as $l = \level{q}$.
-Since levels directly represent their corresponding tapes, we use terms \emph{level} and \emph{tape} interchangeably when the meaning is clear.
-
 For this reason, \nfts can have only states $q$ with $\level{q} = 0$ as initial or final states.
 This is crutial for many algorithms (more in~\ref{sec:Algorithms}) which rely on certain invariants in the representation of \nfts, such as that \nfts always synchronize in states with state level $0$ and each step in operations must consider the entire state levels sequence from $0$ to $n-1$ as a single \emph{abstract} step (a single complete \nft transition).
 
-\subsection{Epsilon and Don't Care Transitions}
+For 2-tape (input/output) \nft, the levels used will be $0$ and $1$, where transitions from states with levels $0$ represent the input transitions and transitions from states with levels $1$ represent the output transitions.
+
+Since levels directly represent their corresponding tapes, we use terms \emph{level} and \emph{tape} interchangeably when the meaning is clear.
+
+\section{Epsilon and Don't Care Transitions}
+\label{sec:epsilon_dont_care}
 The approach used in \lash does not support epsilon and don't care transitions.
 However, finite transducers need support for epsilon transitions: epsilon symbols are often used to, e.g., model a removal of a malicious substring or model sanitization function \texttt{HTMLEscape} in web applications.
-Plus, BDDAs require don't care symbols (matching any transition symbol) with don't care \emph{jumps}.
+
+Notice that BDDAs are similar to the level automata, only slightly modified.
+BDDAs do not have epsilon symbols, but need don't care symbols (matching any transition symbol) with \emph{jumps}.
 An interesting and tricky problem is how to add support for epsilons and don't care symbols to level automata elegantly to allow reusing the existing finite automata algorithms without large modifications to the algorithms and without complicating the data structures for \nfas used to represent level automata.
 We pay close attention and to the careful design of epsilon transitions and don't care jumps which work well with \nfas and their algorithms.
 
 \mata already supports epsilon symbols $\epsilon$ as (several) last transition symbol(s) in the range of possible transition symbols given by the data type for the symbol.
 Similarly, we reserve a new symbol at the end of the range for the don't care symbol $\dontCare$.
 
-An epsilon symbol on a transition from state with level $k$ to level $k + 1 \text{ mod } n$ in \nfaClass representing an \nft means that the tape corresponding to the level $k$ does not read from~/~write on the tape $k$ any symbol.
+An epsilon symbol on a transition from state with level $k$ to level $k + 1 \mod n$ in \nfaClass representing an \nft means that the tape corresponding to the level $k$ does not read from~/~write on the tape $k$ any symbol.
 
 We also allow jumps where the transition goes from a state with level $k$ to any other state with level $l$ where $l \neq k + 1$.
 However, we restrict the jumps for $n$-tape \nft as follows:
@@ -755,39 +787,17 @@ However, we restrict the jumps for $n$-tape \nft as follows:
   \item Jumping from a state $q$ where $\level{q} = 0$ to a next state $q'$ where $\level{q'} = 0$ with transition symbol $a \in \Sigma$ means that we performed an identity \nft transition over $a$ where all tapes read/write symbol $a$.
 \end{itemize}
 
-BDDAs often change the interpretation of a jump to a single transition symbol (from the jump transition) followed by a sequence of don't care symbols.
-We easily implemented this interpretation to the representation of \nfts.
+\nfts and BDDAs interpret the same instance of an \nft automaton slightly differently.
+BDDAs change the interpretation of a jump to a single transition symbol (from the jump transition) followed by a sequence of don't care symbols for the remaining tapes (levels), as opposed to the \nft interpretation where all transitions in the jump use the jump symbol.
+We easily implemented this BDDA interpretation next to the \nft interpretation.
 
-% TODO: Figure for jumps.
+\subsection{No-operation Transitions}
+An epsilon transition from a state with level $k$ to $k+1 \mod n$ can be understood as a \emph{no-operation transition} \nop, i.e., a transition where the tape $k$ does not perform any operation (no reading nor writing). In essence, the impact of \nop is the same as if reading an empty string $\epsilon$ on the tape $k$.
+An epsilon jump from a state with level $0$ to another state with level $0$ is a simple change of states (as per the usual definition of epsilon transitions in \nfas).
+It has the same effect as a sequence of \nop transitions on all tapes (or a sequence of $\epsilon$ symbols).
 
-
-
-
-\begin{example}\label{example:2_tape_nft_in_mata}
-  The \nft from Example~\ref{example:2_tape_nft} is represented in the data structure for \nfts inherited from \nfaClass as in the Figure~\ref{fig:2_tape_nft_in_mata}.
-
-  Transitions from states with level $0$ represent the input tape, and transitions from states with level $1$ represent the output tape.
-
-  \begin{figure}[ht]
-    \centering
-    \includegraphics[scale=0.7,keepaspectratio]{jumps_synchronization-example_transducer_mata.pdf}
-    \caption{
-      $2$-tape \nft from Example~\ref{example:2_tape_nft} represented in \mata as an \nfaClass with states annotated by levels.
-    }\label{fig:2_tape_nft_in_mata}
-  \end{figure}
-
-Intuitively, we can still see that the same rewriting rules apply.
-The input word $abcabc$ is still accepted on the input tape and produces the same word $bcabca$ on the output tape.
-
-\end{example}
-
-\subsection{No Operation Transitions}
-An epsilon transition from a state with level $k$ to $k+1 \mod n$ can be understood as a \emph{no operation transition} \nop, i.e., a transition where the current tape does not perform any operation (no reading nor writing). In essence the impact of the transition is the same as if reading an empty string on the current tape.
-
-In constrast, an epsilon transition from a state with level $k$ to another state with level $k$ is a simple change of states (as per the usual definition of epsilon transitions in \nfas).
-
-Depending on the application, one might prefer to use one or the other representation as needed.
-In this work, we use \nop when we want to explicitly stress the distinction between a simple change of state in \nft (an epsilon transition between states with the same level), and no operation on a current tape (the tape does not read nor writes any symbol).
+Depending on the application, one might prefer to use $\epsilon$ symbols or \nop transitions as needed.
+% In this work, we use \nop when we want to explicitly stress the distinction between a simple change of state in \nft (an epsilon transition between states with the same level), and no-operation on a current tape (the tape does not read nor writes any symbol).
 
 \section{Algorithms}
 \label{sec:Algorithms}
@@ -796,7 +806,7 @@ For general uses of transducers in \mata, we have implemented general automata o
 Furthermore, we have implemented several transducer-specific operations.
 
 \paragraph{\nfa operations.}
-The general \nfa operations such as concatenation, union, etc. can be reused from \nfa without many modifications.
+Thanks to our design choices, the general \nfa operations such as concatenation, union, etc. can be reused from \nfa without many modifications.
 We only need to remember to correctly set levels of states when renumbering states in the result \nft.
 
 Further, we discuss several more significant modifications to existing operations and algorithms for several \nft-specific operations.
@@ -807,15 +817,14 @@ All operations performing some kind of traversal over multiple transition relati
 \nfts are always synchronized on states with level $0$, that is, after each \nft transition is completed (all tape operations are handled).
 If the macrostate in a worklist contains only states with levels $0$, the \nfts are synchronized and the next macrostate can be computed.
 When the synchronized \nfts perform one transition, due to the supported jumps, the new macrostate may contain states with different levels.
-Only the state in the macrostate with the level furthest behind is expanded (performs its transitions, if possible).
-The others are at least one level ahead and therefore cannot be expanded and must wait for the states behind to get to at least their levels first before being expanded themselves.
 
-Since jumps can jump at most to the next state with level $0$, we always know which states in the macrostate are ahead and which are behind by the following method.
+Since jumps can jump at most to the next state with level $0$, we always know which states in the macrostate are ''ahead'' and which are ''behind'' by the following method.
 If we expand a macrostate with states with levels $k$ and $l$ where $k > l$, we know that state with level $k$ must be ahead of the state with level $l$.
 If any of the states has level $0$ (and there are other states with nonzero levels), we know that the state $0$ must be ahead of all the other states with nonzero levels, and synchronized with all other states with levels $0$.
 That holds since the states with levels $0$ can only be the next states with levels $0$, and not the states with level $0$ behind (as the first step from the synchronized states is to move immediately out of the states with level $0$).
-
-The same holds for BDDs utilizing the same data structure and constraints as \nfts.
+The same holds for BDDAs using the same constraints as \nfts.
+Only the state in the macrostate with the level furthest behind is expanded (performs its transitions, if possible).
+The others are at least one level ahead and therefore cannot be expanded and must wait for the states behind to get to at least their levels first before being expanded themselves.
 
 \begin{example}
   If we perform synchronization over three $4$-tape \nfts, starting from macrostate with levels $(0, 0, 0)$, we perform one transition and may end up in a macrostate with levels $(3, 1, 0)$ where the first \nft made a jump of length $3$, the second performed normal transition (jump of length $0$), and the last \nft performed a jump to the next state with level $0$.
@@ -839,11 +848,12 @@ The same holds for BDDs utilizing the same data structure and constraints as \nf
 
 \end{figure}
 
+
 \paragraph{Alternative representation of jumps.}
 If the restriction of allowed jumps being only to the next state with level $0$ is too strict, an alternative approach where jumps are allowed to jump over (potentially multiple) states with level $0$ can be chosen.
 However, during operations such as product construction, an additional information must be added to the worklist containing macrostates containing a list of lengths of each jump performed during the expansion of the last macrostate in order to know how far ahead are the states jumped to in relation to the other states in the macrostate.
 
-We deem this approach inferior to our chosen approach since it distorts the simplicity of a single data structure and algorithms on it for NFAs, \nfts, and BDDs.
+We deem this approach inferior to our chosen approach since it distorts the simplicity of a single data structure and algorithms on it for NFAs, \nfts, and BDDAs.
 
 % ==================================
 \subsection{Projection}\label{sec:projection}
@@ -960,7 +970,7 @@ The composition comprises the following steps:
   For clarity, we number the tapes uniquely between both \nfts in this example. Internally, each \nft has tapes with levels from $0$ to $2$ and for each \nft, we specify which tape(s) the \nfts should synchronize on.
 \end{example}
 
-\paragraph{Extending \nfts to match each other.}
+\paragraph{Extending \nfts with additional tapes.}
 The first step of the composition is to extend the input \nfts by inserting additional levels $k$ (additional states with levels $k$) into each transition with $\dontCare$ symbols on the transitions at levels $k$.
 This operation balances out the \nfts so both have the same tapes in the same order.
 This allows us to perform the classic \nfa intersection for each level in both \nfts during \nft intersection.
@@ -1064,30 +1074,65 @@ When adding support for transducers to \noodler, it may be advantageous to utili
 When we construct an \nft $\ft$, the most intuitive use of $\ft$ is to perform the transduction $\ft$ encodes (reading the input on the input tapes and outputting the output on the output tapes) .
 This operation is called \emph{application}.
 
-We can \emph{apply} a word $w$ on $\ft$, or a regular language $\langof{\aut}$ for some $\aut$.
+We can \emph{apply} $\ft$ on a word $w$, or on a regular language $\langof{\aut}$ for some $\aut$.
 
-\paragraph{Application of a word.}
-We can either apply a word $w \in \Sigma^*$ on a given tape (at level $k$), or apply an $l$-tuple of words $(w_i)$ where $l < n$, $i \in \{ 0, \ldots, n - 1 \}$ and $i$ specifies on which tape (level) we want to apply the respective words (one word $w_i$ for tape $i$).
+\paragraph{Application on a word.}
+We can either apply $\ft$ on a word $w \in \Sigma^*$ on a given tape (at level $k$), or apply $\ft$ on an $l$-tuple of words $(w_i)$ where $l < n$, $i \in \{ 0, \ldots, n - 1 \}$ and $i$ specifies on which tape (level) we want to apply the respective words on (for tape $i$, one word $w_i$).
 
-The result of the application of a word (or a tuple of words) is a set of tuples of size $(n - l)$ of words.
-We read the word(s) being applied and move through the \nft according to the transition symbols in the applied word(s) on the corresponding tapes, similarly to performing a run on a word in \nfa, only now to potentially multiple tapes (multiple words).
+The result of the application on a word (or on a tuple of words) is a set of tuples of size $(n - l)$ of words.
+We read the word(s) and move through the \nft according to the transition symbols in the word(s) on the corresponding tapes, similarly to performing a run on a word in \nfa, only now to potentially multiple tapes (multiple words).
 During the traversal, we construct the result by appending the transition symbols on the remaining tapes to the result constructed so far for the current state.
 This gives us the corresponding word on the remaing tapes when the words on the given tapes are $(w_i)$.
 
 Focusing on $2$-tape \nfts $\ft$, the application equals to translation from the input word $w$ to the output word $w'$ (similarly to what a natural language translator does) where $w' = \apply{\ft}{w}$.
 By convention, we presume the input tape is at level $0$ and the output tape is at level $1$.
 
-The application of a word is equivalent to $\idNft{\aut} \composePipe \ft$ where $\aut$ represents a \dfa accepting only $w$.
+The application on a word is equivalent to $\idNft{\aut} \composePipe \ft$ where $\aut$ represents a \dfa accepting only $w$.
 This gives us an \nft encoding the result.
 For $2$-tape $\ft$, we get a $1$-tape \nft, equal to the corresponding \nfa encoding the set of words in the result.
 
-\paragraph{Application of a language.}
-Applying a regular language $\langof{\aut}$ on $n$-tape \nft $\ft$ instead of a single word is performed similarly to the application of a single word, but now the result is a regular language (for $2$-tape \nfts) or an \nft $\ft'$ with $n-1$ tapes.
+\paragraph{Application on a language.}
+Application of $n$-tape \nft $\ft$ on a regular language $\langof{\aut}$ instead of a single word is performed similarly to the application on a single word, but now the result is a regular language (for $2$-tape \nfts) or an \nft $\ft'$ with $n-1$ tapes.
 
-The application of a language $\langof{\aut}$, similarly to the application of a word, is equivalent to $\idNft{\aut} \composePipe \ft$.
+The application on a language $\langof{\aut}$, similarly to the application on a word, is equivalent to $\idNft{\aut} \composePipe \ft$.
 The resulting \nft encodes the result.
 For $2$-tape $\ft$, we get a $1$-tape \nft, equal to the corresponding \nfa encoding the regular language of the result.
 
+\section{Implementation}
+
+The proposed data structures for finite transducers, standard operations on finite transducers were implemented in \mata.
+The code is accessible in a \href{https://github.com/Adda0/mata/tree/transducers}{GitHub repository}\footnote{\url{https://github.com/Adda0/mata/tree/transducers}} and will be merged into the main \mata \href{https://github.com/VeriFIT/mata/}{GitHub repository}\footnote{\url{https://github.com/VeriFIT/mata/}}.
+
+The \nfa operations for \nfts have to be modified in places where we need to correctly set and reset the vector of levels for transducer states, or where we handle epsilon, \nop and don't care symbols in automata algorithms.
+
+\paragraph{Number of levels.}
+Each \nft also stores the number of tapes (levels) used.
+If the number of tapes is set to $1$, it means that the \nft is equivalent to \nfa and the \nft operations will behave the same as a corresponding \nfa operations (with an equivalent transition relation where all don't care transitions are replaced with transitions between the same states over the whole alphabet).
+This keeps the behaviour of operations on \nfts and \nfas consitent between automata models.
+
+\paragraph{Single epsilon for epsilon and \nop transitions.}
+We have decided to unify the symbols for epsilon transitions and \nop transitions.
+We represent both transitions with a transition over $\epsilon$, corresponding to the largest unsigned integer value of a symbol in \mata.
+
+To distinguish between both, we check whether the epsilon transition leads from a state with level $k$ to a state with level $k + 1 \mod n$ or not whenever we encounter the symbol in algorithms.
+This operation has constant complexity since a set of levels in \mata is a state-idexable vector of levels.
+
+We decided for this approach since all operations in \mata already support epsilon transitions, checking for existence of epsilon transitions and accessing them has constant complexity, and adding handling for yet another special transition symbol further complicates the logic for many operations which do not have to distinguish between epsilon and no-operation transitions.
+
+\paragraph{Specifying tapes to work on.}
+Since we aim to implement \nfts in \mata so they are usable for general purposes, not only limited to string solving, we allow for the majority of operations to specify what is the interpretation of each tape: e.g., which tapes are to be the input tapes, and which are to be the output tapes in application on a word or a language; or which tape(s) to use for synchronization during composition.
+
+Be mindful that using different tapes for some operations may affect the performance of these operations. For example, application on the first tape is more performant than the application on the last tape in an $n$-tape \nft.
+
+\paragraph{Basis of the implementation.}
+For the implementation of the current interface and algorithms specific for \nfts (composition and projection), we used the existing implementation for a simple prototype BDDA representation using \nfas with levels (supporting simple composition and projection operations), which was implemented previously in \mata.
+we further modified the interface for the existing operations, expanded the interface with new operations, added string solving-specific operations (construction of typical \nfts used in string solving, \nfts for replace operations, \ldots).
+We collaborated with our colleagues needing BDDAs to define the same interface for \nfts and future proper implementation of BDDAs, inherited from \nfts.
+As a result of discussions and collaboration, we add support for \nfts (this work, extending the existing implementations for projection and composition) and we plan to add support for BDDAs in the future: using the defined common interface, where BDDAs inherit operations from \nfts where the cores of the \nft- and BDDA-specific operations from Section~\ref{sec:Algorithms} (composition, projection) are modified and extended versions of the existing implementations for simple BDDA implementation.
+Thanks to this, we are able to add official support for BDDAs into \mata easily.
+The proper support for BDDAs inheriting from \nfts is planned to be implemented when the current implementation for \nfts matures enough.
+
+% ========================================
 \chapter{Transducers for String Solving}
 
 We discuss in this chapter how to utilize finite transducers in \noodler to solve SMT string constraints \texttt{str.replace}, \texttt{str.replace\_re}, \texttt{str.replace\_all} and\\\texttt{str.replace\_re\_all}.
@@ -1474,8 +1519,8 @@ Performing projection on either tape produces an \nfa representing the language 
 The projection of \nft $\ft$ to its output tape, $\projOutput{\ft}$, gives us the forward image of $\ft$, \nfa $\aut_{\text{out}}$.
 Similarly, the projection of \nft $\ft$ to its input tape, $\projInput{\ft}$, gives us the backward image of $\ft$, \nfa $\aut_{\text{in}}$.
 
-For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the \nfas representing the regular languages assigned to variables $x$ and $u$, we can compute the language (the corresponding \nfa) of the forward image as $\projOutput{\idNft{\aut_x} \composePipe \ft_{x^+_{\pi \rightarrow y}}}$, i.e., the forward application (propagation) of $\aut_x$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{u}$ for the given $\langof{x}$.
-The backward image can be computed as $\projInput{\ft_{x^+_{\pi \rightarrow y}} \composePipe \idNft{\aut_u}}$, that is, backward application (propagation) of $\aut_u$ on $\ft_{x^+_{\pi \rightarrow y}}$ which gives us the admissible $\langof{x}$ for the given $\langof{u}$.
+For the given problem $ u = x^{+}_{\pi \rightarrow y}$ with $\aut_x$ and $\aut_u$ being the \nfas representing the regular languages assigned to variables $x$ and $u$, we can compute the language (the corresponding \nfa) of the forward image as $\projOutput{\idNft{\aut_x} \composePipe \ft_{x^+_{\pi \rightarrow y}}}$, i.e., the forward application (propagation) of $\ft_{x^+_{\pi \rightarrow y}}$ on $\aut_x$ which gives us the admissible $\langof{u}$ for the given $\langof{x}$.
+The backward image can be computed as $\projInput{\ft_{x^+_{\pi \rightarrow y}} \composePipe \idNft{\aut_u}}$, that is, backward application (propagation) of $\ft_{x^+_{\pi \rightarrow y}}$ on $\aut_u$ which gives us the admissible $\langof{x}$ for the given $\langof{u}$.
 
 \paragraph{Languages of variables as concatenations of regular languages}
 A decision procedure in \noodler, called \emph{stabilization}~\cite{oopsla23_stabilization_DBLP:journals/pacmpl/ChenCHHLS23}
@@ -1512,32 +1557,10 @@ The existing decision procedure of \noodler will have to be modified further as 
   \item Inclusion graph~\cite{fm23_equations_synergy_regular_constraints_DBLP:conf/fm/BlahoudekCCHHLS23} used by \noodler will have to be extended to support replace operations.
 \end{itemize}
 
-\chapter{Implementation}
+\section{Implementation.}
 
-The proposed data structures for finite transducers, standard operations on finite transducers, and algorithms for modelling replace operations were implemented in \mata.
+The discussed algorthms for modelling replace operations using \nfts were implemented in \mata.
 The code is accessible in a \href{https://github.com/Adda0/mata/tree/transducers}{GitHub repository}\footnote{\url{https://github.com/Adda0/mata/tree/transducers}} and will be merged into the main \mata \href{https://github.com/VeriFIT/mata/}{GitHub repository}\footnote{\url{https://github.com/VeriFIT/mata/}}.
-
-The majority of the operations on finite transducers closely follow the implementation of the corresponding operations on \nfas already existing in \mata.
-These operations are modified only in places where it is necessary to handle the differences between \nfas and \nfts, such as correctly setting and resetting the vector of levels for transducer states, or handling epsilon, \nop and don't care symbols.
-
-Furthermore, several algorithms specific for \nfts are added to \mata, namely composition of two \nfts, application (of both an \nfa and a word) on an \nft, projection (to a specified subset of \nft tapes---producing a new \nft---or to only a single tape---producing the corresponding \nfa for the specified tape).
-
-\paragraph{Levels.}
-The vector of levels is a vector of unsigned integers representing the levels indexed by states.
-
-Each \nft also stores the number of tapes (levels) in the \nft.
-The number of tapes defaults to $1$, which means that the \nft is equivalent to \nfa and the operations on \nfts with number of levels set to $1$ will behave the same as a corresponding \nfa (with an equivalent transition relation where all don't care transitions are replaced with transition between the same states over the whole alphabet).
-
-This is useful as it keeps the data structures in \mata consitent with the behaviour expected by many potential users of \mata.
-
-\paragraph{Epsilon and no operation transitions.}
-We have decided to unify the symbols for epsilon transitions and \nop transitions used in \mata.
-We represent both transitions with a transition over an epsilon symbol $\epsilon$, corresponding to the largest unsigned integer value of a symbol in \mata.
-
-To distinguish between both, we check whether the epsilon transition leads from a state with level $k$ to a state with level $k + 1 \mod n$ or not whenever we encounter the symbol in algorithms.
-This operation has constant complexity since a set of levels in \mata is a state-idexable vector of levels.
-
-We decided for this approach since all operations in \mata already support epsilon transitions, checking for existence of epsilon transitions and accessing them has constant complexity, and adding handling for yet another special transition symbol further complicates the logic for many operations which do not have to distinguish between epsilon and no operation transitions.
 
 \paragraph{Words and identity insertion.}
 We also implemented a few utility functions which are useful when constructing or modifying \nfts\footnote{Especially during construction of \nfts for the replace operations and other often used operations in string solving.} such as
@@ -1551,26 +1574,6 @@ We also implemented a few utility functions which are useful when constructing o
   This allows one to quickly create transducers which read a specific word, replace a specific string literal with a given literal, or remove a specified literal from the input word.
 \end{itemize}
 
-\paragraph{Specifying tapes to work on.}
-Since we aim to implement \nfts in \mata so they are usable for general purposes, not only limited to string solving, we allow for the majority of operations to specify what is the interpretation of each tape: e.g., which tapes are to be the input tapes, and which are to be the output tapes in application of a word or a language; or which tape(s) to use for synchronization during composition.
-
-Be mindful that using different tapes for some operations may affect the performance of these operations. For example, application on the first tape is more performant than the application on the last tape in an $n$-tape \nft.
-
-\section{Similarities with operations on BDDs}
-Since the idea of data structures and operations for \nfts in \mata was to provide the same underlying data structures as well as the interface for both \nfts and BDDs, many of the operations on \nfts and BDDs follow the same general algorithm with just slight modification in how \nfts and BDDs interpret the same instance of an \nft automaton.
-For example, when using BDDs, one will interpret jumps over several levels to represent a sequence of transitions where the first transition has the transition symbol given by the jump, but the remaining transitions have $\dontCare$ symbols as opposed to the \nft interpretation where all transitions in the jump have the jump symbol.
-
-% \paragraph{Support for BDDs.}
-For the implementation of the current interface and algorithms specific for \nfts (composition and projection), I used the existing implementation for a simple prototype BDD representation using \nfas with levels (supporting simple composition and projection operations), which was implemented previously in \mata.
-I further modified the interface for the existing operations, expanded the interface with new operations, added string solving-specific operations (construction of typical \nfts used in string solving, \nfts for replace operations, \ldots).
-I collaborated with our colleagues to define the same interface for \nfts and future proper implementation of BDDs, inherited from \nfts.
-
-As a result of discussions and collaboration, I add support for \nfts (this work, utilizing the existing implementations for projection and composition) and we plan adding support for BDDs in the future: using the defined common interface, where BDDs inherit operations from \nfts where the cores of the \nft- and BDD-specific operations from Section~\ref{sec:Algorithms} (composition, projection) are modified and extended versions of the existing implementations for BDD operations.
-
-Thanks to this collaboration, we are able to add official support for BDDs into \mata easily by inheriting \nft and modifying handling of jump transitions and several additional changes.
-Therefore, \nft projection will be similar to BDD projection, \nft composition similar to BDD composition, etc.
-The proper support for BDDs inheriting from \nfts is planned to be implemented when the current implementation for \nfts matures enough.
-
 \chapter{Experimental Evaluation}
 \label{chap:experiments}
 
@@ -1582,14 +1585,14 @@ We compare the performance of \nfts implemented in \mata with a state-of-the-art
 
 Even if \mona does not support finite transducers directly, we have chosen \mona to compare \mata against because \mona is a well-optimized library which, thanks to its ability to encode transition relation into MTBBs, provides a reasonable model for encoding finite transducers.
 Each tape in a transducer can be encoded as a single variable in the BDD for a given transition.
-A sequence of variables then encodes an \nft transition, where the leaves of the BDD are target states and edges represent the transition symbols.
+A sequence of variables then encodes an \nft transition, where the leaves of the MTBDDs are target states and edges represent the transition symbols.
 Each transition symbol is encoded as a bit vector (a sequence of bits).
 An \nft transition is then encoded as \texttt{dummy\_1|bitvec\_1|dummy\_2|bitvec\_2} where \texttt{|} denotes the concatenation of bit vectors. \texttt{bitvec\_i} represents a bit vector for a transition symbol on the tape $i$.
 \texttt{dummy\_i} are additional dummy symbols used for determinization (as \mona implicitly determinizes after every operation).
 
-Performing operations such as composition, projection, or application on \nfts is, thanks to how \mata encodes \nfts as a representation very close to the representation of BDDs, a natural operation for \mona in the encoding explained above.
+Performing operations such as composition, projection, or application on \nfts is, thanks to how \mata encodes \nfts as a representation very close to the representation of BDDAs, a natural operation for \mona in the encoding explained above.
 
-Intuitively, \mata performs modified \nfa operations on \nfts while \mona performs its BDD operations with the proper encoding.
+Intuitively, \mata performs modified \nfa operations on \nfts while \mona performs its BDDA operations with the proper encoding.
 
 Our goal in these experiments is not to outperform \mona, but to compare how techniques for \nfts using explicit alphabets with support for nondeterminism (\mata) perform against symbolic alphabets with binary representation of transition relations (binary bit vectors in \mona) without support for nondeterminism.
 
@@ -1604,8 +1607,8 @@ non-incremental/QF\_SLIA/20230403-webapp}\\(\webapp, called \texttt{webapp} in o
 We compare the performance of \mata and \mona on benchmarks for the following operations
 \begin{itemize}
   \item projection to input/output tapes,
-  \item application of a literal (forward/backward),
-  \item application of a language (forward/backward),
+  \item application on a literal (forward/backward),
+  \item application on a language (forward/backward),
   \item composition of two \nfts, and
   \item composition of \nfts used during replace \nft construction.
 \end{itemize}
@@ -1618,25 +1621,25 @@ The projection benchmark consists of unique single $2$-tape \nfts for replace op
 We perform projection to tape $0$ (projecting out the tape $1$), and projection to tape $1$ (projecting out the tape $0$).
 We remove duplicated \nfts in each benchmark which in total produces $1749$ instances ($202$ from \webapp, $1547$ from \transducerPlus).
 
-\paragraph{Application of a literal benchmark.}
-The application of a literal benchmark consists of pairs ($u$, $\ft$) where $u$ is a string literal and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
+\paragraph{Application on a literal benchmark.}
+The application on a literal benchmark consists of pairs ($u$, $\ft$) where $u$ is a string literal and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
 $u$ is constructed as the longest word in the \texttt{pattern} of the replace operation constrainted to the maximal length of word $5$ ($5$ is up to a few exception a sufficient length for all replace operations in SMT-LIB).
-We perform the forward application of $u$ to $\ft$ ($\id{u} \composePipe \ft $).
+We perform the forward application of $\ft$ on $u$ ($\id{u} \composePipe \ft $).
 This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
 We remove duplicated pairs ($u$, $\ft$) in each SMT-LIB benchmark which leaves us in total with $2027$ instances ($211$ from \webapp, $1816$ from \transducerPlus).
 
-In addition, we create a second benchmark performing the backward application of $u$ to $\ft$ ($ \ft \composePipe \idNft{u}$).
+In addition, we create a second benchmark performing the backward application of $\ft$ on $u$ ($ \ft \composePipe \idNft{u}$).
 This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
 We remove duplicated pairs ($\ft$, $u$) in each SMT-LIB benchmark which leaves us in total with $2030$ instances ($214$ from \webapp and $1816$ from \transducerPlus).
 
-\paragraph{Application of a language benchmark.}
-The application of a language benchmark consists of pairs ($\idNft{\Sigma^*}$, $\ft$) where $\idNft{\Sigma^*}$ is a regular language $\Sigma^*$ converted into an indentity \nft, and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
-We choose $\idNft{\Sigma^*}$ as the regular language being applied since $\Sigma^*$ is the most difficult case for our method to compute (for each state in $\ft$, we need to compute operations for all symbols in the language).
-We perform the forward application of $\idNft{\Sigma^*}$ to $\ft$ ($\idNft{\Sigma^*} \composePipe \ft $).
+\paragraph{Application on a language benchmark.}
+The application on a language benchmark consists of pairs ($\idNft{\Sigma^*}$, $\ft$) where $\idNft{\Sigma^*}$ is a regular language $\Sigma^*$ converted into an indentity \nft, and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
+We choose $\idNft{\Sigma^*}$ as the regular language since $\Sigma^*$ is the most difficult case for our method to compute (for each state in $\ft$, we need to compute operations for all symbols in the language).
+We perform the forward application of $\ft$ on $\idNft{\Sigma^*}$ ($\idNft{\Sigma^*} \composePipe \ft $).
 This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
 We remove duplicated pairs ($\idNft{\Sigma^*}$, $\ft$) in each benchmark which in total produces $1750$ instances ($203$ from \webapp, $1547$ from \transducerPlus).
 
-In addition, we create a second benchmark from forward language application benchmark, performing the backward application of $\idNft{\Sigma^*}$ to $\ft$ ($ \ft \composePipe \idNft{\Sigma^*}$).
+In addition, we create a second benchmark from forward language application benchmark, performing the backward application of $\ft$ on $\idNft{\Sigma^*}$ ($ \ft \composePipe \idNft{\Sigma^*}$).
 This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler, too.
 The number of instances is the same as for the forward language application benchmark.
 
@@ -1667,7 +1670,7 @@ We have limited our benchmark to numbers $i$ between $1$ and $150$
 We construct $\ftRegexRelucAll$ and $\ftRegexRelucSingle$ for the regular pattern \texttt{\#.*a.\{i\}} replacing the pattern with an empty string.
 In total, we create $300$ instanes in \symbolFromEnd benchmark.
 
-We compare the performance of \mata and \mona on operations application of a language (applying a language of the matched pattern), and composition constructing the resulting \nft for replace operation.
+We compare the performance of \mata and \mona on operations application on a language (applying $\ftRegexRelucAll$ and $\ftRegexRelucSingle$ on a language of the matched pattern), and composition constructing the resulting \nft for replace operation.
 
 \paragraph{Rationale for chosen benchmarks.}
 All of these are the operations which will often be used on \nfts created for replace operations in \noodler and will make up the main set of operations on \nfts once support for transducers is introduced in \noodler as well.
@@ -1740,23 +1743,23 @@ If the performance of \mata on projection to tape $0$ proves insufficient when s
 
 \subsection{Application}
 
-On each unique \nft, we applied a word and a language using \nft application.
+For each unique \nft $\ft$, we applied $\ft$ on a word and on a language using \nft application.
 
-% \subsubsection{Application of a Language}
+% \subsubsection{Application on a Language}
 
-Table~\ref{tab:language_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
-The language is forward applied to the \nft ($\idNft{\Sigma^*} \composePipe \ft $).
+Table~\ref{tab:language_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying $\ft$ on a language $\Sigma^*$.
+The \nft is forward applied on the language ($\idNft{\Sigma^*} \composePipe \ft $).
 This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}.
 
-Table~\ref{tab:language_application_backward} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a language $\Sigma^*$.
-The language is backward applied to the \nft ($\ft \composePipe \idNft{\Sigma^*}$).
+Table~\ref{tab:language_application_backward} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying $\ft$ on a language $\Sigma^*$.
+The \nft is backward applied on the language ($\ft \composePipe \idNft{\Sigma^*}$).
 This simulates the backward image propagation, as described in~\ref{sec:string_solving_with_replace}.
 
 \begin{table}[ht]
   \centering
   \input{obrazky-figures/apply_language_table.tex}
   \caption{
-    Language application on both benchmarks where the language is forward applied ($\idNft{\Sigma^*} \composePipe \ft$), simulating the forward image propagation.
+    Language application on both benchmarks where $\ft$ is forward applied on the language ($\idNft{\Sigma^*} \composePipe \ft$), simulating the forward image propagation.
   }
   \label{tab:language_application}
 \end{table}
@@ -1765,14 +1768,14 @@ This simulates the backward image propagation, as described in~\ref{sec:string_s
   \centering
   \input{obrazky-figures/apply_language_backward_table.tex}
   \caption{
-    Language application on both benchmarks where the language is backward applied on the \nft ($\ft \composePipe \id{\langof{\pi}}$), simulating backward image propagation.
+    Language application on both benchmarks where $\ft$ is is backward applied on the language ($\ft \composePipe \id{\langof{\pi}}$), simulating backward image propagation.
   }
   \label{tab:language_application_backward}
 \end{table}
 
-% \subsubsection{Application of a Literal}
+% \subsubsection{Application on a Literal}
 
-Table~\ref{tab:literal_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying a literal.
+Table~\ref{tab:literal_application} shows comparison of performance of \mata and \mona on the application operation on both benchmarks applying $\ft$ on a literal.
 
 \begin{table}[ht]
   \centering
@@ -1783,7 +1786,7 @@ Table~\ref{tab:literal_application} shows comparison of performance of \mata and
   \label{tab:literal_application}
 \end{table}
 
-Table~\ref{tab:literal_application_backward} shows comparison of performance of \mata and \mona on the application operation on both benchmarks backward applying a literal to $\ft$.
+Table~\ref{tab:literal_application_backward} shows comparison of performance of \mata and \mona on the application operation on both benchmarks backward applying $\ft$ on a literal.
 
 \begin{table}[ht]
   \centering
@@ -1797,14 +1800,14 @@ Table~\ref{tab:literal_application_backward} shows comparison of performance of 
 \begin{figure}[ht]
     \centering
     \subfloat[
-      Literal application.
+      Application on a literal.
       \label{fig:apply_literal}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_literal_scatter.pdf}
     }}%
     \quad
     \subfloat[
-      Language application.
+      Application on a language.
       \label{fig:apply_language}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_language_scatter.pdf}
@@ -1818,14 +1821,14 @@ Table~\ref{tab:literal_application_backward} shows comparison of performance of 
 \begin{figure}[ht]
     \centering
     \subfloat[
-      Literal application
+      Application on a literal.
       \label{fig:apply_literal_backward}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_literal_backward_scatter.pdf}
     }}%
     \quad
     \subfloat[
-      Language application
+      Application on a language
       \label{fig:apply_language_bacward}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{apply_language_backward_scatter.pdf}
@@ -1836,14 +1839,14 @@ Table~\ref{tab:literal_application_backward} shows comparison of performance of 
     \label{fig:apply_operation_backward}%
 \end{figure}
 
-From the results in Table~\ref{tab:literal_application} and Table~\ref{tab:language_application} and scatter plots in Figures~\ref{fig:apply_operation} and~\ref{fig:apply_operation_backward}, we can see that applying a fairly constrainted language (in our case directly a literal) is a quick operation where \mata performs comparably with \mona.
-However, applying a large language such as $\Sigma^*$ (used in our experiments), the application gets considerably more expensive for \mata.
+From the results in Table~\ref{tab:literal_application} and Table~\ref{tab:language_application} and scatter plots in Figures~\ref{fig:apply_operation} and~\ref{fig:apply_operation_backward}, we can see that applying $\ft$ on a fairly constrainted language (in our case directly a literal) is a quick operation where \mata performs comparably with \mona.
+However, applying $\ft$ on a large language such as $\Sigma^*$ (used in our experiments), the application gets considerably more expensive for \mata.
 
-This application of $\Sigma^*$ is actually the word case scenario for \mata, as with $\Sigma^*$, \mata must to apply all transition symbols $a \in \Sigma$ for each state $s \in \states$ of $\ft$.
+This application on $\Sigma^*$ is actually the word case scenario for \mata, as with $\Sigma^*$, \mata must to apply all transition symbols $a \in \Sigma$ for each state $s \in \states$ of $\ft$.
 Nevertheless, the computation for both the forward and backward application operations for both the literal and the language finishes in $75\%$ cases in at most $50$ ms, which should be fast enough for \noodler, especially considering the results of the applications and computations can be cached and reused during a run of \noodler.
-Notice that for literal application, \mata is about $2$ to $3$ times slower, however, when the language applied gets larger ($\Sigma^*$ in our case), the performance on the 3rd quartile is comparable to \mona on the bacward language application, and only $2$ times slower on the forward language application.
+Notice that for application on a literal, \mata is about $2$ to $3$ times slower, however, when the language gets larger ($\Sigma^*$ in our case), the performance on the 3rd quartile is comparable to \mona on the backward application on the language, and only $2$ times slower on the forward application on the language.
 
-Considering our future uses for application operation in \noodler, we will sometimes apply the whole language $\Sigma^*$, but more often we will apply a more constrained subset $L \subset \Sigma^*$ which should therefore perform better on \noodler runs.
+Considering our future uses for application operation in \noodler, we will sometimes apply on the whole language $\Sigma^*$, but more often we will apply on a more constrained subset $L \subset \Sigma^*$ which should therefore perform better on \noodler runs.
 If the performance is then still insufficient, we can implement the aforementioned optimization for composition for $2$-tape \nfts and use in \noodler this version instead of the general application implementation for multi-tape \nfts.
 
 \subsection{Composition}
@@ -1902,13 +1905,13 @@ As mentioned earlier, if the performance of \nfts in \mata proves to be a bottle
 
 \subsection{Pattern matching benchmark.}
 
-The Table~\ref{tab:symbol_from_end_apply_language} shows the comparison of \mata and \mona on pattern matching benchmark \symbolFromEnd on language application operation.
+The Table~\ref{tab:symbol_from_end_apply_language} shows the comparison of \mata and \mona on pattern matching benchmark \symbolFromEnd on application on the language operation.
 
 \begin{table}[ht]
   \centering
   \input{obrazky-figures/symbol_from_end_apply_language_table.tex}
   \caption{
-    Language application on \symbolFromEnd.
+    Application on language on \symbolFromEnd.
   }
   \label{tab:symbol_from_end_apply_language}
 \end{table}
@@ -1927,7 +1930,7 @@ The Table~\ref{tab:symbol_from_end_construct_replace} shows the comparison of \m
 \begin{figure}[ht]
     \centering
     \subfloat[
-      Language application.
+      Application on the language.
       \label{fig:symbol_from_end_apply_language}
     ]{{
       \includegraphics[keepaspectratio, width=0.45\textwidth]{symbol_from_end_apply_language_scatter.pdf}
@@ -1945,7 +1948,7 @@ The Table~\ref{tab:symbol_from_end_construct_replace} shows the comparison of \m
     \label{fig:symbol_from_end}%
 \end{figure}
 
-\mata computed all pattern matching benchmarks quickly, running at most $8$ s on the largest instance with $150$ repetitions on the language application operation.
+\mata computed all pattern matching benchmarks quickly, running at most $8$ s on the largest instance with $150$ repetitions on the application on the language operation.
 \mona managed to compute only the first smallest $14$ instances (for both the replace single and replace all variants, in total finishing $28$ on instances).
 In the remaining $272$ instances, \mona fails to determinize the pattern and runs out of memory.
 
@@ -1957,7 +1960,7 @@ This benchmark clearly shows that once you start using \nfts on problems from pr
 \section{Summary}
 
 The experiments show that \mata has higher base runtime in comparision with \mona, but in general, $75 \%$ of examples are finished in about the same time in \mata as in \mona, finishing in under $50$ ms.
-\mata runs comparably with \mona on application of a literal and projection to tape $1$.
+\mata runs comparably with \mona on application on a literal and projection to tape $1$.
 Otherwise, \mata runs slower than \mona, but even then its runtime is reasonable.
 There are a few instances where \mata fails to compute the composition and times out whereas \mona succeeds in computing the composition.
 
@@ -1979,9 +1982,9 @@ Moreover, we conclude that \nfts in \mata are capable of handling complex tasks 
 To summarize this thesis, we have added support for a new model for finite state machines, finite state transducers, to \mata, explained the principles behind \nfts and specifically \nfts in the context of \mata and \noodler for string solving.
 
 We have created a new data structures derived from the existing data structures for \nfas in \mata, which fit well in the overall structure and design decision of \mata.
-The introduced algorithms on \nfts are closely related to the corresponding algorithms on BDDs and maintain the two main goals of \mata: simplicity and efficiency, while keeping \mata easily extensible and understandable for a wide variety of users and applicable to both the areas of automata research and industry.
+The introduced algorithms on \nfts are closely related to the corresponding algorithms on BDDAs and maintain the two main goals of \mata: simplicity and efficiency, while keeping \mata easily extensible and understandable for a wide variety of users and applicable to both the areas of automata research and industry.
 
-Thanks to these design decision, further extending \mata with support for handling BDDs will be effortless.
+Thanks to these design decision, further extending \mata with support for handling BDDAs will be effortless.
 
 We further focussed on utilizing \nfts in string solving by adding algorithms to model string replace operations defined in SMT-LIB which will be used in \noodler for solving SMT formulae with string replace operations, previously unsolvable by \noodler.
 
@@ -2000,9 +2003,9 @@ Furthermore, depending on the performance of \nfts in \noodler, we intend to add
 
 If the performance of composition of \nfts in \noodler proves to be a bottleneck, we can implement the optimized algorithm specialized for $2$-tape \nfts.
 
-Since the representation of \nfts in \mata is close to BDDs, we intend to study various optimizations used for BDDs to further improve the performance of \nfts in \mata.
+Since the representation of \nfts in \mata is close to BDDAs, we intend to study various optimizations used for BDDAs to further improve the performance of \nfts in \mata.
 
-Finally, we intend to inherit the current structure for \nfts with the corresponding operations and add support for BDDs to \mata for future uses.
+Finally, we intend to inherit the current structure for \nfts with the corresponding operations and add support for BDDAs to \mata for future uses.
 
 
 %=========================================================================
