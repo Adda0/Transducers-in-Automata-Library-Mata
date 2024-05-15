@@ -920,12 +920,6 @@ These are the tapes we expect to act as a mediator between the output of $\ft_1$
 To create a new product transition, the symbols on the corresponding tapes in both \nfts must be compatible (the same symbol, or pairs like $(\dontCare, a)$ for $a \in \Sigma$, etc.).
 % TODO: Explain synchronization better.
 
-\begin{example}
-  Throughout this section, we will demonstrate the composition algorithm on the following example.
-  Given \nft $\ft_1$ with tapes $0$, $1$, and $2$, and $\ft_2$ with tapes $2$, $3$, and $4$, we want to compute $\ft_1 \composePipe \ft_2$, synchronizing both \nfts on tape $2$.
-  For clarity, we number the tapes uniquely between both \nfts in this example. Internally, each \nft has tapes with levels from $0$ to $2$ and for each \nft, we specify which tape(s) the \nfts should synchronize on.
-\end{example}
-
 The composition comprises the following steps:
 \begin{itemize}
   \item Extending the \nfts to contain matching tapes,
@@ -933,6 +927,12 @@ The composition comprises the following steps:
   \item Performing \nft intersection as described in Section~\ref{sec:intersection}, and
   \item Projecting out the synchronization tapes (as described in Section~\ref{sec:projection}) which were ''consumed'' by the composition.
 \end{itemize}
+
+\begin{example}
+  Throughout this section, we will demonstrate the composition algorithm on the following example.
+  Given \nft $\ft_1$ with tapes $0$, $1$, and $2$, and $\ft_2$ with tapes $2$, $3$, and $4$, we want to compute $\ft_1 \composePipe \ft_2$, synchronizing both \nfts on tape $2$.
+  For clarity, we number the tapes uniquely between both \nfts in this example. Internally, each \nft has tapes with levels from $0$ to $2$ and for each \nft, we specify which tape(s) the \nfts should synchronize on.
+\end{example}
 
 \paragraph{Extending \nfts to match each other.}
 The first step of the composition is to extend the input \nfts by inserting additional levels $k$ (additional states with levels $k$) into each transition with $\dontCare$ symbols on the transitions at levels $k$.
@@ -942,7 +942,7 @@ We use $\dontCare$ symbols since for each \nft $\ft_i$, the other \nft $\ft_j$ d
 Hence, from the point of view $\ft_j$, $\ft_i$ can perform any transition.
 
 \begin{example}
-  Continuing the example, we extend each \nft transition in $\ft_1$ with new transitions as follows: from existing states $q_2$ with level $2$ to new states $q_3$ with levels $3$ (using the original transition symbol on transitions outging from $q_2$), from $q_3$ to new states $q_4$ with levels $4$ using $\dontCare$ symbol, and finally from $q_4$ to the next existing states $q_0$ with levels $0$ (the orinal targets of transitions from $q_2$) using $\dontCare$ symbol (finishing the original \nft transition).
+  Continuing the example, we extend each \nft transition in $\ft_1$ with new transitions as follows: from existing states $q_2$ with level $2$ to new states $q_3$ with levels $3$ (using the original transition symbol on transitions outgoing from $q_2$), from $q_3$ to new states $q_4$ with levels $4$ using $\dontCare$ symbol, and finally from $q_4$ to the next existing states $q_0$ with levels $0$ (the orinal targets of transitions from $q_2$) using $\dontCare$ symbol (finishing the original \nft transition).
 
   Figure~\ref{fig:composition_nfts_extension} shows a depiction of a single transition in $\ft_1$ and $\ft_2$ before and after extension.
 
@@ -953,7 +953,7 @@ Hence, from the point of view $\ft_j$, $\ft_i$ can perform any transition.
     \subfloat[\centering After extention\label{fig:composition_nfts_extension_after}]{{\includegraphics[keepaspectratio,width=0.45\textwidth]{jumps_synchronization-composition_nfts_extension_balanced.pdf} }}%
     \caption{
       A depiction of a single transition in \nfts $\ft_1$ (top) and $\ft_2$ (bottom) before extension (Figure~\ref{fig:composition_nfts_extension_before}) and after extension with $\dontCare$ transitions on inserted tapes to balance out the tapes in both \nfts (Figure~\ref{fig:composition_nfts_extension_after}).
-      The red states with together with the outgoing transition represent the tape $\ft_1$ and $\ft_2$ are synchornized on.
+      The red states together with the outgoing transitions represent the tape $\ft_1$ and $\ft_2$ are synchornized on.
       The blue states represent the newly inserted tapes with $\dontCare$ symbols on transitions.
     }
     \label{fig:composition_nfts_extension}%
@@ -962,7 +962,7 @@ Hence, from the point of view $\ft_j$, $\ft_i$ can perform any transition.
   We can see that after the extension, both $\ft_1$ and $\ft_2$ have the same tapes.
 \end{example}
 
-Thanks to this general approach, we can compute compositions of any $n$-tape \nfts\footnote{Where $\ft_1$ and $\ft_2$ does not even have to have the same $n$.}, synchronizing on any tape(s)\footnote{When synchronizing on multiple tapes, the tapes must at least be in the same order in both \nfts.}, with the tapes being in an arbitrary order.
+Thanks to this general approach, we can compute compositions of any $n$-tape and $m$-tape \nfts, synchronizing on any tape(s)\footnote{When synchronizing on multiple tapes, the tapes must be in the same order in both \nfts.}, with the tapes being in an arbitrary order.
 
 As an optimization, when adding multiple subsequent $\dontCare$ transitions during the extension, we can instead add only a single $\dontCare$ jump from the first state in the sequence leading to the last state in the sequence, without having to create new states for all inserted tapes being jumped over.
 
@@ -974,8 +974,8 @@ The self-loops is a symbolic name since they are self-loops in the sense of \nft
 
 The symbols on the self-loops are added as follows:
 \begin{itemize}
-  \item For the transitions on tapes $T$, the symbol is $\epsilon$ is used, being handled as a normal transition symbol the other \nft can synchronize with an $\epsilon$ symbol on the non-self-loop transition.
-  \item For the transitions on tapes added by the extension, the symbol is $\dontCare$ is used.
+  \item For the transitions on the synchronization tapes, the symbol $\epsilon$ is used, being handled as a normal transition symbol the other \nft can synchronize with the $\epsilon$ symbol on any non-self-loop transition.
+  \item For the transitions on tapes added by the extension, the symbol $\dontCare$ is used.
   $\dontCare$ here has the same role as $\dontCare$ symbols added during extension.
   \item For the transitions on the remaining tapes (the original non-synchronizing tapes), $\epsilon$ symbol is used to represent the waiting on all \nft's own transitions.
 \end{itemize}
@@ -1006,7 +1006,7 @@ This would represent a situation where both \nfts are waiting for the other, but
 Since these macrostates are not useful, we prevent their creation entirely.
 
 \paragraph{Projecting out the tapes the composition synchronized on.}
-To clean up $\ft$, we need to project out the tapes $T$ we synchronized on as these are the tapes that have been ''consumed'' by the composition.
+To clean up $\ft$, we need to project out the tapes we synchronized on as these are the tapes that have been ''consumed'' by the composition (used as the link between the output of $\ft_1$ and input of $\ft_2$).
 
 \begin{example}
   To finish out example, Figure~\ref{fig:composition_nfts_extension_final} depicts a single product transition after composition is performed and the synchronization tapes are projected out.
@@ -1024,22 +1024,24 @@ To clean up $\ft$, we need to project out the tapes $T$ we synchronized on as th
 
 \paragraph{Optimization for $2$-tape \nfts.}
 For working with only $2$-tape \nfts, a specialized algorithm for composition can be utilized.
+We presume that input/output \nfts always input on the first tape and output on the second tape.
 The algorithm would still utilize the general idea of \nft intersection, but now no extension of \nfts and no self-loops are necessary.
 For each macrostate, we would first perform a step in $\ft_1$ on level $0$, then perform the synchronized step on levels $1$ in $\ft_1$ and $0$ in $\ft_2$ (if such a step is possible as per \nft intersection rules), then finish the composition of the current transition by performing a step in $\ft_2$ on level $1$, constructing a new macrostate from targets of transitions on levels $1$ of both \nfts.
 Handling of jumps is similar to \nft intersection: waiting for the state ''left behind'' to catch up with the state jumped to.
+This approach no longer handles $\epsilon$ symbols as normal symbols $a \in \Sigma$, but instead uses the classic synchronization on $\epsilon$ symbols used in the intersection for \nfas.
 
 When adding support for transducers to \noodler, it may be advantageous to utilize this specialized variation of composition as string replace operations in \noodler only ever work with $2$ tapes.
 
 % ==================================
 \subsection{Application}
 
-When we construct an \nft $\ft$, the most intuitive use of $\ft$ is to perform the transduction (the process of reading the input on input tapes and outputting the output on the output tapes) $\ft$ encodes.
-This operation is called \emph{Application}.
+When we construct an \nft $\ft$, the most intuitive use of $\ft$ is to perform the transduction $\ft$ encodes (reading the input on the input tapes and outputting the output on the output tapes) .
+This operation is called \emph{application}.
 
 We can \emph{apply} a word $w$ on $\ft$, or a regular language $\langof{\aut}$ for some $\aut$.
 
 \paragraph{Application of a word.}
-We can either apply a word $w \in \Sigma^*$ on a given tape (at level $k$), or apply an $l$-tuple of words $(w_i)$ where $i in \in \{ 1, \ldots, n \}$ where $|(w_i)| = l$ and $i$ specifies on which tapes we want to apply the tuple of words (one word $w_i$ for each tape $i$).
+We can either apply a word $w \in \Sigma^*$ on a given tape (at level $k$), or apply an $l$-tuple of words $(w_i)$ where $l < n$, $i \in \{ 0, \ldots, n - 1 \}$ and $i$ specifies on which tape (level) we want to apply the respective words (one word $w_i$ for tape $i$).
 
 The result of the application of a word (or a tuple of words) is a set of tuples of size $(n - l)$ of words.
 We read the word(s) being applied and move through the \nft according to the transition symbols in the applied word(s) on the corresponding tapes, similarly to performing a run on a word in \nfa, only now to potentially multiple tapes (multiple words).
