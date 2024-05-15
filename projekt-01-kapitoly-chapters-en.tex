@@ -9,12 +9,11 @@
 \chapter{Introduction}
 % Finite Automata + Mata
 
-\emph{Finite automata} can be found in numerous fields, both in research and in industry.
+\emph{Finite automata} can be found in numerous fields, both in research and in the industry.
 In some use cases, handling finite automata can be computationally costly.
 Therefore, a number of automata libraries have emerged throughout the years, each with their own set of supported automata types and operations.
 Their respective design and implementation decisions give various advantages and disadvantages to each library.
 Recently, a new finite automata library called \mata has been introduced in~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
-
 \mata is already used to \emph{reason about regular expressions} and in \emph{string solving}.
 However, in order for \mata to work well in other applications such as \emph{regular model checking}, or \emph{deciding logics} such as \emph{WS1S} or \emph{quantified Presburger arithmetic}, support for \emph{finite transducers} is necessary.
 In this work, we add \emph{finite transducers} to \mata.
@@ -27,52 +26,64 @@ That is, finite transducer models a set of $n$-tuples of words.
 Finite state transducers are of immense practical use in numerous domains such as language and speech processing (computational linguistics)~\cite{DBLP:journals/coling/Mohri97}, software compilers~\cite{compilers}, parameterized unit testing~\cite{DBLP:conf/icst/VeanesHT10}, code parallelization~\cite{DBLP:journals/nle/Watson96}, web security~\cite{DBLP:conf/uss/HooimeijerLMSV11}, or verification of software programs~\cite{DBLP:books/ws/automata12}.
 
 The two distinctive features of \mata which determine our work in this thesis are \emph{efficiency} and \emph{simplicity}.
-
 The \emph{efficiency} of automata algorithms is crucial since in many use cases, automata problems are computationally hard and every small decrease in performance of the often used low-level operations causes a significant slowdown.
 Many automata libraries are well-optimized on only a subset of operations, presume a certain specific approach to using them, or make limitations on how one can utilize the library.
 \mata wants to achieve fast computation on operations in various applications, providing optimized general operations on finite automata as well as several purpose-specific algorithms, especially for its applications in string solving.
-
 The \emph{simplicity} of \mata focuses on delivering an approachable interface for automata operations, easy integration of \mata into the existing tools, and further extensibility and modifiability of implemented algorithms and automata models.
-
 The underlying data structures in \mata are designed to make it possible for \mata to run sufficiently fast, but also enable \emph{easy modification} by the user for their own use cases, and give an \emph{extensible} interface for adding new automata models, or purpose-specific operations.
-
 The design decisions behind \mata, and an comparison with other automata libraries are further discussed in Chapter~\ref{chap:finite_automata}.
 
 % String solving.
 Our first and primary use case for finite transducers in \mata, beside others, is string solving.
-
 String solving has gotten a lot of attention from the research and industry in the last two decades.
 The work on string solving is primarily motivated by its uses in analysis of programs for web applications.
 String solving allows us to prevent software attacks such as cross-site scripting (XSS) or code injection by discovering security vulnerabilities in the programs.
-
 There exists a large number of different SMT string solvers, each applying their unique techniques and optimizations for specific operations.
 
-Use of automata-based techniques have recently gained noticable popularity among the string solving community.
+The use of automata-based techniques have recently gained noticable popularity among the string solving community.
 Using automata for string solving is a natural step as in string solving, we deal with a lot of regular expressions and regular constraints.
-
 The work in this thesis is highly motivated by an automata-based technique introduced recently in a novel SMT string solver \noodler.
 \noodler uses automata as the backbone of its decision procedure.
 \noodler can solve word equations with regular constraints, but cannot be used to solve word equations and constraints with replace operations such as \texttt{replaceAll} (replacing all words or regular patterns with a string literal), as explored in~\cite{10.1145/3158091} for analysis of string manipulating programs in web applications.
 One of the main motivations for adding finite transducers to \mata is encoding replace operations in \noodler.
-
 The broader context of string solving and related work relevant to this thesis is given in Chapter~\ref{chap:string_solving}.
 
 In this work, we design the representation and algorithms for finite transducers in \mata.
-We adjust the design to fit the simplicity and efficiency requirements of \mata.
-We model finite transducers using data structures inherited from finite automata in \mata.
-We extend the data structure for finite transducers as a finite automaton with levels for states.
+To maintain the simplicity and efficiency requirements of \mata, we want to keep the data structures and algorithms for finite transducers simple.
+Since finite transducers have normally $n$-tape alphabets, a support for special $n$-tape symbols would have to be introduced to \mata, with special operations and data structures supporting $n$ tapes.
+We did not want to introduce a new data structure just for finite transducers.
+Therefore, we designed a representation of finite transducers and algorithms for them in such a way that we reuse the existing data structures and algorithms already implemented in \mata without having to do too many changes.
+For the representation of finite transducers, we inherit the data structure for finite automata, and only extend the data structure with a mapping of states to $n$ levels, each corresponding to one tape.
+We represent the $n$-tape symbols as a simple sequence of single finite automata symbols (a sequence of finite automata transitions with states annotated with a level, one state and transition for each tape).
+All data structures for finite automata are therefore directly reusable for finite transducers.
 This also allows us to inherit large portions of finite automata operations for finite transducers with only slight modifications.
+No special data structures need to be added and the encoding of finite transducer as a finite automaton with levels is intuitive.
 
-The representation for finite transducers simultaneously serves as a common representation for finite transducers and future representation of binary decision diagrams (BDDs).
+In order to achieve this, we had to solve a few technical problems regarding especially epsilon transitions.
+A single epsilon transition between the subsequent tapes represents a no operation transition where the transducer does not read/write anything on the tape.
+We also work on a parallel project where we need to handle automata with large alphabets using binary decision diagrams (BDDs).
+BDDs also use $n$-tape symbols.
+The representation for $n$-tape transducer transitions is very close to BDD-like transitions (as seen in, e.g., \mona~\cite{mona}).
+Therefore, the representation for finite transducers simultaneously serves as a common representation for future implementation of BDDs.
+BDDs also use jumps (special transitions) and don't care symbols (matching any symbol in the alphabet, represented similarly to epsilon symbols in finite automata).
+Hence, we further design epsilon and don't care jumps for finite transducers.
+By only using levels, we are able to encode epsilon transitions (a simple change of state as for finite automata) between states with the same level, and epsilon or don't care jumps (performing multiple transitions in a single transition) between states with different levels.
+We restrict the jumps to be allowed to jump only up to the next state with the level of the first tape.
+This allows us to use the existing algorithms such as subset and product construction for finite transducers without modifications and without having to store the information about lengths of jumps into the pair of states in the worklist.
+Depending on whether one works with finite transducers or BDDs, a different interpretation of jumps is possible with a minimal change in the algorithms, all with a single transition representation: a jump in a finite transducer repeats the symbol jumped over on all transitions, whereas in BDDs, the jumped over symbol is used only for the first transition jumped over, followed by a sequence of don't care transitions.
+
+This is to our best knowledge a unique approach for encoidng finite automata, transducers and BDDs with a single automaton data structure and shared algorithms with only minimal modifications.
 
 We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB.
 
 Finally, we run an experimental evaluation of performance of finite transducers in \mata on a new benchmark with replace operations from runs of \noodler and solving problems in pattern matching.
-The approach is feasible and ready for use in \noodler.
 The experimental results show that even though \mata is slower than the state-of-the-art, it performs well enough for our use cases.
 Moreover, the support for nondeterminism in \mata allows for great performance of \nfts on complex regular expressions found in practice.
-%  and even outperforms the state-of-the-art
-\newpage
+
+The described design is feasible.
+Finite transducers perform sufficiently well and and are prepared for \noodler and string solving in general.
+
+% \newpage
 \paragraph{Contribution.}
 The contributions of this work can be summarized as follows:
 \begin{itemize}
@@ -1489,7 +1500,7 @@ The existing decision procedure of \noodler will have to be modified further as 
 \chapter{Implementation}
 
 The proposed data structures for finite transducers, standard operations on finite transducers, and algorithms for modelling replace operations were implemented in \mata.
-The code is accessible on \mata \href{https://github.com/VeriFIT/mata/}{GitHub repository}\footnote{\url{https://github.com/VeriFIT/mata/}}.
+The code is accessible in a \href{https://github.com/Adda0/mata/tree/transducers}{GitHub repository}\footnote{\url{https://github.com/Adda0/mata/tree/transducers}} and will be merged into the main \mata \href{https://github.com/VeriFIT/mata/}{GitHub repository}\footnote{\url{https://github.com/VeriFIT/mata/}}.
 
 The majority of the operations on finite transducers closely follow the implementation of the corresponding operations on \nfas already existing in \mata.
 These operations are modified only in places where it is necessary to handle the differences between \nfas and \nfts, such as correctly setting and resetting the vector of levels for transducer states, or handling epsilon, \nop and don't care symbols.
@@ -1558,8 +1569,8 @@ Even if \mona does not support finite transducers directly, we have chosen \mona
 Each tape in a transducer can be encoded as a single variable in the BDD for a given transition.
 A sequence of variables then encodes an \nft transition, where the leaves of the BDD are target states and edges represent the transition symbols.
 Each transition symbol is encoded as a bit vector (a sequence of bits).
-An \nft transition is then encoded as \texttt{dummy\_1|bitvec\_1|dummy\_2|bitvec\_2}. where \texttt{|} denotes the concatenation of bit vectors. \texttt{bitvec\_i} for represents a bit vector for a transition symbol on the tape $i$.
-\texttt{dummy\_i} are additional dummy symbols used for determinization.
+An \nft transition is then encoded as \texttt{dummy\_1|bitvec\_1|dummy\_2|bitvec\_2} where \texttt{|} denotes the concatenation of bit vectors. \texttt{bitvec\_i} represents a bit vector for a transition symbol on the tape $i$.
+\texttt{dummy\_i} are additional dummy symbols used for determinization (as \mona implicitly determinizes after every operation).
 
 Performing operations such as composition, projection, or application on \nfts is, thanks to how \mata encodes \nfts as a representation very close to the representation of BDDs, a natural operation for \mona in the encoding explained above.
 
@@ -1570,9 +1581,10 @@ Our goal in these experiments is not to outperform \mona, but to compare how tec
 \section{Benchmarks.}
 
 For the first group of benchmarks, we have generated a new set of benchmarks from runs of \noodler on benchmarks from SMT-LIB~\cite{SMTLIB} which contain string replace operations \texttt{str.replace}, \texttt{str.replace\_all}, \texttt{str.replace\_re} and \texttt{str.replace\_re\_all}.
-The replace operations appear in SMT-LIB benchmarks \texttt{
-non-incremental/QF\_SLIA/20230331-transducer-plus} (\transducerPlus, called \texttt{transducer plus} in our experiments) and \texttt{
-non-incremental/QF\_SLIA/20230403-webapp} (\webapp, called \texttt{webapp} in our experiments).
+The replace operations appear in SMT-LIB benchmarks
+\\\texttt{
+non-incremental/QF\_SLIA/20230331-transducer-plus}\\(\transducerPlus, called \texttt{transducer plus} in our experiments), and\\\texttt{
+non-incremental/QF\_SLIA/20230403-webapp}\\(\webapp, called \texttt{webapp} in our experiments).
 
 We compare the performance of \mata and \mona on benchmarks for the following operations
 \begin{itemize}
@@ -1580,7 +1592,7 @@ We compare the performance of \mata and \mona on benchmarks for the following op
   \item application of a literal (forward/backward),
   \item application of a language (forward/backward),
   \item composition of two \nfts, and
-  \item composition of \nfts used during replace \nft creation.
+  \item composition of \nfts used during replace \nft construction.
 \end{itemize}
 
 We collect \nfts for each unique replace operation in benchmarks from SMT-LIB solved by \noodler.
@@ -1593,7 +1605,7 @@ We remove duplicated \nfts in each benchmark which in total produces $1749$ inst
 
 \paragraph{Application of a literal benchmark.}
 The application of a literal benchmark consists of pairs ($u$, $\ft$) where $u$ is a string literal and $\ft$ is a $2$-tape \nft for replace operations found in SMT-LIB formulae solved by \noodler.
-$u$ is constructed as the longest word in the \texttt{pattern} of the replace operation constrainted to the maximal length of word $5$.
+$u$ is constructed as the longest word in the \texttt{pattern} of the replace operation constrainted to the maximal length of word $5$ ($5$ is up to a few exception a sufficient length for all replace operations in SMT-LIB).
 We perform the forward application of $u$ to $\ft$ ($\id{u} \composePipe \ft $).
 This simulates the forward image propagation, as described in~\ref{sec:string_solving_with_replace}, which is an operation to be used in \noodler.
 We remove duplicated pairs ($u$, $\ft$) in each SMT-LIB benchmark which leaves us in total with $2027$ instances ($211$ from \webapp, $1816$ from \transducerPlus).
@@ -1614,7 +1626,7 @@ This simulates the backward image propagation, as described in~\ref{sec:string_s
 The number of instances is the same as for the forward language application benchmark.
 
 \paragraph{Composition.}
-Last but not least, we compare the performance of \mata and \mona on compsition operation.
+Last but not least, we compare the performance of \mata and \mona on the composition operation.
 The composition benchmark contains pairs ($\ft_1$, $\ft_2$) where we perform composition $\ft_1 \composePipe \ft_2$.
 We performed composition of various \nfts appearing in a sequence in SMT-LIB benchmarks including composition of pre-constructed partial compositions of \nfts for replace operations in these sequences.
 
@@ -1627,17 +1639,17 @@ We remove duplicated pairs ($\ftBeginMarker$, $\ftRegexRelucReplaceAll$) in each
 
 For a second benchmark, we introduce a regular pattern with counters, appearing often in works on pattern matching~\cite{10.1007/978-3-031-30829-1_19}.
 The pattern looks similar to the following regular expression:
-\texttt{\^.*u.\{i, j\}u.\{k, l\}\$} where
-\texttt{\^} denotes the beginning of a line, \texttt{.} matches any character, \texttt{*} denotes Kleene star, \texttt{\{i, j\}} denotes a repetition where the number of repetitions is between $i$ and $j$, and $\$$ denotes the end of line. \texttt{u} stands here for an arbitrary specific string, e.g., \texttt{<script>}.
+\texttt{\#.*u.\{i, j\}u.\{k, l\}\$} where
+\texttt{\#} denotes the beginning of a line, \texttt{.} matches any character, \texttt{*} denotes Kleene star (zero or more repetitions), \texttt{\{i, j\}} denotes a repetition where the number of repetitions is between $i$ and $j$, and $\$$ denotes the end of line. \texttt{u} stands here for an arbitrary specific string, e.g., \texttt{<script>}.
 The pattern reads as follows: Starting with any sequence of characters, we match words that end with two strings \texttt{u} separated by $i$ to $j$ characters and followed by another $k$ to $l$ characters until the end of the line.
 
 This is one of many examples of such regular patterns.
-For the purpose of experimental evaluation, we simplify the pattern as follows: \texttt{\^.*a.\{i\}\$} where \texttt{a} stands for a single symbol and \texttt{\{ i \}} for a fixed number $i$ of repetitions.
+For the purpose of experimental evaluation, we simplify the pattern as follows: \texttt{\#.*a.\{i\}\$} where \texttt{a} stands for a single symbol and \texttt{\{ i \}} for a fixed number $i$ of repetitions.
 The pattern reads as: match any word that have symbol \texttt{a} $i$ symbols away from the end of the word.
 
 Usually, the integers for repetitions in pattern matching are parametrtic, giving us a parametric benchmark \symbolFromEnd with varying numbers of repetitions.
 We have limited our benchmark to numbers $i$ between $1$ and $150$
-We construct $\ftRegexRelucAll$ and $\ftRegexRelucSingle$ for the regular pattern \texttt{\^.*a.\{i\}} replacing the pattern with an empty string.
+We construct $\ftRegexRelucAll$ and $\ftRegexRelucSingle$ for the regular pattern \texttt{\#.*a.\{i\}} replacing the pattern with an empty string.
 In total, we create $300$ instanes in \symbolFromEnd benchmark.
 
 We compare the performance of \mata and \mona on operations application of a language (applying a language of the matched pattern), and composition constructing the resulting \nft for replace operation.
@@ -1649,18 +1661,25 @@ Furthermore, these are the operations usually performed in any general use of tr
 
 Note that since self-loops cannot be easily added to an existing \nft in \mona, for all operations using composition, we extend the \nfts from benchmarks with additional tapes to synchronize the tapes in both \nfts and add self-loops manually before measuring the runtimes of operations.
 
+The generated benchmarks are accessible in a \href{https://github.com/Adda0/smt-lib-replace-transducers-benchmarks}{GitHub repository}\footnote{\url{
+https://github.com/Adda0/smt-lib-replace-transducers-benchmarks}}.
+
 \section{Results}
 
-The experiments were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux kernel GNU/Linux 5.15.0-106-generic x86\_64, CPU AMD Ryzen 5 5600G @ 3.892GHz ) with timeout set to 120 seconds. Due to small runtimes on the majority of instances (a few milliseconds and less), each benchmark instance was run $3$ times and the resulting runtime is computed as the mean of the $3$ runs which mitigates unexpected runtime deviations caused by waiting for the assignment of computation unit.
+The experiments were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux kernel GNU/Linux 5.15.0-106-generic x86\_64, CPU AMD Ryzen 5 5600G @ 3.892GHz) with timeout set to 120 seconds. Due to small runtimes on the majority of instances (a few milliseconds and less), each benchmark instance was run $3$ times and the resulting runtime is computed as the mean of the $3$ runs which mitigates unexpected runtime deviations caused by waiting for the assignment of computation unit.
 
-After computing the number of timeouts, the rows with timeouts are dropped so the tables show runtimes for instances where both tools finished.
+The experimental pipeline and all the raw results of run experiments are accessible in a \href{https://github.com/Adda0/Transducers-in-Automata-Library-Mata_experiments}{GitHub repository}\footnote{\url{
+https://github.com/Adda0/Transducers-in-Automata-Library-Mata_experiments}}.
 
-All tables in this chapter show the tool used; number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, standard deviation.
+After computing the number of timeouts for each tool, the instances with timeouts are dropped from the results.
+Therefore, the tables show runtimes for instances where both tools finished.
+All tables in this chapter show the tool used; number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, and standard deviation.
 The times shown in the tables are in milliseconds.
 
 \subsection{Projection}
 
 We show the performance of projection on a $2$-tape \nfts on the input tape (projecting out the output tape), and the output tape (projecting out the input tape) separately, since in $2$-tape \nfts, both cases project the first or the last tape, which requires a more complex modification of the \nft than projection of a tape in the middle between another tapes.
+This results in a different runtimes for each projection.
 
 Table~\ref{tab:projection} shows comparison of performance of \mata and \mona on the projection operation on both benchmarks.
 
