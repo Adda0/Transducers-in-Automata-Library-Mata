@@ -5,7 +5,7 @@
 %\begin{document}
 
 % Placing of table of contents of the memory media here should be consulted with a supervisor
-\chapter{Contents of the included storage media}
+\chapter{Contents of the Storage Media}
 
 The following list lists the contents of the included storage media. Listed are
 only the few top-level folders in the folder hierarchy.
@@ -22,7 +22,7 @@ only the few top-level folders in the folder hierarchy.
 
         \item \texttt{analysis}: The scripts for analysing run experiments (generate graphs and tables shown in this work).
         \begin{itemize}
-          \item \texttt{plots/}: The graphs and plots generated from analysis of the run experiments shown in this work.
+          \item \texttt{plots/}: The graphs, tables and plots generated from analysis of the run experiments shown in this work.
         \end{itemize}
     \end{itemize}
 \end{itemize}
@@ -32,9 +32,6 @@ only the few top-level folders in the folder hierarchy.
 
 Here, we describe how our reference implementation for transducers in \mata can be run, tested, and how one can reproduce the experiments shown in this work.
 
-
-% TODO.
-
 The experiments shown in this work were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux kernel GNU/Linux 5.15.0-106-generic x86\_64).
 The experiments should be runnable on any Unix-like system, provided the following requirements are met.
 
@@ -43,7 +40,6 @@ The following programs are required for the implementation and experimental pipe
     \item Python 3.10.12 or higher,
     \item C++ compiler, experiments run on g++ (Ubuntu 11.4.0-1ubuntu1\textasciitilde 22.04) 11.4.0,
     \item cmake 3.22.1 or higher,
-    \item
 \end{itemize}
 
 The experiments can be run as follows:
@@ -73,7 +69,8 @@ The experiments can be run as follows:
   \\
   \texttt{./run\_all\_experiments.sh}
 
-  \item See generated CSV files with results in \texttt{results/raw/}. Copy the files over to \texttt{results/processed/} with descriptive names.
+  \item See generated CSV files with results in \texttt{results/raw/}.
+  \\Copy the files over to \texttt{results/processed/} with descriptive names.
 
   \item Analyse the results:
   \\
@@ -86,7 +83,7 @@ The experiments can be run as follows:
   \texttt{pip install -r requirements.txt}
   \\
   \texttt{analyse.py}
-  where \texttt{analyse.py} expects the following CSV files with results in \texttt{results/processed/}:
+  where \texttt{analyse.py} expects the following CSV files with results in \\\texttt{results/processed/}:
   \begin{itemize}
     \item \texttt{
     results/processed/<BENCHMARK>\_apply\_language.csv
@@ -96,14 +93,35 @@ The experiments can be run as follows:
     }
 
     \item \texttt{
+    results/processed/<BENCHMARK>\_apply\_language_backward.csv
+    }
+    \item \texttt{
+      results/processed/<BENCHMARK>\_apply\_literal_backward.csv
+    }
+
+    \item \texttt{
 results/processed/<BENCHMARK>\_projection.csv
     }
 
     \item \texttt{
 results/processed/<BENCHAMRK>\_composition.csv
     }
+    \item \texttt{
+results/processed/<BENCHAMRK>\_composition_construct_replace.csv
+    }
+
   \end{itemize}
-  where \texttt{<BENCHAMRK>} is replaced with \texttt{transducer-plus} and \texttt{webapp}.
+  where \texttt{<BENCHMARK>} is replaced with \texttt{transducer-plus} and \texttt{webapp}.
+
+  Further, results for benchmark \symbolFromEnd are expected:
+  \begin{itemize}
+    \item \texttt{
+      results/processed/symbol_from_end\_apply_language.csv
+    }
+    \item \texttt{
+      results/processed/symbol_from_end\_construct_replace.csv
+    }
+  \end{itemize}
 
 \end{itemize}
 

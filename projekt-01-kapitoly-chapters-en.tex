@@ -1990,26 +1990,27 @@ Moreover, we conclude that \nfts in \mata are capable of handling complex tasks 
 
 \chapter{Conclusion}
 
-To conclude this thesis, we have added support for a new model for finite state machines, finite transducers, to \mata, explained the principles behind \nfts and specifically \nfts in the context of \mata and \noodler for string solving.
+We have added support for a new model for finite state machines, finite transducers, to \mata, explained the principles behind \nfts and specifically \nfts in the context of \mata and \noodler for string solving.
 We have created a new data structures derived from the existing data structures for \nfas in \mata as \nfas with levels, which fit well in the overall structure and design decision of \mata.
-The introduced algorithms on \nfts are closely related to the corresponding algorithms on BDDAs and maintain the two main goals of \mata: simplicity and efficiency, while keeping \mata easily extensible and understandable for a wide variety of users and applicable to both the areas of automata research and industry.
+The introduced algorithms on \nfts are closely related to the corresponding BDD-like algorithms on BDDAs and maintain the two main goals of \mata: simplicity and efficiency, while keeping \mata easily extensible and understandable for a wide variety of users and applicable to both the areas of automata research and industry.
 Thanks to these design decision, further extending \mata with support for handling BDDAs will be effortless.
 We further focussed on utilizing \nfts in string solving by adding algorithms to model string replace operations defined in SMT-LIB which will be used in \noodler for solving SMT formulae with string replace operations, previously unsolvable by \noodler.
 
 We compared the performance of \nfts in \mata with a natural encoding of transducers in the automata library \mona.
 The experiments show that \mata performs slower than \mona in string solving, but still runs reasonably fast.
 When applied to complex regular expressions such as pattern matching, \mata clearly outperforms approaches without proper support for nondeterminism.
-The performance of \mata on $2$-tape \nfts can be further improved by applying the specialized algorithm for composition for $2$-tape \nfts, or by sometimes preventing execution of projection.
+The performance of \mata on $2$-tape \nfts can be further improved by applying the specialized algorithm for composition for $2$-tape \nfts.
 
 Overall, the design and implementation of \nfts in \mata is feasible, functional, performs sufficiently enough, and is widely usable, with ready-for-use support for solving SMT formulae with string replace operations in \noodler.
 
+% \vspace{-4mm}
 \paragraph{Future work.}
 We continue optimizing and developing \mata and the implementation of \nfts.
 In the future, we want to apply \nfts to solving string SMT formulae in \noodler.
 In addition, depending on the performance of \nfts in \noodler, we intend to add support for symbolic representations for large alphabets using bit vectors representing sequences of bits, as used in tool \lash~\cite{lash} and transition representation specific to \nfts to encode \nft operations such as identity more easily.
 If the performance of composition of \nfts in \noodler proves to be a bottleneck, we can implement the optimized algorithm specialized for $2$-tape \nfts.
-Since the representation of \nfts in \mata is close to BDDAs, we intend to study various optimizations used for BDDAs to further improve the performance of \nfts in \mata.
-Finally, we intend to inherit the current structure for \nfts with the corresponding operations and add support for BDDAs to \mata for future uses.
+Since the representation of \nfts in \mata is close to BDDAs, we intend to study various optimizations used for BDDAs to further improve the performance of \nfts in \mata, leading to adding support for BDDAs in \mata.
+% Finally, we intend to inherit the current structure for \nfts with the corresponding operations and add support for BDDAs to \mata for future uses.
 
 %=========================================================================
 
