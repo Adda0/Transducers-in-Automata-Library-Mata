@@ -13,19 +13,19 @@
 In some use cases, handling finite automata can be computationally costly.
 Therefore, a number of automata libraries have emerged throughout the years, each with their own set of supported automata types and operations.
 Their respective design and implementation decisions give various advantages and disadvantages to each library.
-Recently, a new finite automata library called \mata has been introduced in~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7}.
+Recently, a new finite automata library called \mata~\cite{tacas24_mata_10.1007/978-3-031-57249-4_7} has been introduced.
 \mata is already used to \emph{reason about regular expressions} and in \emph{string solving}.
-However, in order for \mata to work well in other applications such as \emph{regular model checking}, or \emph{deciding logics} such as \emph{WS1S} or \emph{quantified Presburger arithmetic}, support for \emph{finite transducers} is necessary.
+However, in order for \mata to work well in other applications such as \emph{regular model checking}, string solving with advanced constraints, or \emph{deciding logics} such as \emph{WS1S} or \emph{quantified Presburger arithmetic}, support for \emph{finite transducers} is necessary.
 In this work, we add \emph{finite transducers} to \mata.
 
 The same as finite automata, finite transducers are finite state machines.
 They differ from finite automata by working with \emph{multiple memory tapes} (whereas finite automata work with only one memory tape).
 Each run represents an $n$-tuple of words (each tape represents a single word).
-While finite automaton models a regular language, finite transducer models a relation between regular languages.
-That is, a finite transducer models a set of $n$-tuples of words.
+While a finite automaton models a regular language, a finite transducer models a rational relation.
+That is, an $n$-tape finite transducer models a set of $n$-tuples of words.
 Finite state transducers are of immense practical use in numerous domains such as language and speech processing (computational linguistics)~\cite{DBLP:journals/coling/Mohri97}, software compilers~\cite{compilers}, parameterized unit testing~\cite{DBLP:conf/icst/VeanesHT10}, code parallelization~\cite{DBLP:journals/nle/Watson96}, web security~\cite{DBLP:conf/uss/HooimeijerLMSV11}, or verification of software programs~\cite{DBLP:books/ws/automata12}.
 
-The two distinctive features of \mata which determine our work in this thesis are \emph{efficiency} and \emph{simplicity}.
+The two distinctive features of \mata, which determine our work in this thesis, are \emph{efficiency} and \emph{simplicity}.
 The \emph{efficiency} of automata algorithms is crucial since in many use cases, automata problems are computationally hard and every small decrease in performance of the often used low-level operations causes a significant slowdown.
 Many automata libraries are well-optimized on only a subset of operations, presume a certain specific approach to using them, or make limitations on how one can utilize the library.
 \mata wants to achieve fast computation on operations in various applications, providing optimized general operations on finite automata as well as several purpose-specific algorithms, especially for its applications in string solving.
@@ -35,13 +35,13 @@ The design decisions behind \mata, and a comparison with other automata librarie
 
 % String solving.
 Our first and primary use case for finite transducers in \mata, beside others, is string solving.
-String solving has got a lot of attention from the research and industry in the last two decades.
+In the last two decades, string solving enjoys a lot of attention from the research and the industry.
 The work on string solving is primarily motivated by its uses in analysis of programs for web applications.
 String solving allows us to prevent software attacks such as cross-site scripting (XSS) or code injection by discovering security vulnerabilities in the programs.
 There exists numerous SMT string solvers, each applying their unique techniques and optimizations for specific operations.
 
-The use of automata-based techniques have recently gained noticeable popularity among the string solving community.
-Using automata for string solving is a natural step as in string solving, we deal with a lot of regular expressions and regular constraints.
+The use of automata-based techniques has recently gained noticeable popularity among the string solving community.
+Using automata for string solving is a natural approach: we have to deal with a lot of regular expressions and regular constraints in the solved formulae.
 The work in this thesis is highly motivated by an automata-based technique introduced recently in a novel SMT string solver \noodler.
 \noodler uses automata as the backbone of its decision procedure.
 \noodler can solve word equations with regular constraints, but cannot be used to solve word equations and constraints with replace operations such as \texttt{replaceAll} (replacing all words or regular patterns with a string literal), as explored in~\cite{10.1145/3158091} for analysis of string manipulating programs in web applications.
@@ -51,16 +51,16 @@ The broader context of string solving and related work relevant to this thesis i
 In this work, we design the representation and algorithms for finite transducers in \mata.
 To maintain the simplicity and efficiency requirements of \mata, we want to keep the data structures and algorithms for finite transducers simple.
 Since finite transducers have normally $n$-tape alphabets, a support for special $n$-tape symbols would have to be introduced to \mata, with special operations and data structures supporting $n$ tapes.
-We did not want to introduce a new data structure just for finite transducers.
+We did not want to introduce a new data structure just for finite transducers, or complicate the existing data structures.
 Therefore, we designed a representation of finite transducers and algorithms for them in such a way that we reuse the existing data structures and algorithms already implemented in \mata without having to do too many modifications.
 For the representation of finite transducers, we inherit the data structure for finite automata, and only extend the data structure with a mapping of states to $n$ levels, each corresponding to one tape.
 We represent the $n$-tape symbols as a simple sequence of single finite automata symbols (a sequence of finite automata transitions with states annotated with a level, one state and transition for each tape).
 All data structures for finite automata are therefore directly reusable for finite transducers.
 This also allows us to inherit large portions of finite automata operations for finite transducers with only slight modifications.
 No special data structures need to be added, and the encoding of a finite transducer as a finite automaton with levels is intuitive.
-In order to achieve this, we had to solve a few technical problems regarding especially epsilon transitions.
-A single epsilon transition between the subsequent tapes represents a no-operation transition, where the transducer does not read/write anything on the tape.
 
+In order to achieve this, we had to solve technical problems regarding especially epsilon transitions.
+A single epsilon transition between the subsequent tapes represents a no-operation transition, where the transducer does not read/write anything on the tape.
 We also work on a parallel project where we need to handle automata with large alphabets using automata with multi-terminal binary decision diagrams (called BDDAs here) as seen in an automata library \mona~\cite{mona} (see Section~\ref{sec:other_automata_libraries}).
 BDDAs also use $n$-tape symbols.
 The representation for $n$-tape transducer transitions is very close to BDD-like transitions in \mona, integrating MTBDDs into the transition relation.
@@ -69,14 +69,13 @@ BDDAs also use jumps (special transitions performing multiple transitions in a s
 Hence, we further design epsilon and don't care jumps for finite transducers.
 By only using levels, we are able to encode epsilon transitions (a simple change of a state as for the finite automata) between states with the same level. Levels further encode epsilon jumps (no operation is performed on the jumped over tapes), and don't care jumps (any symbol is accepted on the jumped over tapes) between states with different levels.
 We restrict the jumps to be allowed to jump only up to the next state with the level of the first tape.
-This allows us to use the existing algorithms such as subset and product construction for the finite transducers without modifications and without having to store the information about lengths of jumps into the pair of states in the worklist.
+This allows us to use the existing algorithms such as subset and product construction for the finite transducers without modifications and without having to store the information about lengths of jumps into a pair of states in a worklist.
 Depending on whether one works with finite transducers or BDDAs, a different interpretation of jumps is possible with a minimal change in the algorithms, all with a single transition representation: a jump in a finite transducer repeats the symbol jumped over on all tapes, whereas in BDDAs, the jumped over symbol is used only for the first tape jumped over, followed by a sequence of don't care transitions.
+This is to our best knowledge a unique approach for encoding finite automata, transducers and BDDAs with a single automaton data structure and shared algorithms with only minimal modifications and support for epsilon and don't care transitions.
 
-This is to our best knowledge a unique approach for encoding finite automata, transducers and BDDAs with a single automaton data structure and shared algorithms with only minimal modifications.
+We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB~\cite{SMTLIB}.
 
-We further extend the design with algorithms to construct finite transducers modelling replace operations defined in SMT-LIB.
-
-Finally, we run an experimental evaluation of performance of finite transducers in \mata on a new benchmark with replace operations from runs of \noodler and solving problems in pattern matching.
+Finally, we run an experimental evaluation of the performance of finite transducers in \mata on a new benchmark with replace operations from runs of \noodler and solving problems in pattern matching.
 The experimental results show that even though \mata is slower than the state-of-the-art, it performs well enough for our use cases.
 Moreover, the support for nondeterminism in \mata allows for great performance of \nfts on complex regular expressions found in practice.
 
@@ -167,7 +166,7 @@ A state $q$ is reachable if there exists a path $q_0a_1, \ldots, a_nq$ in $\aut$
 We call an NFA $\aut = (\states, \Sigma
 % \SigmaEps
 , \post, \initialStates, \finalStates)$ a \emph{deterministic finite automaton} (\emph{DFA}) iff
-\\$\forall q \in \states, a \in \Sigma: |\post(q, a)| \leq 1
+$\forall q \in \states, a \in \Sigma: |\post(q, a)| \leq 1
 % \land |\post(q, \eps)| = 0
 $, and $|\initialStates| = 1$.
 
@@ -240,7 +239,7 @@ Further improvements to automata theory may be widely applicable to large-scale 
 
 \section{Finite Transducers}
 
-In this section, we define \emph{finite state transducers} (further also called \emph{finite transducers} or just \emph{transducers}) and corresponding operations.
+In this section, we define \emph{finite state transducers} (further also called \emph{finite transducers} or just \emph{transducers}) and the corresponding operations.
 
 Finite transducers are finite state machines with multiple memory tapes.
 Each run of a finite transducer represents an $n$-tuple of words.
@@ -248,7 +247,7 @@ While a finite automaton models a regular language,
 finite transducers model \emph{rational relations} (or \emph{regular} relations), subsets of the Cartesian product of regular languages.
 That is, a finite transducer models a set of $n$-tuples of words.
 
-Henceforth, each $2$-tape finite transducer can be thought of as a translator translating (transducing) between the languages: a 2-tape finite transducer precisely models a translator from an input language to an output language, modelling a so-called \emph{binary rational relation}), a subset of $\Sigma^* \times \Sigma^*$.
+Henceforth, each $2$-tape finite transducer can be thought of as a translator translating (transducing) between the languages: a 2-tape finite transducer precisely models a translator from an input language to an output language, modelling a so-called \emph{binary rational relation}), a subset of $\Sigma_1^* \times \Sigma_2^*$.
 In this work, we usually work with binary rational relations, but in general an \emph{n-ary rational relation} can be modelled by an $n$-tape transducer.
 
 \begin{definition}[\textbf{Nondeterministic finite transducer}] \hfill \newline
@@ -355,13 +354,13 @@ It utilizes a symbolic representation of the transition relation with MTBDDs to 
 Implicit determinization of automata used in \mona after every operation provides interesting advantages for certain algorithms, but might be unnecessarily expensive for other algorithms (as can be seen in Chapter~\ref{chap:experiments}).
 
 \paragraph{BDD automata.}
-An automaton with MTBBDs integrated into the transition relation (we call them BDDAs in this work) is an automata machine where each MTBBD represents one set of all transitions from a given source state, as applied in \mona.
-However, \mona implements BDDAs restricted to deterministic automata.
+An automaton with MTBDDs integrated into the transition relation (we call them BDDAs in this work) is an automata machine where each MTBDD represents one set of all transitions from a given source state, as applied in \mona.
+However, \mona implements BDDAs restricted to only deterministic automata.
 The terminals of MTBDDs represent the successor states of the transitions (BDDs alone use only true and false values as terminals).
 Therefore, MTBDDs even more compactly represent the transition relation.
 
 Another compact symbolic representation of transition relation is used in tree automata library \vata~\cite{vata}.
-\vata also utilizes MTBBDs for transition relations from source states.
+\vata also utilizes MTBDDs for transition relations from source states.
 \vata implements fast antichain-based inclusion check~\cite{doyen-antichain-10} and simulation-based size reduction~\cite{ranzato_efficient_2010, treesimulation08} algorithms.
 
 Symbolic representations in comparison with the explicit ones allow interesting optimizations~\cite{dantoni_taminimization_2016}, but working with symbolic automata is more complex and applying general automata algorithms for symbolic automata may prove difficult~\cite{dantoni_taminimization_2016, symbsim18}.
@@ -672,7 +671,7 @@ In this section, we explain how we encode \nfts to reuse data structures for \nf
 
 \begin{example}\label{example:2_tape_nft}
 In Figure~\ref{fig:2_tape_nft}, we show a $2$-tape input/output \nft $\ft$ accepting a rational relation with an input language of sequences of $abc$, and the corresponding output language where each input transition symbol in a sequence is replaced accoringly as: input transition symbol $a$ is replaced with $bc$, $b$ is erased, and $c$ is replaced with $a$.
-That is, for language $\Sigma = \{ a, b, c \}$, $\ft$ accepting language $(abc)^*$, the following transductions are performed on each sequence $abc$:
+That is, for language $\Sigma = \{ a, b, c \}$, $\ft$ accepting language $(abc)^*$ on the input tape, the following transductions are performed on each sequence $abc$:
 $a \rightarrow bc$,
 $b \rightarrow \epsilon$, and
 $c \rightarrow a$.
@@ -702,7 +701,7 @@ A similar approach to this simplest representation with unfolding has been used 
 \begin{example}\label{example:2_tape_nft_in_mata}
   The \nft from Example~\ref{example:2_tape_nft} is represented as a level automaton in the Figure~\ref{fig:2_tape_nft_in_mata}.
 
-  Transitions from states with level $0$ represent the input tape, and transitions from states with level $1$ represent the output tape.
+  The transitions from states with level $0$ represent the input tape, and the transitions from states with level $1$ represent the output tape.
 
   \begin{figure}[ht]
     \centering
@@ -744,7 +743,7 @@ BDDAs in our representation only extend the functionality of \nfts, and can ther
 We want to reuse \deltastruct for the representation of transition relation in finite transducers.
 
 \nfts and BDDAs can directly utilize \nfaClass with all the underlying data structures.
-The only modification of \nfaClass to support \nfts and BDDAs is adding a vector of state \emph{levels} (represented by \texttt{std::vector}<unsigned>) indexed by automaton states. The vector maps each automaton state to its level in the finite state machine.
+The only modification of \nfaClass to support \nfts and BDDAs is adding a vector of state \emph{levels} (represented by \texttt{std::vector}<unsigned>) indexed by the automaton states. The vector maps each automaton state to its level in the finite state machine.
 $n$-tape \nft has $n$ levels.
 Therefore, in a representation of an $n$-tape \nft, the vector of state levels maps to values from $0$ to $n-1$.
 One transition in \nft corresponds to $n$ transitions in \nfaClass.
@@ -757,7 +756,7 @@ Finally, the transition from state with level $n-1$ back to state with level $0$
 For this reason, \nfts can have only states $q$ with $\level{q} = 0$ as initial or final states.
 This is crucial for many algorithms (more in~\ref{sec:Algorithms}) which rely on certain invariants in the representation of \nfts, such as that \nfts always synchronize in states with state level $0$ and each step in operations must consider the entire state levels sequence from $0$ to $n-1$ as a single \emph{abstract} step (a single complete \nft transition).
 
-For 2-tape (input/output) \nft, the levels used will be $0$ and $1$, where transitions from states with levels $0$ represent the input transitions and transitions from states with levels $1$ represent the output transitions.
+For the 2-tape (input/output) \nfts, the levels used will be $0$ and $1$, where transitions from states with levels $0$ represent the input transitions and transitions from states with levels $1$ represent the output transitions.
 
 Since levels directly represent their corresponding tapes, we use the terms \emph{level} and \emph{tape} interchangeably when the meaning is clear.
 
@@ -769,7 +768,7 @@ However, finite transducers need support for epsilon transitions: epsilon symbol
 Notice that BDDAs are similar to the level automata, only slightly modified.
 BDDAs do not have epsilon symbols, but need don't care symbols (matching any transition symbol) with \emph{jumps}.
 An interesting and tricky problem is how to add support for epsilons and don't care symbols to level automata elegantly to allow reusing the existing finite automata algorithms without large modifications to the algorithms and without complicating the data structures for \nfas used to represent level automata.
-We pay close attention and to the careful design of epsilon transitions and don't care jumps which work well with \nfas and their algorithms.
+We pay close attention to the careful design of epsilon transitions and don't care jumps which work well with \nfas and their algorithms.
 
 \mata already supports epsilon symbols $\epsilon$ as (several) last transition symbol(s) in the range of possible transition symbols given by the data type for the symbol.
 Similarly, we reserve a new symbol at the end of the range for the don't care symbol $\dontCare$.
@@ -791,7 +790,7 @@ However, we restrict the jumps for $n$-tape \nft as follows:
 BDDAs change the interpretation of a jump to a single transition symbol (from the jump transition) followed by a sequence of don't care symbols for the remaining tapes (levels), as opposed to the \nft interpretation where all transitions in the jump use the jump symbol.
 We easily implemented this BDDA interpretation next to the \nft interpretation.
 
-\subsection{No-operation Transitions}
+\paragraph{No-operation transitions.}
 An epsilon transition from a state with level $k$ to $k+1 \mod n$ can be understood as a \emph{no-operation transition} \nop, i.e., a transition where the tape $k$ does not perform any operation (no reading nor writing). In essence, the impact of \nop is the same as if reading an empty string $\epsilon$ on the tape $k$.
 An epsilon jump from a state with level $0$ to another state with level $0$ is a simple change of states (as per the usual definition of epsilon transitions in \nfas).
 It has the same effect as a sequence of \nop transitions on all tapes (or a sequence of $\epsilon$ symbols).
@@ -902,7 +901,7 @@ Given $\ft_1$ with $\states_1$ and $\ft_2$ with $\states_2$, construct the inter
 
 A new level $\level{q'}$ for a new macrostate $q' = (q'_1, q'_2)$, given a current macrostate $q = (q_1, q_2) \in \states_1 \times \states_2$ where $q'_1$ and $q'_2$ are targets of transitions from $q_1$ and $q_2$, is determined as follows:
 \begin{itemize}
-  \item If $\level{q'_1} = 0$ or $\level{q'_2} = 0$ (holds for both equal $0$, too), $\level{q'} = \texttt{max}(\level{q'_1}, \level{q'_2})$. If both target states have levels $0$, we are finishing an entire \nft transition and enter a synchronized macrostate $q'$, $\level{q'} = 0$. Otherwise, only $q'_1 = 0$ ($q'_2 = 0$) holds, and $q'_1$ ($q'_2$) must be ''further ahead'' of $q'_2$ ($q'_1$), and must wait for $q'_2$ ($q'_1$) to catch up, therefore, $0 < \level{q'} < n$.
+  \item If $\level{q'_1} = 0$ or $\level{q'_2} = 0$ (holds for both equal $0$, too),\\ $\level{q'} = \texttt{max}(\level{q'_1}, \level{q'_2})$. If both target states have levels $0$, we are finishing an entire \nft transition and enter a synchronized macrostate $q'$, $\level{q'} = 0$. Otherwise, only $q'_1 = 0$ ($q'_2 = 0$) holds, and $q'_1$ ($q'_2$) must be ''further ahead'' of $q'_2$ ($q'_1$), and must wait for $q'_2$ ($q'_1$) to catch up, therefore, $0 < \level{q'} < n$.
   \item Otherwise, $\level{q'} = \texttt{min}(\level{q'_1}, \level{q'_2})$. That is, if both $0 < \level{q'_1}, \level{q'_2} < n$, we must wait for the state further behind to catch up, so we choose the lower level as $\level{q'}$.
 \end{itemize}
 
@@ -1179,7 +1178,7 @@ No replacement \nft needs to be constructed in this case.
 \begin{definition}[\textbf{Reluctant all replacement}] \hfill \newline
   A \emph{reluctant all replacement} $x^{+}_{\pi \rightarrow y}$ is defined as follows: \newline
   $$x^{+}_{\pi \rightarrow y} = \{ u \concat y \concat w^{+}_{\pi \rightarrow y} \}$$
-  where $u, v, w, x, y \in \Sigma^*$, $\pi$ is a regular language (regex), $x = u v w$, $u \notin \Sigma^* \pi \Sigma^*$, $v \in \pi$, and to ensure the shortest left-most matching, the following must hold: $\forall u = u_1 u_2, v = v_1 v_2, w = w_1 w_2:$ if $v_2 \neq \epsilon$ then $v_1 \notin \pi$ (the shortest match---if $v_1$ is not a match, then surely the shortest match is $v = v_1v_2$);
+  where $u, v, w, x, y \in \Sigma^*$, $\pi$ is a regular language (regex), $x = u v w$, $u \notin \Sigma^* \pi \Sigma^*$, $v \in \pi$, and to ensure the shortest left-most matching, the following must hold: $\forall u = u_1 u_2, v = v_1 v_2,\\ w = w_1 w_2:$ if $v_2 \neq \epsilon$ then $v_1 \notin \pi$ (the shortest match---if $v_1$ is not a match, then surely the shortest match is $v = v_1v_2$);
   if $u_2 \neq \epsilon$ then $u_2 v_1 \notin \pi \land u_2 v w_1 \notin \pi$ (the left-most match is $v$ since there is no match of $\pi$ before $v$).
 \end{definition}
 
@@ -1387,8 +1386,8 @@ Here we do not return to the beginning after the first replace, but move to a ne
 \subsection{Whole Regex Reluctant Replace \nft}
 
 We have constructed $\ftBeginMarker$ to insert non-deterministically begin markers into the input word, and constructed $\ftRegexRelucReplaceAll$ (or $\ftRegexRelucReplaceSingle$) to perform the replacement upon encountering matches prepended with $\marker$.
-$\ftRegexRelucAll$ (and similarly $\ftRegexRelucSingle$) can be constructed by connecting these two \nfts into a sequence using composition: $\ftRegexRelucAll = \ftBeginMarker \composePipe \ftRegexRelucReplaceAll$ and $\ftRegexRelucSingle = \ftBeginMarker \composePipe \ftRegexRelucReplaceSingle$.
-$\langof{\ftRegexRelucAll} = \{ (u, v) \in \Sigma^* \times \Sigma^* \,\mid\, v = u^{+}_{\pi \rightarrow y} \} $ and $\langof{\ftRegexRelucSingle} = \{ (u, v) \in \Sigma^* \times \Sigma^* \,\mid\, v = u^{1}_{\pi \rightarrow y} \} $.
+$\ftRegexRelucAll$ (and similarly $\ftRegexRelucSingle$) can be constructed by connecting these two \nfts into a sequence using composition: $\ftRegexRelucAll = \ftBeginMarker \composePipe \ftRegexRelucReplaceAll$ and \\$\ftRegexRelucSingle = \ftBeginMarker \composePipe \ftRegexRelucReplaceSingle$.
+$$\langof{\ftRegexRelucAll} = \{ (u, v) \in \Sigma^* \times \Sigma^* \,\mid\, v = u^{+}_{\pi \rightarrow y} \}, \langof{\ftRegexRelucSingle} = \{ (u, v) \in \Sigma^* \times \Sigma^* \,\mid\, v = u^{1}_{\pi \rightarrow y} \} \text{.}$$
 
 \section{Transducers for Literal Reluctant Replacement}
 
@@ -1583,7 +1582,7 @@ Modelling replace operations in \noodler is not the only use case for \nfts in \
 We want to see whether \mata is performant enough for our use cases and whether the performance of \mata is comparable with the well-optimized state-of-the-art.
 
 We compare the performance of \mata with a state-of-the-art automata library \mona~\cite{mona}.
-Even if \mona does not support finite transducers directly, we have chosen \mona to compare \mata against because \mona is a well-optimized library which, thanks to its ability to encode transition relation into MTBBs, provides a reasonable model for encoding finite transducers.
+Even if \mona does not support finite transducers directly, we have chosen \mona to compare \mata against because \mona is a well-optimized library which, thanks to its ability to encode transition relation into MTBDDs, provides a reasonable model for encoding finite transducers.
 Each tape in a transducer can be encoded as a single variable in the BDD for a given transition.
 A sequence of variables then encodes an \nft transition, where the leaves of the MTBDDs are target states and edges represent the transition symbols.
 Each transition symbol is encoded as a bit vector (a sequence of bits).
@@ -1592,7 +1591,7 @@ An \nft transition is then encoded as \texttt{dummy\_1|bitvec\_1|dummy\_2|bitvec
 
 Performing operations such as composition, projection, or application on \nfts is, thanks to how \mata encodes \nfts as a representation very close to the representation of BDDAs, a natural operation for \mona in the encoding explained above.
 
-Intuitively, \mata performs modified \nfa operations on \nfts while \mona performs its BDDA operations with the proper encoding.
+Intuitively, \mata performs modified \nfa operations on \nfts while \mona performs its BDD-like operations with the proper encoding.
 
 Our goal in these experiments is not to outperform \mona, but to compare how techniques for \nfts using explicit alphabets with support for nondeterminism (\mata) perform against symbolic alphabets with binary representation of transition relations (binary bit vectors in \mona) without support for nondeterminism.
 
@@ -1655,7 +1654,7 @@ We remove duplicated pairs ($\ftBeginMarker$, $\ftRegexRelucReplaceAll$) in each
 
 \paragraph{Pattern matching benchmark.}
 
-For a second benchmark, we introduce a regular pattern with counters, appearing often in works on pattern matching~\cite{10.1007/978-3-031-30829-1_19}.
+For a second benchmark, we introduce a regular pattern with counters, appearing often in works on pattern matching~\cite{10.1007/978-3-031-30829-1_19}, containing complext \texttt{replaceAll} operations.
 The pattern looks similar to the following regular expression:
 \texttt{\#.*u.\{i, j\}u.\{k, l\}\$} where
 \texttt{\#} denotes the beginning of a line, \texttt{.} matches any character, \texttt{*} denotes Kleene star (zero or more repetitions), \texttt{\{i, j\}} denotes a repetition where the number of repetitions is between $i$ and $j$, and $\$$ denotes the end of a line. \texttt{u} stands here for an arbitrary specific string, e.g., \texttt{<script>}.
@@ -1674,8 +1673,9 @@ We compare the performance of \mata and \mona on operations application on a lan
 
 \paragraph{Rationale for chosen benchmarks.}
 All of these are the operations which will often be used on \nfts created to replace operations in \noodler and will make up the main set of operations on \nfts once support for transducers is introduced in \noodler as well.
-
 Furthermore, these are the operations usually performed in any general use of transducers, since they comprise all the transducer-specific operations one needs when working with transducers.
+The benchmarks \transducerPlus and \webapp from runs of \noodler are practical, but very simple benchmarks with small regular patterns, which is however the first planned application of \nfts in \mata. The benchmark \symbolFromEnd created from pattern matching benchmarks is practical, and produces a complex problem instances.
+The benchmark represents what happens when \nfts are applied to complex \texttt{replaceAll} problems and problems from other domains than the simplest string solving examples in SMT-LIB.
 
 Note that since self-loops cannot be easily added to an existing \nft in \mona, for all operations using composition, we extend the \nfts from benchmarks with additional tapes to synchronize the tapes in both \nfts and add self-loops manually before measuring the runtimes of operations.
 
@@ -1689,7 +1689,11 @@ The experiments were run on GNU/Linux system Ubuntu 22.04.4 LTS (with the Linux 
 The experimental pipeline and all the raw results of run experiments are accessible in a \href{https://github.com/Adda0/Transducers-in-Automata-Library-Mata_experiments}{GitHub repository}\footnote{\url{
 https://github.com/Adda0/Transducers-in-Automata-Library-Mata_experiments}}.
 
-After computing the number of timeouts for each tool, the instances with timeouts are dropped from the results.
+The scatter plots show the comparison between \mata and \mona.
+The axis are linear with runtimes in milliseconds.
+The horizontal and vertical dotted lines represent the timeouts.
+For graphs with limited range on the axis to more clearly see the comparison on the majority of the results, all results beyond the displayed area are depicted as timeouts on the dotted lines.
+When constructing the tables, after computing the number of timeouts for each tool, the instances with timeouts are dropped from the results.
 Therefore, the tables show runtimes for instances where both tools finished.
 All tables in this chapter show the tool used; number of timeouts; and runtimes: minimal, maximal, mean, quantile 0.25, median (quantile 0.50), quantile 0.75, and standard deviation.
 The times shown in the tables are in milliseconds.
