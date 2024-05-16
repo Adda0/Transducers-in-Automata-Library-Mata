@@ -13,7 +13,7 @@ only the few top-level folders in the folder hierarchy.
 \begin{itemize}
 	\item \texttt{mata/}: The main folder containing the source code for \mata automata library, with the reference implementation of finite transducers.
     \item \texttt{docs/}: The LaTeX source files for this work.
-    \item \texttt{benchmarks/}: The benchmarks generated from runs of \noodler on SMT-LIB benchmarks used in comparision of \mata with \mona.
+    \item \texttt{benchmarks/}: The benchmarks generated from runs of \noodler on SMT-LIB benchmarks, used in comparison of \mata with \mona.
     \item \texttt{experiments/}: The experimental pipeline with the source code for running experiments comparing \mata with \mona, source code for \mona.
     \begin{itemize}
         \item \texttt{results/raw/}: The storage of raw generated CSV files when running experiments.
@@ -67,7 +67,7 @@ The experiments can be run as follows:
   \texttt{
     ./run\_on\_benchmark.py --runs <RUNS> --timeout <TIMEOUT> <OPERATION> <PATH>
   }
-  where \texttt{<RUNS>} is to be replacedwith the number of runs on each benchmark instance should be run; \texttt{<TIMEOUT>} is the requested timeout for each benchmark instance in seconds; \texttt{<OPERATION>} is the benchmark operation to run; and \texttt{<PATH>} is the path to a file containing a benchmark instance in \texttt{.mata} format, or a folder containing (possibly inside additional subfolders) files with the benchmark instances in \texttt{.mata} format to run the experiments on.
+  where \texttt{<RUNS>} is to be replaced with the number of runs on each benchmark instance should be run; \texttt{<TIMEOUT>} is the requested timeout for each benchmark instance in seconds; \texttt{<OPERATION>} is the benchmark operation to run; and \texttt{<PATH>} is the path to a file containing a benchmark instance in \texttt{.mata} format, or a folder containing (possibly inside additional subfolders) files with the benchmark instances in \texttt{.mata} format to run the experiments on.
 
   \item Run all experiments from this work:
   \\
