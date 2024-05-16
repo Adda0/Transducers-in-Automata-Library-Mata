@@ -182,17 +182,17 @@
   supervisor.title.a={Ph.D.},    %titul za jménem (nepovinné) / title after the name (optional)
   % Klíčová slova / keywords
   % TODO.
-  keywords.cs={konečné převodn\'iky, konečn\'e automaty, operace nahrazení, řešení řetězcových problémů, řetězcová omezení, SMT, efektivita, jednoduchost, verifikace, cross-site scripting, vložení kódu, prohlížečové transdukce, kompozice, projekce, aplikace}, % klíčová slova v českém či slovenském jazyce / keywords in czech or slovak language
-  keywords.en={finite transducers, finite automata, replace operations, string solving, string constraints, SMT, efficiency, simplicity, verification, cross-site scripting, code injection, browser transductions, composition, projection, application}, % klíčová slova v anglickém jazyce / keywords in english
+  keywords.cs={konečné převodn\'iky, konečn\'e automaty, operace nahrazení, řešení řetězcových problémů, řetězcová omezení, SMT, efektivita, jednoduchost, verifikace, cross-site scripting, vložení kódu, prohlížečové transdukce, kompozice, projekce, aplikace, nedeterminismus}, % klíčová slova v českém či slovenském jazyce / keywords in czech or slovak language
+  keywords.en={finite transducers, finite automata, replace operations, string solving, string constraints, SMT, efficiency, simplicity, verification, cross-site scripting, code injection, browser transductions, composition, projection, application, nondeterminism}, % klíčová slova v anglickém jazyce / keywords in english
   %keywords.en={Here, individual keywords separated by commas will be written in English.},
   % Abstrakt / Abstract
   % TODO
   abstract.cs={
     Implementujeme konečné převodníky do nové rychlé a jednoduché automatové knihovny \mata.
-    Konečné převodníky jsou konečné stavové stoje modelující regulární relace nad regulárními jazyky.
+    Konečné převodníky jsou konečné stavové stoje modelující regulární relace.
     Naše hlavní použití pro konečné převodníky je kódovaní operací nahrazení (nahrazení slova nebo regulárního vzoru řetězcem).
     Nový SMT nástroj pro řešení formulí s omezeními nad řetězci \noodler používá knihovnu \mata jako základ pro jeho rozhodovací proceduru.
-    \noodler potřebuje konečné převodníky k analýze programů manipulujících s řetězci s operacemi nahrazení.
+    \noodler potřebuje konečné převodníky k analýze programů manipulujících s~řetězci s~operacemi nahrazení.
     Analýzou zmíněných programů používaných ve webových aplikacích se zabrání útokům jako cross-site scripting (XSS) nebo vložení kódu.
 
     Hlavní odlišující vlastnosti knihovny \mata zahrnují jednoduchost (jednoduchá k~užívání, úpravě a rozšíření) a efektivitu (pracuje rychle).
@@ -208,7 +208,7 @@
 }, % abstrakt v českém či slovenském jazyce / abstract in czech or slovak language
   abstract.en={
     We implement finite transducers in a new fast and simple automata library \mata.
-    Finite transducers are finite state machines modelling rational relations between regular languages.
+    Finite transducers are finite state machines modelling rational relations.
     Our primary use case for finite transducers is encoding replace operations (replacing a word or a regular pattern with a string literal).
     A recent automata-based SMT string solver \noodler uses \mata as a backbone of its decision procedure.
     \noodler needs finite transducers to analyse string manipulating programs with replace operations.
@@ -245,7 +245,6 @@ I have listed all the literary sources, publications and other sources, which we
     Z~toho důvodu se postupně objevil značný počet automatových knihoven, každá s vlastními podporovanými typy automatů a operacemi nad nimi.
     Návrh implementace každé z knihoven dává určité výhody a nevýhody.
     Nedávno byla předvedena nová automatová knihovna \mata.
-
     \mata je již nyní používána pro uvažování nad regulárními výrazy a pro řešení omezení nad řetězci.
     Aby však \mata dobře pracovala i v jiných doménách jako regulární \emph{model checking} nebo rozhodování logik jako WS1S nebo kvantifikovaná Presburgerova aritmetika, podpora pro konečné převodníky je nutná.
     V této práci přidáváme konečné převodníky do knihovny \mata.
@@ -257,27 +256,21 @@ I have listed all the literary sources, publications and other sources, which we
     Konkrétně, konečné převodníky modelují množinu n-tic slov.
     Konečné převodníky mají rozsáhlé využití v mnoha aplikačních doménách jako zpracování řeči a jazyka (výpočetní lingvistika), překladače programů, parametrické \emph{unit} testování, paralelizace kódu, webová bezpečnost, nebo verifikace programů.
 
-    Hlavními charakteristikami knihovny \mata určujícími povahu této práce je efektivita a jednoduchost.
-
+    Hlavními charakteristikami knihovny \mata určujícími povahu této práce je efektivita a~jednoduchost.
     Efektivita automatových algoritmů je důležitá pro mnohé příklady použití, kde jsou automatové problémy výpočetně náročné a každé zpomalení práce s automatem způsobuje značné zpomalení celkově.
     Mnohé automatové knihovny jsou dobře optimalizované na vybranou množinu operací, předpokládají určitý způsob práce s knihovnou, nebo limitují, jak je možné knihovnu využívat.
-    Cílem knihovny \mata je dosáhnout rychlého výpočtu operací v různých aplikacích, poskytovat optimalizované obecné algoritmy i speciální konkrétně zaměřené algoritmy, obzvláště pro její aplikaci v uvažování o omezeních nad řetězci.
-
+    Cílem knihovny \mata je dosáhnout rychlého výpočtu operací v různých aplikacích, poskytovat optimalizované obecné algoritmy i~speciální konkrétně zaměřené algoritmy, obzvláště pro její aplikaci v uvažování o omezeních nad řetězci.
     Jednoduchost knihovny se zaměřuje na dodání pochopitelného a přístupného rozhraní pro automatové operace, jednoduchou integraci knihovny do existujících nástrojů a jednoduchou rozšiřitelnost a upravitelnost implementovaných algoritmů a automatových modelů.
-
     \mata využívá datových struktur navržených tak, aby umožnily knihovně rychlé výpočty, ale také jejich jednoduchou modifikaci uživatelem pro vlastní použití a poskytující rozšiřitelné rozhraní pro přidávání nových automatových modelů, nebo speciálních operací.
 
     Naším prvním a hlavním případem použití pro konečné převodníky v knihovně \mata je uvažování o omezeních nad řetězci.
-
-    V posledních dvou desetiletích se oblast uvažování o řetězcových omezeních dočkala značné pozornosti od výzkumu i z praxe.
+    V posledních dvou desetiletích se oblast uvažování o~řetězcových omezeních dočkala značné pozornosti od výzkumu i z praxe.
     Výzkum je hlavně motivován použitím nástrojů pro analýzu programů pro webové aplikace.
-    Uvažování o omezeních na řetězci zabraňuje útokům jako cross-site scripting (XSS) nebo code injection objevováním zranitelností v~programech.
-
-    Existuje velké množství SMT nástrojů pro uvažování nad řetěžcovými omezeními, každý implementující vlastní techniky a optimalizace.
+    Uvažování o~omezeních na řetězci zabraňuje útokům jako cross-site scripting (XSS) nebo code injection objevováním zranitelností v~programech.
+    Existuje velké množství SMT nástrojů pro uvažování nad řetězcovými omezeními, každý implementující vlastní techniky a optimalizace.
 
     Použití přístupů k uvažování o omezeních nad řetězci založených na automateh nedávno získalo značnou popularitu.
     Použití automatů pro uvažování o omezeních nad řetězci je přirozeným krokem, neboť řetězcová omezení obsahují hodně regulárních výrazů a regulárních omezení.
-
     Tato práce je značně motivována existujícími technikami založenými na automatech nedávno uvedenými v nástroji pro uvažování o omezeních nad řetězci \noodler.
     \noodler používá automaty jako hlavní podstatu jeho rozhodovací procedury.
     \noodler umí řešit řetězcové rovnice s regulárními omezeními, ale nedokáže jednoduše řešit omezení obsahující operace nahrazení jako \texttt{replaceAll} (nahrazení všech výskytů vzoru za řetězec).
@@ -288,13 +281,10 @@ I have listed all the literary sources, publications and other sources, which we
     Modelujeme konečné převodníky pomocí zdědění existujících datových struktur pro konečné automaty v knihovně \mata.
     Rozšíříme datové struktury pro konečné převodníky jako konečný automat s úrovněmi pro stavy.
     Tento přístup nám umožňuje zdědit také velké množství existujících operací pro konečné automaty s pouze mírnými úpravami pro funkčnost s konečnými převodníky.
-
     Reprezentace konečných převodníků zároveň slouží jako datová struktura i pro automaty s~multi-terminálními binárními rozhodovacími stromy pro práci s velkými abecedami.
-
     Dále rozšíříme konečné převodníky algoritmy pro konstrukci konečných převodníků modelujících operace nahrazení definované v SMT-LIB.
-
     Nakonec experimentálně porovnáme čas běhu konečných převodníků implementovaných v knihovně \mata na nové sadě příkladů získaných z běhů nástroje \noodler.
-    Zvolený přístup se zdá být vhodný a přestože pro uvažování o řetězcových operacích je \mata pomalejší, pracuje dostatečně rychle pro naše případy použití.
+    Zvolený přístup se zdá být vhodný, a přestože pro uvažování o řetězcových operacích je \mata pomalejší, pracuje dostatečně rychle pro naše případy použití.
     Naopak na příkladech z oblasti nalezení vzorů schopnost knihovny \mata pracovat s nedeterminismem jasně překonává deterministické přístupy.
   },
   %extabstract.odd={true}, % Začít rozšířený abstrakt na liché stránce? / Should extended abstract start on the odd page?
