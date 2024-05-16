@@ -1844,12 +1844,15 @@ Table~\ref{tab:literal_application_backward} shows comparison of performance of 
 \end{figure}
 
 From the results in Table~\ref{tab:literal_application} and Table~\ref{tab:language_application} and scatter plots in Figures~\ref{fig:apply_operation} and~\ref{fig:apply_operation_backward}, we can see that applying $\ft$ on a fairly constrained language (in our case directly a literal) is a quick operation where \mata performs comparably with \mona.
-However, applying $\ft$ on a large language such as $\Sigma^*$ (used in our experiments), the application gets considerably more expensive for \mata.
+However, applying $\ft$ on a large language such as $\Sigma^*$ (used in our experiments), the application gets more expensive for \mata, but even then \mata runs in under $4$ ms on the forward application benchmark.
 
-This application on $\Sigma^*$ is actually the word case scenario for \mata, as with $\Sigma^*$, \mata have to apply all transition symbols $a \in \Sigma$ for each state $s \in \states$ of $\ft$.
+This application on $\Sigma^*$ is actually the worst case scenario for \mata, as with $\Sigma^*$, \mata has to apply all transition symbols $a \in \Sigma$ for each state $s \in \states$ of $\ft$.
 Nevertheless, the computation for both the forward and backward application operations for both the literal and the language finishes in $75\%$ cases in at most $50$ ms, which should be fast enough for \noodler, especially considering the results of the applications and computations can be cached and reused during a run of \noodler.
 Notice that for application on a literal, \mata is about $2$ to $3$ times slower, however, when the language gets larger ($\Sigma^*$ in our case), the performance on the 3rd quartile is comparable to \mona on the backward application on the language, and only $2$ times slower on the forward application on the language.
-
+We can see that the backward application is more difficult for both libraries.
+When backward applying $\ft$ on a literal, \mata times out on a few instances.
+This calls for a close inspection of the particular instances.
+If we find a reason for this slowdown, subsequent optimization of the data structures and algorithms in \mata according to the results should be possible.
 Considering our future uses for application operation in \noodler, we will sometimes apply on the whole language $\Sigma^*$, but more often we will apply on a more constrained subset $L \subset \Sigma^*$ which should therefore perform better on \noodler runs.
 If the performance is then still insufficient, we can implement the aforementioned optimization for composition for $2$-tape \nfts and use in \noodler this version instead of the general application implementation for multi-tape \nfts.
 
@@ -1900,11 +1903,11 @@ Table~\ref{tab:composition_construct_replace} shows comparison of performance of
 
 We can see that performance of \mata is comparable to the performance of \mona on numerous instances for composition constructing replace \nfts, but there is also a similarly large group of instances in the \transducerPlus benchmark where \mata runs slower.
 \mata also has 15 timeouts on the largest compositions created as partial compositions of a long sequence of compositions.
-
 In general, the runtime of \mata is sufficient.
 We can see that $75 \%$ of instances common in string solving are solved in less than $28$ ms in \mata compared to $21$ ms in \mona.
 Only the partial compositions containing considerably larger \nfts show noticeable slowdown for \mata.
-
+Composition creating the replace \nfts runs much faster, and \mata is comparable to \mona on many instances, even if slower on other instances.
+The runtime for $75 \%$ of cases is under $9$ ms, about two times higher then for \mona.
 As mentioned earlier, if the performance of \nfts in \mata proves to be a bottleneck in string solving, a specialized algorithm for composition of $2$-tape \nfts can be used instead of the general algorithm for multi-tape \nfts.
 
 \subsection{Pattern matching benchmark.}
@@ -1955,10 +1958,9 @@ The Table~\ref{tab:symbol_from_end_construct_replace} shows the comparison of \m
 \mata computed all pattern matching benchmarks quickly, running at most $8$ s on the largest instance with $150$ repetitions on the application on the language operation.
 \mona managed to compute only the first smallest $14$ instances (for both the replace single and replace all variants, in total finishing $28$ on instances).
 In the remaining $272$ instances, \mona fails to determinize the pattern and runs out of memory.
-
 The similar results can be seen in construction of replace \nfts. Even if the intermediate \nfts are small compared to the final \nfts for replace operations, \mona manages to compute only the first smallest $35$ instances (for both the replace single and replace all variants, in total finishing on $70$ instances).
 In the remaining $232$ instances, \mona fails to determinize the pattern and runs out of memory.
-
+The tables show that on the smallest instances, \mona runs faster, but quickly starts timing out when the lack of support for nondeterminism starts being an issue for \mona.
 This benchmark clearly shows that once you start using \nfts on problems from practice more complex than the simple replace operations in string solving benchmarks from SMT-LIB, the ability to use explicit symbols on transitions and handling nondeterminism becomes crucial to all tools applicable to these problem domains.
 
 \section{Summary}
@@ -1967,9 +1969,7 @@ For the string solving benchmarks, the experiments show that \mata has higher ba
 \mata runs comparably with \mona on application on a literal and projection to tape $1$.
 Otherwise, \mata runs slower than \mona, but even then its runtime is reasonable.
 There are a few instances where \mata fails to compute the composition and times out whereas \mona succeeds in computing the composition.
-
 Considering that \mona is a well-optimized library for applications on binary representations of transition symbols, and the experiments are run on the extreme cases (application on $\Sigma^*$) of the operations performed in string solving, which are the most unfavourable cases for \mata, we consider a success that \nfts in \mata are able to get close to the performance of \mona, and even outperform \mona in some cases.
-
 For most cases, the performance of \mata should be improved by implementing the optimized composition specialized for $2$-tape \nfts which omits having to insert self-loops and additional levels into the composed \nfts.
 
 The experiments shown are not the only use cases for \nfts in \mata, but they represent a selection of operations that will be performed in \noodler.
@@ -1990,19 +1990,15 @@ Moreover, we conclude that \nfts in \mata are capable of handling complex tasks 
 
 \chapter{Conclusion}
 
-To summarize this thesis, we have added support for a new model for finite state machines, finite state transducers, to \mata, explained the principles behind \nfts and specifically \nfts in the context of \mata and \noodler for string solving.
-
-We have created a new data structures derived from the existing data structures for \nfas in \mata, which fit well in the overall structure and design decision of \mata.
+To conclude this thesis, we have added support for a new model for finite state machines, finite transducers, to \mata, explained the principles behind \nfts and specifically \nfts in the context of \mata and \noodler for string solving.
+We have created a new data structures derived from the existing data structures for \nfas in \mata as \nfas with levels, which fit well in the overall structure and design decision of \mata.
 The introduced algorithms on \nfts are closely related to the corresponding algorithms on BDDAs and maintain the two main goals of \mata: simplicity and efficiency, while keeping \mata easily extensible and understandable for a wide variety of users and applicable to both the areas of automata research and industry.
-
 Thanks to these design decision, further extending \mata with support for handling BDDAs will be effortless.
-
 We further focussed on utilizing \nfts in string solving by adding algorithms to model string replace operations defined in SMT-LIB which will be used in \noodler for solving SMT formulae with string replace operations, previously unsolvable by \noodler.
 
 We compared the performance of \nfts in \mata with a natural encoding of transducers in the automata library \mona.
-
 The experiments show that \mata performs slower than \mona in string solving, but still runs reasonably fast.
-When applied to complex regular expressions such as pattern matching, \mata clearly outperforms approaches without proper handling for explicit alphabets with nondeterminism.
+When applied to complex regular expressions such as pattern matching, \mata clearly outperforms approaches without proper support for nondeterminism.
 The performance of \mata on $2$-tape \nfts can be further improved by applying the specialized algorithm for composition for $2$-tape \nfts, or by sometimes preventing execution of projection.
 
 Overall, the design and implementation of \nfts in \mata is feasible, functional, performs sufficiently enough, and is widely usable, with ready-for-use support for solving SMT formulae with string replace operations in \noodler.
@@ -2010,14 +2006,10 @@ Overall, the design and implementation of \nfts in \mata is feasible, functional
 \paragraph{Future work.}
 We continue optimizing and developing \mata and the implementation of \nfts.
 In the future, we want to apply \nfts to solving string SMT formulae in \noodler.
-Furthermore, depending on the performance of \nfts in \noodler, we intend to add support for symbolic representations for large alphabets using bit vectors representing sequences of bits, as used in tool \lash~\cite{lash} and transition representation specific to \nfts to encode \nft operations such as identity more easily.
-
+In addition, depending on the performance of \nfts in \noodler, we intend to add support for symbolic representations for large alphabets using bit vectors representing sequences of bits, as used in tool \lash~\cite{lash} and transition representation specific to \nfts to encode \nft operations such as identity more easily.
 If the performance of composition of \nfts in \noodler proves to be a bottleneck, we can implement the optimized algorithm specialized for $2$-tape \nfts.
-
 Since the representation of \nfts in \mata is close to BDDAs, we intend to study various optimizations used for BDDAs to further improve the performance of \nfts in \mata.
-
 Finally, we intend to inherit the current structure for \nfts with the corresponding operations and add support for BDDAs to \mata for future uses.
-
 
 %=========================================================================
 
